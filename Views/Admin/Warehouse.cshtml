@@ -1,0 +1,411 @@
+@model WebsiteDienMay.Models.WarehouseViewModel
+@{
+    ViewData["Title"] = "Quản lý kho & Nhập hàng";
+}
+
+<!-- 4 Thẻ KPI Tổng quan Kho vận -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Tổng tồn kho khả dụng</div>
+                    <div class="adm-kpi-value text-primary">@Model.TotalUnitsInStock SP</div>
+                    <div class="adm-kpi-sub">Chỉ tăng khi lập phiếu nhập kho</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #eff6ff; color: #2563eb;">
+                    <i class="bi bi-boxes"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Giá trị hàng tồn kho</div>
+                    <div class="adm-kpi-value text-success" style="font-size: 20px;">@Model.TotalInventoryValue.ToString("N0") đ</div>
+                    <div class="adm-kpi-sub">Tính theo đơn giá niêm yết KM</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #ecfdf5; color: #059669;">
+                    <i class="bi bi-bank"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Cảnh báo tồn kho</div>
+                    <div class="adm-kpi-value text-danger">@Model.OutOfStockProductCount hết hàng</div>
+                    <div class="adm-kpi-sub">Sắp hết (&le; 10): <strong class="text-warning">@Model.LowStockProductCount</strong> mặt hàng</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #fef2f2; color: #dc2626;">
+                    <i class="bi bi-exclamation-octagon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Chứng từ nhập kho</div>
+                    <div class="adm-kpi-value text-dark">@Model.TotalImportReceipts phiếu</div>
+                    <div class="adm-kpi-sub">Lưu vết kiểm toán tự động</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #f1f5f9; color: #334155;">
+                    <i class="bi bi-clipboard2-data"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Cột trái: Lập Phiếu Nhập Kho -->
+    <div class="col-lg-4">
+        <div class="adm-card position-sticky" style="top: 88px;" id="importFormCard">
+            <div class="adm-card-header">
+                <h6 class="adm-card-title">
+                    <i class="bi bi-box-arrow-in-down text-primary"></i>
+                    <span>Lập phiếu nhập kho mới</span>
+                </h6>
+                <span class="adm-badge adm-badge-success">Cộng tồn kho</span>
+            </div>
+
+            <form asp-action="ImportStock" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label for="importProductSelect" class="adm-form-label">Chọn thiết bị nhập kho <span class="text-danger">*</span></label>
+                    <select name="productId" id="importProductSelect" class="form-select" required>
+                        <option value="">-- Chọn sản phẩm cần nhập hàng --</option>
+                        @foreach (var p in Model.AllProductsForSelect)
+                        {
+                            var suggestedCost = (long)(Math.Round(p.Price * 0.82m / 1000m, 0) * 1000m);
+                            <option value="@p.Id"
+                                    data-stock="@p.StockQuantity"
+                                    data-cost="@suggestedCost"
+                                    data-brand="@(p.Brand?.Name ?? "Điện Máy")"
+                                    data-img="@p.ImageUrl"
+                                    data-code="@p.Code"
+                                    selected="@(Model.PreselectedProductId == p.Id)">
+                                [@p.Code] @p.Name (Tồn: @p.StockQuantity)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Khung xem trước biến động tồn kho trực tiếp -->
+                <div id="stockPreviewBox" class="p-3 rounded-3 bg-light border mb-3 d-none">
+                    <div class="d-flex align-items-center gap-3 mb-2 pb-2 border-bottom">
+                        <img id="previewProdImg" src="" alt="Preview" class="adm-thumb" style="width: 46px; height: 46px;" />
+                        <div class="min-w-0">
+                            <div id="previewProdCode" class="badge bg-white text-secondary border font-monospace mb-1"></div>
+                            <div class="small text-muted">Kiểm tra đối chiếu tồn kho tự động</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between text-center small">
+                        <div>
+                            <div class="text-muted">Tồn hiện tại</div>
+                            <div id="previewBefore" class="fw-bold fs-6 text-secondary">0</div>
+                        </div>
+                        <i class="bi bi-arrow-right text-primary"></i>
+                        <div>
+                            <div class="text-muted">Nhập thêm</div>
+                            <div id="previewAdd" class="fw-bold fs-6 text-primary">+0</div>
+                        </div>
+                        <i class="bi bi-arrow-right text-success"></i>
+                        <div>
+                            <div class="text-muted">Tồn sau nhập</div>
+                            <div id="previewAfter" class="fw-extrabold fs-6 text-success">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label for="importQtyInput" class="adm-form-label">Số lượng nhập <span class="text-danger">*</span></label>
+                        <input type="number" name="quantity" id="importQtyInput" min="1" max="10000" value="10" class="form-control fw-bold text-primary" required />
+                    </div>
+                    <div class="col-6">
+                        <label for="importPriceInput" class="adm-form-label">Đơn giá nhập (VNĐ)</label>
+                        <input type="number" name="importPrice" id="importPriceInput" min="0" step="1" class="form-control" placeholder="Giá vốn..." />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="supplierInput" class="adm-form-label">Nhà cung cấp / Hãng phân phối</label>
+                    <input type="text" name="supplierName" id="supplierInput" class="form-control" placeholder="VD: Nhà phân phối chính hãng Samsung Việt Nam" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Ghi chú lô hàng / Chứng từ</label>
+                    <textarea name="note" rows="2" class="form-control" placeholder="VD: Nhập lô hàng đợt 1 theo hợp đồng phân phối..."></textarea>
+                </div>
+
+                <div class="p-2 px-3 rounded-3 bg-primary-subtle border border-primary-subtle small text-primary mb-3">
+                    <i class="bi bi-shield-lock-fill me-1"></i>Quy tắc kho: Tồn kho không cho phép sửa tay, chỉ tăng khi xác nhận Phiếu nhập kho và tự động trừ khi phát sinh đơn bán.
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-3">
+                    <i class="bi bi-check2-circle me-1"></i>Xác nhận Nhập kho
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cột phải: Bảng Tồn Kho Thiết Bị & Nhật Ký Phiếu Nhập -->
+    <div class="col-lg-8">
+        <!-- Bảng Kiểm Kê Tồn Kho -->
+        <div class="adm-card">
+            <div class="adm-card-header">
+                <div>
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-layers-half text-primary"></i>
+                        <span>Kiểm kê tồn kho thiết bị (@Model.Products.Count mặt hàng)</span>
+                    </h6>
+                </div>
+            </div>
+
+            <!-- Bộ lọc nhanh trạng thái tồn kho -->
+            <div class="adm-filter-pills mb-3">
+                <a asp-action="Warehouse" asp-route-stockFilter="" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-keyword="@Model.Keyword"
+                   class="adm-filter-pill @(string.IsNullOrEmpty(Model.StockFilter) ? "active" : "")">
+                    Tất cả mặt hàng
+                </a>
+                <a asp-action="Warehouse" asp-route-stockFilter="out" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-keyword="@Model.Keyword"
+                   class="adm-filter-pill @(Model.StockFilter == "out" ? "active" : "")">
+                    <i class="bi bi-x-circle text-danger"></i>Hết hàng (0)
+                </a>
+                <a asp-action="Warehouse" asp-route-stockFilter="low" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-keyword="@Model.Keyword"
+                   class="adm-filter-pill @(Model.StockFilter == "low" ? "active" : "")">
+                    <i class="bi bi-exclamation-triangle text-warning"></i>Sắp hết (1 - 10)
+                </a>
+                <a asp-action="Warehouse" asp-route-stockFilter="in" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-keyword="@Model.Keyword"
+                   class="adm-filter-pill @(Model.StockFilter == "in" ? "active" : "")">
+                    <i class="bi bi-check-circle text-success"></i>Đủ hàng (&gt; 10)
+                </a>
+            </div>
+
+            <!-- Lọc theo danh mục & từ khóa -->
+            <form asp-action="Warehouse" method="get" class="row g-2 mb-3">
+                <input type="hidden" name="stockFilter" value="@Model.StockFilter" />
+                <div class="col-md-4">
+                    <select name="categoryId" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Tất cả ngành hàng</option>
+                        @foreach (var c in Model.Categories)
+                        {
+                            <option value="@c.Id" selected="@(Model.SelectedCategoryId == c.Id)">@c.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" name="keyword" value="@Model.Keyword" class="form-control form-control-sm" placeholder="Tìm tên hoặc mã SKU..." />
+                </div>
+                <div class="col-md-3 d-flex gap-1">
+                    <button type="submit" class="btn btn-primary btn-sm fw-semibold w-100">Lọc kho</button>
+                    <a asp-action="Warehouse" class="btn btn-light border btn-sm px-2" title="Đặt lại"><i class="bi bi-arrow-counterclockwise"></i></a>
+                </div>
+            </form>
+
+            <div class="adm-table-wrap">
+                <div class="table-responsive" style="max-height: 440px; overflow-y: auto;">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Thiết bị điện tử</th>
+                                <th class="text-center">Tồn hiện tại</th>
+                                <th class="text-center">Đã xuất bán</th>
+                                <th class="text-center">Tình trạng</th>
+                                <th class="text-end">Nhập nhanh</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Products.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Không có sản phẩm nào khớp điều kiện lọc.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.Products)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <img src="@item.ImageUrl" alt="@item.Name" class="adm-thumb" style="width: 44px; height: 44px;" />
+                                                <div class="min-w-0">
+                                                    <span class="badge bg-light text-secondary border font-monospace">@item.Code</span>
+                                                    <div class="fw-semibold text-dark text-truncate" style="max-width: 260px;" title="@item.Name">@item.Name</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center fw-extrabold fs-6 @(item.StockQuantity <= 0 ? "text-danger" : item.StockQuantity <= 10 ? "text-warning" : "text-primary")">
+                                            @item.StockQuantity
+                                        </td>
+                                        <td class="text-center text-muted fw-semibold">@item.SoldCount</td>
+                                        <td class="text-center">
+                                            @if (item.StockQuantity <= 0)
+                                            {
+                                                <span class="adm-badge adm-badge-danger"><span class="adm-badge-dot"></span>Hết hàng</span>
+                                            }
+                                            else if (item.StockQuantity <= 10)
+                                            {
+                                                <span class="adm-badge adm-badge-warning"><span class="adm-badge-dot"></span>Sắp hết</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="adm-badge adm-badge-success"><span class="adm-badge-dot"></span>Sẵn hàng</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button"
+                                                    class="btn btn-outline-primary btn-sm fw-semibold rounded-3 btn-pick-import"
+                                                    data-id="@item.Id">
+                                                <i class="bi bi-plus-circle me-1"></i>Nhập kho
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nhật ký Phiếu Nhập Kho gần đây -->
+        <div class="adm-card mb-0">
+            <div class="adm-card-header">
+                <h6 class="adm-card-title">
+                    <i class="bi bi-journal-check text-primary"></i>
+                    <span>Nhật ký phiếu nhập kho gần đây</span>
+                </h6>
+                <span class="text-muted small">30 phiếu gần nhất</span>
+            </div>
+
+            <div class="adm-table-wrap">
+                <div class="table-responsive">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Mã phiếu & Thời gian</th>
+                                <th>Sản phẩm nhập</th>
+                                <th class="text-center">Đối chiếu tồn kho</th>
+                                <th class="text-end">Đơn giá nhập</th>
+                                <th>Nguồn nhập & Người lập</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.RecentImports.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Chưa có lịch sử phiếu nhập kho.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var imp in Model.RecentImports)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-primary font-monospace">#@imp.ReceiptCode</div>
+                                            <div class="text-muted" style="font-size: 11.5px;">@imp.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                        </td>
+                                        <td style="max-width: 220px;">
+                                            <div class="fw-semibold text-dark text-truncate" title="@imp.Product?.Name">@(imp.Product?.Name ?? $"SP #{imp.ProductId}")</div>
+                                            <div class="text-muted small">@imp.Note</div>
+                                        </td>
+                                        <td class="text-center text-nowrap">
+                                            <span class="text-muted">@imp.StockBefore</span>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle mx-1">+@imp.Quantity</span>
+                                            <i class="bi bi-arrow-right-short text-muted"></i>
+                                            <strong class="text-dark">@imp.StockAfter</strong>
+                                        </td>
+                                        <td class="text-end fw-semibold text-dark text-nowrap">
+                                            @imp.ImportPrice.ToString("N0") đ
+                                        </td>
+                                        <td>
+                                            <div class="small fw-semibold text-dark">@imp.SupplierName</div>
+                                            <div class="text-muted" style="font-size: 11.5px;">Lập bởi: @imp.CreatedBy</div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const prodSelect = document.getElementById("importProductSelect");
+            const qtyInput = document.getElementById("importQtyInput");
+            const priceInput = document.getElementById("importPriceInput");
+            const supplierInput = document.getElementById("supplierInput");
+
+            const previewBox = document.getElementById("stockPreviewBox");
+            const previewImg = document.getElementById("previewProdImg");
+            const previewCode = document.getElementById("previewProdCode");
+            const previewBefore = document.getElementById("previewBefore");
+            const previewAdd = document.getElementById("previewAdd");
+            const previewAfter = document.getElementById("previewAfter");
+
+            function refreshPreview(populateDefaults) {
+                const opt = prodSelect.options[prodSelect.selectedIndex];
+                if (!prodSelect.value || !opt) {
+                    previewBox.classList.add("d-none");
+                    return;
+                }
+
+                const curStock = parseInt(opt.dataset.stock || "0", 10);
+                const addQty = Math.max(0, parseInt(qtyInput.value || "0", 10));
+
+                previewImg.src = opt.dataset.img || "";
+                previewCode.textContent = "SKU: " + (opt.dataset.code || "");
+                previewBefore.textContent = curStock;
+                previewAdd.textContent = "+" + addQty;
+                previewAfter.textContent = curStock + addQty;
+                previewBox.classList.remove("d-none");
+
+                if (populateDefaults) {
+                    if (opt.dataset.cost) priceInput.value = opt.dataset.cost;
+                    if (opt.dataset.brand) supplierInput.value = "Nhà phân phối chính hãng " + opt.dataset.brand;
+                }
+            }
+
+            prodSelect.addEventListener("change", function () {
+                refreshPreview(true);
+            });
+
+            qtyInput.addEventListener("input", function () {
+                refreshPreview(false);
+            });
+
+            document.querySelectorAll(".btn-pick-import").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    prodSelect.value = this.dataset.id;
+                    refreshPreview(true);
+                    qtyInput.focus();
+                    qtyInput.select();
+                    document.getElementById("importFormCard").scrollIntoView({ behavior: "smooth", block: "nearest" });
+                });
+            });
+
+            if (prodSelect.value) {
+                refreshPreview(true);
+            }
+        });
+    </script>
+}

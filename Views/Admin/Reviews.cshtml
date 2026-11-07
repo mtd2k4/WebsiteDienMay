@@ -1,0 +1,121 @@
+@model List<WebsiteDienMay.Models.ProductReview>
+@{
+    ViewData["Title"] = "Đánh giá & Nhận xét khách hàng";
+    var avgRating = Model.Any() ? Model.Average(r => r.Rating) : 0;
+    var fiveStarCount = Model.Count(r => r.Rating == 5);
+}
+
+<!-- Tổng quan điểm đánh giá -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="adm-kpi-card py-3">
+            <div class="adm-kpi-label">Tổng lượt nhận xét</div>
+            <div class="fs-4 fw-extrabold text-dark mt-1">@Model.Count đánh giá</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="adm-kpi-card py-3">
+            <div class="adm-kpi-label">Điểm hài lòng trung bình</div>
+            <div class="fs-4 fw-extrabold text-warning mt-1">
+                @avgRating.ToString("0.0") / 5.0 <i class="bi bi-star-fill fs-6"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="adm-kpi-card py-3">
+            <div class="adm-kpi-label">Đánh giá tuyệt đối (5 sao)</div>
+            <div class="fs-4 fw-extrabold text-success mt-1">@fiveStarCount lượt</div>
+        </div>
+    </div>
+</div>
+
+<div class="adm-card mb-0">
+    <div class="adm-card-header">
+        <div>
+            <h5 class="adm-card-title">
+                <i class="bi bi-chat-left-quote-fill text-primary"></i>
+                <span>Kiểm duyệt nhận xét sản phẩm</span>
+            </h5>
+            <div class="text-muted small mt-1">Quản lý phản hồi thực tế của khách hàng sau khi mua sắm thiết bị</div>
+        </div>
+    </div>
+
+    <div class="adm-table-wrap">
+        <div class="table-responsive">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm được đánh giá</th>
+                        <th>Khách hàng</th>
+                        <th class="text-center">Mức đánh giá</th>
+                        <th>Nội dung nhận xét</th>
+                        <th>Thời gian</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-chat-square-dots fs-2 d-block mb-2"></i>
+                                Chưa có đánh giá sản phẩm nào từ khách hàng.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var r in Model)
+                        {
+                            <tr>
+                                <td style="max-width: 260px;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (!string.IsNullOrEmpty(r.Product?.ImageUrl))
+                                        {
+                                            <img src="@r.Product.ImageUrl" alt="@r.Product?.Name" class="adm-thumb" style="width: 42px; height: 42px;" />
+                                        }
+                                        <a asp-controller="Product" asp-action="Detail" asp-route-id="@r.ProductId" target="_blank" class="fw-semibold text-dark text-decoration-none">
+                                            @(r.Product?.Name ?? $"Sản phẩm #{r.ProductId}")
+                                        </a>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">@r.CustomerName</div>
+                                    <div class="text-muted small">@r.CustomerPhone</div>
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    <div class="text-warning">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <i class="bi @(i <= r.Rating ? "bi-star-fill" : "bi-star text-muted opacity-25")"></i>
+                                        }
+                                    </div>
+                                    <span class="small fw-bold text-secondary">@r.Rating / 5</span>
+                                </td>
+                                <td style="max-width: 340px;">
+                                    <div class="text-dark">@r.Comment</div>
+                                </td>
+                                <td class="text-muted small text-nowrap">
+                                    @r.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                                <td class="text-end">
+                                    <form asp-action="DeleteReview" method="post"
+                                          class="swal-confirm-form d-inline"
+                                          data-swal-title="Xóa nhận xét này?"
+                                          data-swal-text="Bạn có chắc chắn muốn xóa đánh giá của khách hàng '@r.CustomerName'?"
+                                          data-swal-confirm="Xóa đánh giá">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="adm-icon-btn danger" title="Xóa đánh giá">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

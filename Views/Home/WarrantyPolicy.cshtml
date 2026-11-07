@@ -1,0 +1,303 @@
+@{
+    ViewData["Title"] = "Chính sách bảo hành, lắp đặt và đổi trả";
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb dmx-breadcrumb mb-0">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index"><i class="bi bi-house-door me-1"></i>Trang chủ</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Chính sách bảo hành & đổi trả</li>
+    </ol>
+</nav>
+
+<!-- Hero Banner Trung tâm Bảo hành -->
+<div class="dmx-section-card p-4 p-lg-5 mb-4 border-0 text-white" style="background: linear-gradient(125deg, #004899 0%, #1d71e8 60%, #2a83e9 100%);">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+            <span class="badge bg-warning text-dark fw-bold px-3 py-2 rounded-pill mb-3">
+                <i class="bi bi-patch-check-fill me-1"></i>DỊCH VỤ HẬU MÃI TIÊU CHUẨN ĐIỆN MÁY XANH
+            </span>
+            <h2 class="fw-extrabold mb-2">Trung Tâm Bảo Hành, Lắp Đặt & Đổi Trả Chính Hãng</h2>
+            <p class="mb-4 opacity-90" style="font-size: 15px; max-width: 680px;">
+                Cam kết bảo vệ quyền lợi khách hàng tối đa với chính sách <strong>"Hư gì đổi nấy ngay và luôn"</strong> trong 30 ngày đầu tiên, bảo hành tận nhà nhanh chóng trên toàn quốc và tổng đài kỹ thuật hỗ trợ xuyên suốt 7 ngày/tuần.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-controller="Cart" asp-action="TrackOrder" class="btn btn-warning fw-bold px-4 py-2 rounded-pill text-dark">
+                    <i class="bi bi-receipt-cutoff me-1"></i>Tra cứu đơn hàng & bảo hành
+                </a>
+                <a href="#bang-chinh-sach" class="btn btn-light fw-bold px-4 py-2 rounded-pill text-primary">
+                    <i class="bi bi-table me-1"></i>Xem bảng quy định đổi trả
+                </a>
+                <a href="tel:1900232465" class="btn btn-outline-light fw-bold px-4 py-2 rounded-pill">
+                    <i class="bi bi-telephone-outbound me-1"></i>Tổng đài BH: 1900 232 465
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="bg-white text-dark rounded-4 p-4 shadow-sm">
+                <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+                    <div class="dmx-trust-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-headset"></i>
+                    </div>
+                    <div>
+                        <div class="small text-muted fw-semibold">Tổng đài kỹ thuật & bảo hành</div>
+                        <div class="fs-4 fw-extrabold text-primary">1900 232 465</div>
+                    </div>
+                </div>
+                <ul class="list-unstyled small mb-0 d-flex flex-column gap-2 text-secondary">
+                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Thời gian làm việc: <strong>08:00 - 21:00</strong> (Thứ 2 - CN)</li>
+                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Kỹ thuật viên có mặt tận nơi trong <strong>24 giờ</strong></li>
+                    <li><i class="bi bi-check-circle-fill text-success me-2"></i>Tra cứu bảo hành điện tử theo <strong>Số điện thoại</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4 Cam kết vàng -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="dmx-section-card h-100 mb-0 p-4 border-top border-4 border-primary">
+            <div class="dmx-trust-icon mb-3">
+                <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-2">1. Hư gì đổi nấy 30 ngày</h6>
+            <p class="text-muted small mb-0">
+                Nếu sản phẩm phát sinh lỗi kỹ thuật từ nhà sản xuất trong 30 ngày đầu tiên, khách hàng được đổi ngay 1 sản phẩm mới 100% cùng model hoàn toàn miễn phí.
+            </p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="dmx-section-card h-100 mb-0 p-4 border-top border-4 border-success">
+            <div class="dmx-trust-icon mb-3" style="background:#ecfdf5;color:#059669;">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-2">2. Bảo hành chính hãng 100%</h6>
+            <p class="text-muted small mb-0">
+                Toàn bộ sản phẩm được kích hoạt bảo hành điện tử chính hãng từ 12 đến 24 tháng tại hệ thống trung tâm ủy quyền của Sony, Samsung, LG, Panasonic, Apple...
+            </p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="dmx-section-card h-100 mb-0 p-4 border-top border-4 border-warning">
+            <div class="dmx-trust-icon mb-3" style="background:#fffbeb;color:#d97706;">
+                <i class="bi bi-house-gear"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-2">3. Bảo hành tận nhà miễn phí</h6>
+            <p class="text-muted small mb-0">
+                Đối với thiết bị điện máy cỡ lớn (Tivi từ 43 inch, Tủ lạnh, Máy giặt, Máy lạnh, Máy lọc nước), kỹ thuật viên sẽ đến kiểm tra và xử lý trực tiếp tại nhà khách hàng.
+            </p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="dmx-section-card h-100 mb-0 p-4 border-top border-4 border-info">
+            <div class="dmx-trust-icon mb-3" style="background:#eff6ff;color:#0284c7;">
+                <i class="bi bi-truck"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-2">4. Giao & lắp đặt tiêu chuẩn</h6>
+            <p class="text-muted small mb-0">
+                Miễn phí vận chuyển trong bán kính 50km, miễn phí công lắp đặt tiêu chuẩn và hướng dẫn vận hành chi tiết trước khi bàn giao nghiệm thu.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Bảng chi tiết chính sách theo nhóm ngành hàng -->
+<div id="bang-chinh-sach" class="dmx-section-card p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
+        <div>
+            <h5 class="dmx-section-title mb-1"><i class="bi bi-table text-primary me-2"></i>Bảng Quy Định Bảo Hành & Đổi Trả Theo Ngành Hàng</h5>
+            <p class="text-muted small mb-0">Áp dụng cho sản phẩm mua trực tiếp tại siêu thị hoặc đặt hàng trực tuyến trên hệ thống Điện Máy Xanh</p>
+        </div>
+        <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-semibold">
+            Cập nhật tiêu chuẩn mới nhất
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0" style="font-size: 14px;">
+            <thead class="table-light">
+                <tr class="text-secondary fw-bold">
+                    <th style="min-width: 200px;">Nhóm ngành hàng</th>
+                    <th style="min-width: 140px;">Thời hạn bảo hành</th>
+                    <th style="min-width: 240px;">Chính sách 30 ngày đầu (Lỗi NSX)</th>
+                    <th style="min-width: 240px;">Từ tháng thứ 2 trở đi</th>
+                    <th style="min-width: 170px;">Hình thức hỗ trợ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="fw-bold text-dark"><i class="bi bi-tv text-primary me-2"></i>Tivi chính hãng</div>
+                        <small class="text-muted">Sony, Samsung, LG, TCL...</small>
+                    </td>
+                    <td><span class="badge bg-success-subtle text-success fw-bold px-2 py-1">24 tháng</span></td>
+                    <td>Đổi ngay Tivi mới 100% cùng model (miễn phí vận chuyển & lắp đặt lại).</td>
+                    <td>Gửi bảo hành chính hãng. Hoàn tất xử lý trong vòng 5 - 7 ngày làm việc.</td>
+                    <td><span class="text-primary fw-semibold"><i class="bi bi-house-check me-1"></i>Bảo hành tận nhà</span></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="fw-bold text-dark"><i class="bi bi-snow2 text-primary me-2"></i>Tủ lạnh, Máy giặt, Máy lạnh</div>
+                        <small class="text-muted">Panasonic, Daikin, Toshiba, LG...</small>
+                    </td>
+                    <td><span class="badge bg-success-subtle text-success fw-bold px-2 py-1">24 tháng</span><div class="small text-muted mt-1">Máy nén Inverter: 10 năm</div></td>
+                    <td>Đổi máy mới 100% tương đương hoặc hoàn tiền 100% nếu hết hàng cùng model.</td>
+                    <td>Kỹ thuật viên hãng kiểm tra và thay thế linh kiện chính hãng miễn phí tại nhà.</td>
+                    <td><span class="text-primary fw-semibold"><i class="bi bi-house-check me-1"></i>Bảo hành tận nhà</span></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="fw-bold text-dark"><i class="bi bi-phone text-primary me-2"></i>Điện thoại & Laptop</div>
+                        <small class="text-muted">Apple, Samsung, ASUS, Dell, HP...</small>
+                    </td>
+                    <td><span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1">12 - 24 tháng</span></td>
+                    <td>1 đổi 1 máy mới nguyên hộp trong 30 ngày đầu khi có biên bản xác nhận lỗi phần cứng.</td>
+                    <td>Gửi trung tâm bảo hành ủy quyền chính hãng (Apple AASP, Samsung Care, ASUS...).</td>
+                    <td><span class="text-secondary fw-semibold"><i class="bi bi-shop me-1"></i>Tại siêu thị / TTBH</span></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="fw-bold text-dark"><i class="bi bi-droplet-half text-primary me-2"></i>Máy lọc nước & Gia dụng</div>
+                        <small class="text-muted">Karofi, Kangaroo, Sunhouse, Philips...</small>
+                    </td>
+                    <td><span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1">12 - 36 tháng</span></td>
+                    <td>Đổi mới ngay tại siêu thị hoặc giao đổi tận nơi đối với máy lọc nước tủ đứng.</td>
+                    <td>Sửa chữa, thay thế linh kiện phần điện miễn phí theo quy định của hãng.</td>
+                    <td><span class="text-primary fw-semibold"><i class="bi bi-tools me-1"></i>Tận nhà / Siêu thị</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Quy trình 4 bước tiếp nhận bảo hành -->
+<div class="dmx-section-card p-4 mb-4">
+    <h5 class="dmx-section-title mb-4"><i class="bi bi-diagram-3 text-primary me-2"></i>Quy Trình Tiếp Nhận Bảo Hành & Đổi Trả Nhanh Chóng</h5>
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-3">
+            <div class="p-3 rounded-4 bg-light h-100 border position-relative">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge rounded-pill bg-primary px-2 py-1">Bước 01</span>
+                    <span class="fw-bold text-dark">Đăng ký yêu cầu</span>
+                </div>
+                <p class="text-muted small mb-0">
+                    Khách hàng gọi tổng đài <strong>1900 232 465</strong>, tra cứu tại mục <a asp-controller="Cart" asp-action="TrackOrder" class="text-primary fw-semibold">Tra cứu đơn hàng</a> hoặc mang sản phẩm trực tiếp đến siêu thị gần nhất.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="p-3 rounded-4 bg-light h-100 border position-relative">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge rounded-pill bg-primary px-2 py-1">Bước 02</span>
+                    <span class="fw-bold text-dark">Kiểm tra & Xác nhận lỗi</span>
+                </div>
+                <p class="text-muted small mb-0">
+                    Kỹ thuật viên Điện Máy Xanh đến tận nhà (với điện máy lớn) hoặc kiểm tra trực tiếp tại quầy trong vòng 24 giờ để xác định tình trạng kỹ thuật.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="p-3 rounded-4 bg-light h-100 border position-relative">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge rounded-pill bg-primary px-2 py-1">Bước 03</span>
+                    <span class="fw-bold text-dark">Đổi mới hoặc Bảo hành</span>
+                </div>
+                <p class="text-muted small mb-0">
+                    Nếu sản phẩm lỗi do nhà sản xuất trong 30 ngày đầu: tiến hành xuất kho máy mới 100% đổi ngay. Nếu sau 30 ngày: thay linh kiện chính hãng.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="p-3 rounded-4 bg-light h-100 border position-relative">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge rounded-pill bg-success px-2 py-1">Bước 04</span>
+                    <span class="fw-bold text-dark">Nghiệm thu & Đồng hành</span>
+                </div>
+                <p class="text-muted small mb-0">
+                    Bàn giao thiết bị vận hành ổn định cho khách hàng, cập nhật lịch sử bảo hành điện tử và khảo sát mức độ hài lòng sau dịch vụ.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Điều kiện đổi trả & Câu hỏi thường gặp (Accordion) -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="dmx-section-card p-4 h-100 mb-0">
+            <h5 class="dmx-section-title mb-3"><i class="bi bi-clipboard2-check text-primary me-2"></i>Điều Kiện Áp Dụng Đổi Mới 100%</h5>
+            <ul class="list-unstyled d-flex flex-column gap-3 mb-0" style="font-size: 14px;">
+                <li class="d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                    <div>
+                        <strong>Xác nhận lỗi kỹ thuật từ nhà sản xuất:</strong> Sản phẩm có biên bản xác nhận lỗi phần cứng từ kỹ thuật viên Điện Máy Xanh hoặc Trung tâm bảo hành chính hãng.
+                    </div>
+                </li>
+                <li class="d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                    <div>
+                        <strong>Ngoại quan nguyên vẹn:</strong> Máy không bị trầy xước nặng, móp méo, nứt vỡ, vào nước hoặc biến dạng do tác động ngoại lực từ phía người sử dụng.
+                    </div>
+                </li>
+                <li class="d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                    <div>
+                        <strong>Đầy đủ phụ kiện & quà tặng:</strong> Còn đầy đủ thùng hộp, sách hướng dẫn, điều khiển, dây nguồn và các phụ kiện đi kèm. Nếu mất thùng hoặc phụ kiện sẽ thu phí theo quy định (2% - 5% giá trị).
+                    </div>
+                </li>
+                <li class="d-flex align-items-start gap-2">
+                    <i class="bi bi-info-circle-fill text-primary mt-1"></i>
+                    <div>
+                        <strong>Đổi trả theo nhu cầu (Sản phẩm không lỗi):</strong> Trường hợp khách hàng muốn đổi sang sản phẩm khác dù máy không có lỗi kỹ thuật, hệ thống hỗ trợ thu lại với mức phí khấu hao 20% giá trị hóa đơn trong tháng đầu tiên.
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="dmx-section-card p-4 h-100 mb-0">
+            <h5 class="dmx-section-title mb-3"><i class="bi bi-question-circle text-primary me-2"></i>Câu Hỏi Thường Gặp (FAQ)</h5>
+            <div class="accordion" id="warrantyFaqAccordion">
+                <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-semibold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="true">
+                            Làm thế nào để kiểm tra thời hạn bảo hành sản phẩm?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#warrantyFaqAccordion">
+                        <div class="accordion-body text-muted small">
+                            Toàn bộ sản phẩm mua tại Điện Máy Xanh đều được lưu trữ bảo hành điện tử. Quý khách chỉ cần truy cập trang <a asp-controller="Cart" asp-action="TrackOrder" class="text-primary fw-semibold">Tra cứu đơn hàng</a> và nhập Mã đơn hàng cùng Số điện thoại mua hàng, hoặc gọi <strong>1900 232 465</strong> đọc số điện thoại để nhân viên kiểm tra ngay lập tức.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-semibold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                            Làm mất hóa đơn giấy có được bảo hành chính hãng không?
+                        </button>
+                    </h2>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#warrantyFaqAccordion">
+                        <div class="accordion-body text-muted small">
+                            <strong>Hoàn toàn được.</strong> Hệ thống quản lý bảo hành bằng Số điện thoại khách hàng và số Serial/IMEI của thiết bị trên phần mềm, quý khách không cần giữ phiếu bảo hành giấy hay hóa đơn giấy.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item border rounded-3 mb-0 overflow-hidden">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-semibold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                            Chi phí lắp đặt Máy lạnh, Máy giặt, Tivi được tính như thế nào?
+                        </button>
+                    </h2>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#warrantyFaqAccordion">
+                        <div class="accordion-body text-muted small">
+                            Điện Máy Xanh <strong>miễn phí 100% công lắp đặt tiêu chuẩn</strong> và miễn phí giao hàng trong bán kính 50km. Quý khách chỉ thanh toán chi phí vật tư phát sinh thực tế (như ống đồng máy lạnh, dây điện, giá treo tường nếu có yêu cầu lắp thêm) theo bảng giá niêm yết công khai.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

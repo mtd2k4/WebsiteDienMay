@@ -1,0 +1,241 @@
+@model WebsiteDienMay.Models.HomeViewModel
+@{
+    ViewData["Title"] = "Siêu thị Điện Máy Xanh - Mua bán Tivi, Tủ lạnh, Máy lạnh, Điện thoại, Laptop";
+}
+
+<!-- Khối Hero Banner + Slider Đôi + Cam kết Dịch vụ -->
+<div class="dmx-banner-wrapper mb-4">
+    <!-- Banner lớn phía trên -->
+    <div id="dmxHeroCarousel" class="carousel slide dmx-hero-banner mb-3" data-bs-ride="carousel" data-bs-interval="4500">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <a asp-controller="Product" asp-action="Index">
+                    <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/75/19/7519c4a5b9aa9c47d3f5d17225b17314.jpg" alt="Banner chính Điện Máy Xanh 1" />
+                </a>
+            </div>
+            <div class="carousel-item">
+                <a asp-controller="Product" asp-action="Index">
+                    <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/e3/96/e3965d650c8be5f0ac30293be625496c.jpg" alt="Banner chính Điện Máy Xanh 2" />
+                </a>
+            </div>
+        </div>
+        <button class="carousel-control-prev dmx-carousel-nav-btn ms-2" type="button" data-bs-target="#dmxHeroCarousel" data-bs-slide="prev">
+            <i class="bi bi-chevron-left fs-6"></i>
+        </button>
+        <button class="carousel-control-next dmx-carousel-nav-btn me-2" type="button" data-bs-target="#dmxHeroCarousel" data-bs-slide="next">
+            <i class="bi bi-chevron-right fs-6"></i>
+        </button>
+    </div>
+
+    <!-- Cụm 2 Banner đôi phía dưới (Hiển thị nguyên vẹn 100% khung hình) -->
+    <div id="dmxSubBannerCarousel" class="carousel slide position-relative" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a asp-controller="Product" asp-action="Index" asp-route-categoryId="1" class="dmx-sub-banner">
+                            <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/5c/e5/5ce5c8d856c99ef01528033c294d6389.png" alt="Khuyến mãi Tivi LG Điện Máy Xanh" />
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a asp-controller="Product" asp-action="Index" asp-route-categoryId="2" class="dmx-sub-banner">
+                            <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/a6/97/a697dea35d2b2d853ade4d2ccb4d5382.png" alt="Khuyến mãi Tủ lạnh Máy giặt Điện Máy Xanh" />
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a asp-controller="Product" asp-action="Index" asp-route-categoryId="3" class="dmx-sub-banner">
+                            <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/d1/ef/d1efb16ffc7b86cc908e6abae633ad88.png" alt="Khuyến mãi Máy giặt Điện Máy Xanh" />
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a asp-controller="Product" asp-action="Index" asp-route-categoryId="4" class="dmx-sub-banner">
+                            <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/f1/8c/f18c8e87c390c9ee07b16da74bc253fb.png" alt="Khuyến mãi Máy lạnh Gia dụng Điện Máy Xanh" />
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="carousel-control-prev dmx-carousel-nav-btn ms-2" type="button" data-bs-target="#dmxSubBannerCarousel" data-bs-slide="prev">
+            <i class="bi bi-chevron-left fs-6"></i>
+        </button>
+        <button class="carousel-control-next dmx-carousel-nav-btn me-2" type="button" data-bs-target="#dmxSubBannerCarousel" data-bs-slide="next">
+            <i class="bi bi-chevron-right fs-6"></i>
+        </button>
+    </div>
+
+    <!-- Dải 4 cam kết dịch vụ nhanh dưới Banner -->
+    <div class="dmx-trust-strip">
+        <div class="dmx-trust-item">
+            <div class="dmx-trust-icon"><i class="bi bi-truck"></i></div>
+            <div>
+                <div class="fw-bold small">Giao nhanh & Lắp đặt</div>
+                <div class="text-muted" style="font-size: 11.5px;">Miễn phí công lắp đặt tiêu chuẩn</div>
+            </div>
+        </div>
+        <div class="dmx-trust-item">
+            <div class="dmx-trust-icon"><i class="bi bi-arrow-repeat"></i></div>
+            <div>
+                <div class="fw-bold small">1 đổi 1 trong 30 ngày</div>
+                <div class="text-muted" style="font-size: 11.5px;">Đổi mới tận nơi nếu lỗi kỹ thuật</div>
+            </div>
+        </div>
+        <div class="dmx-trust-item">
+            <div class="dmx-trust-icon"><i class="bi bi-patch-check-fill"></i></div>
+            <div>
+                <div class="fw-bold small">Bảo hành tận nhà</div>
+                <div class="text-muted" style="font-size: 11.5px;">100% hàng chính hãng toàn quốc</div>
+            </div>
+        </div>
+        <div class="dmx-trust-item">
+            <div class="dmx-trust-icon"><i class="bi bi-credit-card-2-front"></i></div>
+            <div>
+                <div class="fw-bold small">Trả góp 0% lãi suất</div>
+                <div class="text-muted" style="font-size: 11.5px;">Duyệt hồ sơ nhanh trong 5 phút</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Danh mục thiết bị điện tử nổi bật -->
+<div class="dmx-cate-box mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h5 class="fw-black m-0 text-uppercase">Danh mục ngành hàng nổi bật</h5>
+            <div class="small text-muted">Khám phá đầy đủ thiết bị điện tử, điện lạnh và gia dụng chính hãng</div>
+        </div>
+        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-primary btn-sm fw-semibold">
+            Tất cả sản phẩm <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+    </div>
+    <div class="dmx-cate-grid">
+        @foreach (var cat in Model.Categories)
+        {
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@cat.Id" class="dmx-cate-card">
+                <div class="dmx-cate-icon-circle">
+                    <img src="@cat.IconUrl" alt="@cat.Name" loading="lazy" />
+                </div>
+                <span>@cat.Name</span>
+            </a>
+        }
+    </div>
+</div>
+
+<!-- Khuyến mãi Giờ Vàng - Flash Sale -->
+<section id="flash-sale" class="dmx-flashsale-box mb-4">
+    <div class="dmx-flashsale-header">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <img src="https://cdnv2.tgdd.vn/mwg-static/common/Campaign/11/03/11037b8881a8f71e708d1005bcddc01d.png" alt="Flashsale Điện Máy Xanh" style="height: 44px; object-fit: contain;" />
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h4 class="fw-black m-0 text-warning text-uppercase">Giờ Vàng Giá Sốc</h4>
+                    <span class="badge bg-danger">Đang diễn ra</span>
+                </div>
+                <div class="small text-white-50">Săn deal điện máy giảm sâu mỗi ngày - Số lượng có hạn</div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="small fw-semibold">Kết thúc sau:</span>
+            <div class="dmx-countdown">
+                <span class="dmx-countdown-box" id="cd-hours">05</span>
+                <span class="fw-bold">:</span>
+                <span class="dmx-countdown-box" id="cd-mins">42</span>
+                <span class="fw-bold">:</span>
+                <span class="dmx-countdown-box" id="cd-secs">19</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        @foreach (var item in Model.FlashSaleProducts)
+        {
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+                <partial name="_ProductCard" model="item" />
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Gian hàng ưu đãi & Thương hiệu chính hãng -->
+<div class="dmx-section-card mb-4">
+    <div class="dmx-section-header">
+        <div>
+            <h4 class="dmx-section-title">Tuần lễ thương hiệu & Gian hàng chính hãng</h4>
+            <div class="small text-muted mt-1">Ưu đãi độc quyền từ các tập đoàn điện tử hàng đầu thế giới</div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <a asp-controller="Product" asp-action="Index">
+            <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/f3/f0/f3f0c660202263d7c20031e07c34627d.png" alt="Tuần lễ thương hiệu" class="w-100 rounded-3" style="height: auto; object-fit: contain;" />
+        </a>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="1" class="dmx-sub-banner">
+                <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/82/25/822506b1e32b4ea0e1afc1a9ab1be512.png" alt="Gian hàng ưu đãi 1" />
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="2" class="dmx-sub-banner">
+                <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/18/57/18571c2dd94cfde7be39e51587ace176.png" alt="Gian hàng ưu đãi 2" />
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="3" class="dmx-sub-banner">
+                <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/ad/ce/adcedc3788ebf3bab50f2ae6401503be.png" alt="Gian hàng ưu đãi 3" />
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="4" class="dmx-sub-banner">
+                <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/b9/98/b998d6cf99ea4f29cc918ea2d6324b63.jpg" alt="Gian hàng ưu đãi 4" />
+            </a>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center flex-wrap gap-2 pt-2">
+        @foreach (var brand in Model.Brands)
+        {
+            <a asp-controller="Product" asp-action="Index" asp-route-brandId="@brand.Id" class="dmx-brand-pill" title="@brand.Name">
+                <img src="@brand.LogoUrl" alt="@brand.Name" loading="lazy" />
+            </a>
+        }
+    </div>
+</div>
+
+<!-- Các chuyên mục sản phẩm theo từng ngành hàng -->
+@foreach (var sectionItem in Model.CategorySections)
+{
+    var category = sectionItem.Key;
+    var products = sectionItem.Value;
+
+    <section class="dmx-section-card">
+        <div class="dmx-section-header flex-wrap gap-2">
+            <div>
+                <h3 class="dmx-section-title">@category.Name nổi bật</h3>
+                <div class="small text-muted mt-1">@category.Description</div>
+            </div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@category.Id" asp-route-priceRange="under-5m" class="btn btn-light border btn-sm d-none d-md-inline-block">Dưới 5 triệu</a>
+                <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@category.Id" asp-route-priceRange="5m-10m" class="btn btn-light border btn-sm d-none d-md-inline-block">5 - 10 triệu</a>
+                <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@category.Id" asp-route-priceRange="10m-15m" class="btn btn-light border btn-sm d-none d-md-inline-block">10 - 15 triệu</a>
+                <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@category.Id" class="btn btn-primary btn-sm fw-semibold">
+                    Xem tất cả @category.Name <i class="bi bi-chevron-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            @foreach (var product in products)
+            {
+                <div class="col-xl-3 col-lg-4 col-sm-6">
+                    <partial name="_ProductCard" model="product" />
+                </div>
+            }
+        </div>
+    </section>
+}

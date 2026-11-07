@@ -1,0 +1,367 @@
+@model List<WebsiteDienMay.Models.Coupon>
+@{
+    ViewData["Title"] = "Quản lý Mã giảm giá & Voucher";
+    var totalCoupons = Model.Count;
+    var activeCoupons = Model.Count(c => c.IsActive && c.EndDate >= DateTime.Now && c.UsedCount < c.UsageLimit);
+    var totalUsed = Model.Sum(c => c.UsedCount);
+}
+
+<!-- KPI Thẻ tổng quan Voucher -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Tổng số Voucher</div>
+                    <div class="adm-kpi-value text-primary">@totalCoupons mã</div>
+                    <div class="adm-kpi-sub">Đã khởi tạo trong hệ thống</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #eff6ff; color: #2563eb;">
+                    <i class="bi bi-ticket-perforated"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Mã đang hiệu lực</div>
+                    <div class="adm-kpi-value text-success">@activeCoupons mã</div>
+                    <div class="adm-kpi-sub">Khách có thể áp dụng ngay</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #ecfdf5; color: #059669;">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Lượt đã áp dụng</div>
+                    <div class="adm-kpi-value text-dark">@totalUsed lượt</div>
+                    <div class="adm-kpi-sub">Ghi nhận qua các đơn hàng</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #f1f5f9; color: #334155;">
+                    <i class="bi bi-cart-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Chính sách ưu đãi</div>
+                    <div class="adm-kpi-value text-warning" style="font-size: 20px;">Cố định & %</div>
+                    <div class="adm-kpi-sub">Hỗ trợ chặn đơn tối thiểu</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #fffbeb; color: #d97706;">
+                    <i class="bi bi-percent"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Cột trái: Form Thêm mới / Cập nhật Voucher -->
+    <div class="col-lg-4">
+        <div class="adm-card position-sticky" style="top: 90px;" id="couponFormCard">
+            <div class="adm-card-header">
+                <h6 class="adm-card-title" id="couponFormTitle">
+                    <i class="bi bi-plus-circle text-primary"></i>
+                    <span>Tạo mã ưu đãi mới</span>
+                </h6>
+                <span class="adm-badge adm-badge-info" id="couponModeBadge">Tạo mới</span>
+            </div>
+
+            <form asp-action="SaveCoupon" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="cpId" value="0" />
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Mã Voucher (Code) <span class="text-danger">*</span></label>
+                    <input type="text" name="code" id="cpCode" class="form-control fw-bold font-monospace text-uppercase" placeholder="VD: DMX500K, TET2026..." required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Mô tả chương trình ưu đãi <span class="text-danger">*</span></label>
+                    <input type="text" name="description" id="cpDesc" class="form-control" placeholder="VD: Giảm 500.000đ cho đơn từ 5 triệu..." required />
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="adm-form-label">Loại giảm giá</label>
+                        <select name="discountType" id="cpType" class="form-select">
+                            <option value="FixedAmount">Số tiền (VNĐ)</option>
+                            <option value="Percentage">Phần trăm (%)</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="adm-form-label">Mức giảm <span class="text-danger">*</span></label>
+                        <input type="number" name="discountValue" id="cpValue" min="1" step="1000" class="form-control fw-bold text-danger" placeholder="VD: 500000 hoặc 10" required />
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="adm-form-label">Đơn tối thiểu (VNĐ)</label>
+                        <input type="number" name="minOrderAmount" id="cpMin" min="0" step="10000" class="form-control" value="0" />
+                    </div>
+                    <div class="col-6">
+                        <label class="adm-form-label">Giảm tối đa (% đơn)</label>
+                        <input type="number" name="maxDiscountAmount" id="cpMax" min="0" step="10000" class="form-control" placeholder="Không giới hạn" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Giới hạn số lượt dùng</label>
+                    <input type="number" name="usageLimit" id="cpLimit" min="1" class="form-control" value="500" required />
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="adm-form-label">Ngày bắt đầu</label>
+                        <input type="date" name="startDate" id="cpStart" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="col-6">
+                        <label class="adm-form-label">Ngày kết thúc</label>
+                        <input type="date" name="endDate" id="cpEnd" class="form-control" value="@DateTime.Now.AddMonths(3).ToString("yyyy-MM-dd")" required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="isActive" id="cpActive" value="true" checked />
+                        <label class="form-check-label fw-semibold" for="cpActive">Kích hoạt mã áp dụng ngay</label>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 pt-2 border-top">
+                    <button type="submit" class="btn btn-primary fw-bold flex-grow-1">
+                        <i class="bi bi-save me-1"></i>Lưu Voucher
+                    </button>
+                    <button type="button" class="btn btn-light border" id="btnResetCoupon" title="Đặt lại form">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cột phải: Bảng Danh sách Voucher -->
+    <div class="col-lg-8">
+        <div class="adm-card mb-0">
+            <div class="adm-card-header">
+                <div>
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-tags-fill text-primary"></i>
+                        <span>Danh sách mã ưu đãi & Voucher</span>
+                    </h6>
+                    <div class="text-muted small mt-1">Quản lý chính sách khuyến mãi trực tiếp trên giỏ hàng</div>
+                </div>
+            </div>
+
+            <div class="adm-table-wrap">
+                <div class="table-responsive">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Mã & Mô tả</th>
+                                <th>Mức giảm</th>
+                                <th>Đơn tối thiểu</th>
+                                <th class="text-center">Đã dùng / Hạn mức</th>
+                                <th>Thời hạn</th>
+                                <th class="text-center">Trạng thái</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">Chưa có mã ưu đãi nào.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var cp in Model)
+                                {
+                                    var isExpired = cp.EndDate < DateTime.Now;
+                                    var isExhausted = cp.UsedCount >= cp.UsageLimit;
+                                    <tr>
+                                        <td>
+                                            <div class="fw-extrabold text-primary font-monospace fs-6">@cp.Code</div>
+                                            <div class="text-muted small" title="@cp.Description" style="max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                @cp.Description
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (cp.DiscountType == "Percentage")
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold fs-6">-@cp.DiscountValue%</span>
+                                                @if (cp.MaxDiscountAmount.HasValue && cp.MaxDiscountAmount > 0)
+                                                {
+                                                    <div class="text-muted" style="font-size: 11px;">Tối đa: @cp.MaxDiscountAmount.Value.ToString("N0") đ</div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-danger fw-extrabold fs-6">-@cp.DiscountValue.ToString("N0") đ</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (cp.MinOrderAmount > 0)
+                                            {
+                                                <span class="fw-semibold text-dark">@cp.MinOrderAmount.ToString("N0") đ</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Không giới hạn</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="fw-bold @(isExhausted ? "text-danger" : "text-primary")">@cp.UsedCount</span> / <span class="text-muted">@cp.UsageLimit</span>
+                                            <div class="progress mt-1" style="height: 4px;">
+                                                <div class="progress-bar @(isExhausted ? "bg-danger" : "bg-primary")" role="progressbar" style="width: @(Math.Min(100, Math.Round((double)cp.UsedCount / cp.UsageLimit * 100)))%"></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="small fw-semibold text-dark">@cp.EndDate.ToString("dd/MM/yyyy")</div>
+                                            <div class="text-muted" style="font-size: 11px;">Từ: @cp.StartDate.ToString("dd/MM/yyyy")</div>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (isExpired)
+                                            {
+                                                <span class="adm-badge adm-badge-secondary">Hết hạn</span>
+                                            }
+                                            else if (isExhausted)
+                                            {
+                                                <span class="adm-badge adm-badge-danger">Hết lượt</span>
+                                            }
+                                            else if (cp.IsActive)
+                                            {
+                                                <span class="adm-badge adm-badge-success"><span class="adm-badge-dot"></span>Đang chạy</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="adm-badge adm-badge-secondary">Tạm dừng</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-inline-flex gap-1">
+                                                <!-- Bật / Tắt trạng thái nhanh -->
+                                                <form asp-action="ToggleCouponStatus" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@cp.Id" />
+                                                    <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(cp.IsActive ? "Tạm dừng mã" : "Kích hoạt lại")">
+                                                        <i class="bi @(cp.IsActive ? "bi-pause-circle" : "bi-play-circle")"></i>
+                                                    </button>
+                                                </form>
+
+                                                <!-- Sửa điền form -->
+                                                <button type="button" class="btn btn-outline-primary btn-sm btn-edit-coupon"
+                                                        data-id="@cp.Id"
+                                                        data-code="@cp.Code"
+                                                        data-desc="@cp.Description"
+                                                        data-type="@cp.DiscountType"
+                                                        data-value="@cp.DiscountValue"
+                                                        data-min="@cp.MinOrderAmount"
+                                                        data-max="@(cp.MaxDiscountAmount ?? 0)"
+                                                        data-limit="@cp.UsageLimit"
+                                                        data-start="@cp.StartDate.ToString("yyyy-MM-dd")"
+                                                        data-end="@cp.EndDate.ToString("yyyy-MM-dd")"
+                                                        data-active="@(cp.IsActive ? "true" : "false")"
+                                                        title="Sửa Voucher">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+
+                                                <!-- Xóa -->
+                                                <form asp-action="DeleteCoupon" method="post" class="d-inline swal-confirm-form"
+                                                      data-swal-title="Xóa Voucher @cp.Code?"
+                                                      data-swal-text="Bạn có chắc chắn muốn xóa mã giảm giá này không?">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@cp.Id" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Xóa Voucher">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const formTitle = document.getElementById("couponFormTitle");
+            const modeBadge = document.getElementById("couponModeBadge");
+            const cpId = document.getElementById("cpId");
+            const cpCode = document.getElementById("cpCode");
+            const cpDesc = document.getElementById("cpDesc");
+            const cpType = document.getElementById("cpType");
+            const cpValue = document.getElementById("cpValue");
+            const cpMin = document.getElementById("cpMin");
+            const cpMax = document.getElementById("cpMax");
+            const cpLimit = document.getElementById("cpLimit");
+            const cpStart = document.getElementById("cpStart");
+            const cpEnd = document.getElementById("cpEnd");
+            const cpActive = document.getElementById("cpActive");
+            const btnReset = document.getElementById("btnResetCoupon");
+
+            document.querySelectorAll(".btn-edit-coupon").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    formTitle.querySelector("span").textContent = "Cập nhật mã ưu đãi";
+                    modeBadge.className = "adm-badge adm-badge-warning";
+                    modeBadge.textContent = "Chỉnh sửa";
+
+                    cpId.value = this.dataset.id;
+                    cpCode.value = this.dataset.code;
+                    cpDesc.value = this.dataset.desc;
+                    cpType.value = this.dataset.type;
+                    cpValue.value = this.dataset.value;
+                    cpMin.value = this.dataset.min;
+                    cpMax.value = this.dataset.max > 0 ? this.dataset.max : "";
+                    cpLimit.value = this.dataset.limit;
+                    cpStart.value = this.dataset.start;
+                    cpEnd.value = this.dataset.end;
+                    cpActive.checked = this.dataset.active === "true";
+
+                    document.getElementById("couponFormCard").scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    cpCode.focus();
+                });
+            });
+
+            btnReset.addEventListener("click", function () {
+                formTitle.querySelector("span").textContent = "Tạo mã ưu đãi mới";
+                modeBadge.className = "adm-badge adm-badge-info";
+                modeBadge.textContent = "Tạo mới";
+
+                cpId.value = "0";
+                cpCode.value = "";
+                cpDesc.value = "";
+                cpType.value = "FixedAmount";
+                cpValue.value = "";
+                cpMin.value = "0";
+                cpMax.value = "";
+                cpLimit.value = "500";
+                cpActive.checked = true;
+            });
+        });
+    </script>
+}
+

@@ -1,0 +1,438 @@
+@model WebsiteDienMay.Models.RevenueReportViewModel
+@{
+    Layout = null;
+    var sttCat = 1;
+    var sttProd = 1;
+    var sttDay = 1;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Báo cáo doanh thu @Model.ReportCode - Điện Máy Xanh</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #0f172a;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 24px 0;
+        }
+
+        .pdf-page {
+            background: #ffffff;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 16mm 18mm;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .pdf-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #0071e3;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .brand-logo-text {
+            background: #fed700;
+            color: #004899;
+            font-weight: 900;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 16px;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        .pdf-title {
+            text-align: center;
+            margin: 20px 0 24px 0;
+        }
+
+        .pdf-title h1 {
+            font-size: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #004899;
+            margin: 0 0 6px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .pdf-section-title {
+            font-size: 13.5px;
+            font-weight: 800;
+            color: #004899;
+            text-transform: uppercase;
+            border-left: 4px solid #0071e3;
+            padding-left: 8px;
+            margin: 18px 0 10px 0;
+        }
+
+        .pdf-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+
+        .pdf-table th, .pdf-table td {
+            border: 1px solid #cbd5e1;
+            padding: 6px 8px;
+            vertical-align: middle;
+            font-size: 12px;
+        }
+
+        .pdf-table th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            color: #0f172a;
+            text-align: center;
+        }
+
+        .pdf-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .pdf-kpi-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+
+        .pdf-kpi-label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .pdf-kpi-val {
+            font-size: 16px;
+            font-weight: 800;
+            color: #004899;
+        }
+
+        .pdf-signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 36px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .sig-block {
+            width: 30%;
+        }
+
+        .sig-title {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 12.5px;
+        }
+
+        .sig-sub {
+            font-size: 11px;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .sig-space {
+            height: 65px;
+        }
+
+        .no-print-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px 24px;
+            z-index: 10000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+        }
+
+        @@media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+            .no-print-bar {
+                display: none !important;
+            }
+            .pdf-page {
+                box-shadow: none;
+                padding: 8mm 10mm;
+                width: 100%;
+                min-height: auto;
+                margin: 0;
+            }
+            @@page {
+                size: A4 portrait;
+                margin: 6mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Thanh thao tác đầu trang -->
+    <div class="no-print-bar">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark font-monospace fw-bold">#@Model.ReportCode</span>
+            <span class="fw-semibold">Báo cáo Thống kê Doanh thu & Lợi nhuận Điện Máy Xanh</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" id="btnDownloadPdf" class="btn btn-danger btn-sm fw-bold px-3">
+                <i class="bi bi-file-earmark-arrow-down-fill me-1"></i>Tải file PDF ngay
+            </button>
+            <button type="button" onclick="window.print()" class="btn btn-primary btn-sm fw-bold px-3">
+                <i class="bi bi-printer-fill me-1"></i>In / Lưu PDF (Ctrl + P)
+            </button>
+            <button type="button" onclick="window.close()" class="btn btn-outline-light btn-sm px-3">
+                <i class="bi bi-x-lg me-1"></i>Đóng
+            </button>
+        </div>
+    </div>
+
+    <div style="height: 38px;" class="d-print-none"></div>
+
+    <!-- Vùng văn bản báo cáo A4 (sẽ được trích xuất thành file PDF) -->
+    <div class="pdf-page" id="reportContentToExport">
+        <!-- Header -->
+        <div class="pdf-header">
+            <div>
+                <div class="brand-logo-text">ĐIỆN MÁY XANH</div>
+                <div class="fw-bold text-dark" style="font-size: 13.5px;">HỆ THỐNG SIÊU THỊ ĐIỆN MÁY XANH</div>
+                <div class="text-muted" style="font-size: 11.5px;">Địa chỉ: 128 Trần Quang Khải, P. Tân Định, Quận 1, TP. Hồ Chí Minh</div>
+                <div class="text-muted" style="font-size: 11.5px;">Tổng đài hỗ trợ: 1800 1061 | Website: https://www.dienmayxanh.com</div>
+            </div>
+            <div class="text-end">
+                <div class="fw-bold text-dark" style="font-size: 12.5px;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                <div class="small text-muted fst-italic">Độc lập - Tự do - Hạnh phúc</div>
+                <div class="mt-2 text-muted" style="font-size: 11px;">Mã số báo cáo: <strong class="font-monospace text-primary">#@Model.ReportCode</strong></div>
+                <div class="text-muted" style="font-size: 11px;">Ngày lập: @Model.ExportedAt.ToString("dd/MM/yyyy HH:mm")</div>
+            </div>
+        </div>
+
+        <!-- Title -->
+        <div class="pdf-title">
+            <h1>BÁO CÁO THỐNG KÊ DOANH THU & HIỆU QUẢ KINH DOANH</h1>
+            <div class="text-muted small">
+                Kỳ thống kê: Từ ngày <strong>@Model.FromDate.ToString("dd/MM/yyyy")</strong> đến ngày <strong>@Model.ToDate.ToString("dd/MM/yyyy")</strong>
+            </div>
+        </div>
+
+        <!-- 1. Tổng hợp chỉ tiêu chính -->
+        <div class="pdf-section-title">1. TỔNG HỢP CÁC CHỈ TIÊU KINH DOANH CHÍNH</div>
+        <div class="pdf-kpi-grid">
+            <div class="pdf-kpi-box">
+                <div class="pdf-kpi-label">Doanh thu thuần thực tế</div>
+                <div class="pdf-kpi-val text-primary">@Model.NetRevenue.ToString("N0") đ</div>
+                <div class="text-muted" style="font-size: 10.5px;">Doanh thu gộp: @Model.GrossRevenue.ToString("N0") đ</div>
+            </div>
+            <div class="pdf-kpi-box">
+                <div class="pdf-kpi-label">Lợi nhuận gộp ước tính</div>
+                <div class="pdf-kpi-val text-success">@Model.EstimatedGrossProfit.ToString("N0") đ</div>
+                <div class="text-muted" style="font-size: 10.5px;">Tỷ suất LN: <strong class="text-success">@Model.ProfitMarginPercent%</strong></div>
+            </div>
+            <div class="pdf-kpi-box">
+                <div class="pdf-kpi-label">Ưu đãi giảm giá (Voucher)</div>
+                <div class="pdf-kpi-val text-danger">-@Model.TotalDiscount.ToString("N0") đ</div>
+                <div class="text-muted" style="font-size: 10.5px;">Khuyến mãi trợ giá cho khách</div>
+            </div>
+            <div class="pdf-kpi-box">
+                <div class="pdf-kpi-label">Tổng số đơn hàng</div>
+                <div class="pdf-kpi-val text-dark">@Model.TotalOrders đơn</div>
+                <div class="text-muted" style="font-size: 10.5px;">Ghi nhận thành công</div>
+            </div>
+            <div class="pdf-kpi-box">
+                <div class="pdf-kpi-label">Số lượng thiết bị bán</div>
+                <div class="pdf-kpi-val text-warning">@Model.TotalSoldProducts sản phẩm</div>
+                <div class="text-muted" style="font-size: 10.5px;">Đã xuất kho giao cho khách</div>
+            </div>
+            <div class="pdf-kpi-box">
+                <div class="pdf-kpi-label">Giá trị trung bình đơn (AOV)</div>
+                <div class="pdf-kpi-val text-info">@Model.AverageOrderValue.ToString("N0") đ</div>
+                <div class="text-muted" style="font-size: 10.5px;">Quy mô giỏ hàng bình quân</div>
+            </div>
+        </div>
+
+        <!-- 2. Cơ cấu doanh thu theo ngành hàng -->
+        <div class="pdf-section-title">2. CƠ CẤU DOANH THU THEO DANH MỤC NGÀNH HÀNG</div>
+        <table class="pdf-table">
+            <thead>
+                <tr>
+                    <th style="width: 6%;">STT</th>
+                    <th style="text-align: left;">Danh mục ngành hàng điện máy</th>
+                    <th style="width: 18%; text-align: center;">Số lượng bán</th>
+                    <th style="width: 25%; text-align: right;">Doanh thu thu về</th>
+                    <th style="width: 15%; text-align: center;">Tỷ trọng (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.CategoryRevenues.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-2 text-muted">Không có dữ liệu trong khoảng thời gian này.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var c in Model.CategoryRevenues)
+                    {
+                        <tr>
+                            <td class="text-center font-monospace">@(sttCat++)</td>
+                            <td class="fw-bold text-dark">@c.CategoryName</td>
+                            <td class="text-center">@c.TotalQuantity</td>
+                            <td class="text-end font-monospace fw-bold">@c.TotalRevenue.ToString("N0") đ</td>
+                            <td class="text-center fw-bold text-primary">@c.Percentage%</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <!-- 3. Top thiết bị điện máy bán chạy nhất -->
+        <div class="pdf-section-title">3. TOP THIẾT BỊ ĐIỆN MÁY ĐÓNG GÓP DOANH THU LỚN NHẤT</div>
+        <table class="pdf-table">
+            <thead>
+                <tr>
+                    <th style="width: 6%;">STT</th>
+                    <th style="width: 15%;">Mã SKU</th>
+                    <th style="text-align: left;">Tên sản phẩm thiết bị điện máy</th>
+                    <th style="width: 16%; text-align: right;">Đơn vị giá</th>
+                    <th style="width: 10%; text-align: center;">SL bán</th>
+                    <th style="width: 22%; text-align: right;">Tổng doanh thu</th>
+                    <th style="width: 11%; text-align: center;">Tỷ trọng</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.TopProducts.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-2 text-muted">Không có dữ liệu trong khoảng thời gian này.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var p in Model.TopProducts)
+                    {
+                        <tr>
+                            <td class="text-center font-monospace">@(sttProd++)</td>
+                            <td class="text-center font-monospace small">@p.ProductCode</td>
+                            <td class="fw-semibold text-dark">@p.ProductName</td>
+                            <td class="text-end font-monospace">@p.UnitPrice.ToString("N0") đ</td>
+                            <td class="text-center fw-bold">@p.QuantitySold</td>
+                            <td class="text-end font-monospace fw-bold text-primary">@p.TotalRevenue.ToString("N0") đ</td>
+                            <td class="text-center fw-bold">@p.RevenuePercentage%</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <!-- 4. Diễn biến doanh thu theo từng ngày -->
+        @if (Model.DailyRevenues.Any())
+        {
+            <div class="pdf-section-title">4. CHI TIẾT BIẾN ĐỘNG DOANH THU THEO TỪNG NGÀY</div>
+            <table class="pdf-table">
+                <thead>
+                    <tr>
+                        <th style="width: 6%;">STT</th>
+                        <th style="width: 18%;">Ngày ghi nhận</th>
+                        <th style="width: 12%; text-align: center;">Số đơn</th>
+                        <th style="width: 12%; text-align: center;">SL bán</th>
+                        <th style="width: 26%; text-align: right;">Doanh thu thuần (VNĐ)</th>
+                        <th style="width: 26%; text-align: right;">Lợi nhuận gộp ước tính</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in Model.DailyRevenues.OrderBy(x => x.Date))
+                    {
+                        <tr>
+                            <td class="text-center font-monospace">@(sttDay++)</td>
+                            <td class="text-center fw-semibold">@d.FullDateString</td>
+                            <td class="text-center">@d.OrdersCount</td>
+                            <td class="text-center">@d.ProductsCount</td>
+                            <td class="text-end font-monospace fw-bold text-primary">@d.NetRevenue.ToString("N0")</td>
+                            <td class="text-end font-monospace fw-bold text-success">@d.EstimatedProfit.ToString("N0")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        <!-- Phần Ký xác nhận 3 bên -->
+        <div class="pdf-signatures">
+            <div class="sig-block">
+                <div class="sig-title">NGƯỜI LẬP BÁO CÁO</div>
+                <div class="sig-sub">(Ký, ghi rõ họ tên)</div>
+                <div class="sig-space"></div>
+                <div class="fw-bold text-dark">@Model.ExportedBy</div>
+            </div>
+
+            <div class="sig-block">
+                <div class="sig-title">KẾ TOÁN TRƯỞNG</div>
+                <div class="sig-sub">(Ký, ghi rõ họ tên)</div>
+                <div class="sig-space"></div>
+                <div class="text-muted">...................................</div>
+            </div>
+
+            <div class="sig-block">
+                <div class="sig-title">BAN GIÁM ĐỐC</div>
+                <div class="sig-sub">(Ký, đóng dấu)</div>
+                <div class="sig-space"></div>
+                <div class="fw-bold text-dark">Quản trị viên hệ thống</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thư viện html2pdf.js để xuất file PDF trực tiếp 1-click -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        document.getElementById("btnDownloadPdf").addEventListener("click", function () {
+            const element = document.getElementById("reportContentToExport");
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Đang tạo file PDF...';
+            btn.disabled = true;
+
+            const opt = {
+                margin:       [8, 8, 8, 8],
+                filename:     'Bao_Cao_Doanh_Thu_DienMayXanh_@(Model.FromDate.ToString("yyyyMMdd"))_@(Model.ToDate.ToString("yyyyMMdd")).pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(function () {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(function (err) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                window.print();
+            });
+        });
+    </script>
+</body>
+</html>
+

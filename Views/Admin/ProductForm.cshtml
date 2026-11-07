@@ -1,0 +1,265 @@
+@model WebsiteDienMay.Models.Product
+@{
+    var isEdit = Model.Id > 0;
+    ViewData["Title"] = isEdit ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới";
+    var categories = ViewBag.Categories as List<WebsiteDienMay.Models.Category> ?? new List<WebsiteDienMay.Models.Category>();
+    var brands = ViewBag.Brands as List<WebsiteDienMay.Models.Brand> ?? new List<WebsiteDienMay.Models.Brand>();
+}
+
+<form asp-action="@(isEdit ? "EditProduct" : "CreateProduct")" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <!-- Thanh tiêu đề & Nút lưu nhanh -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <a asp-action="Products" class="text-muted small text-decoration-none fw-semibold">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách sản phẩm
+            </a>
+            <h4 class="fw-extrabold m-0 mt-1 text-dark">
+                @(isEdit ? $"Cập nhật: {Model.Name}" : "Thêm thiết bị điện tử mới")
+            </h4>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Products" class="btn btn-white bg-white border fw-semibold px-3">Hủy bỏ</a>
+            <button type="submit" class="btn btn-primary fw-bold px-4">
+                <i class="bi bi-check2-circle me-1"></i>@(isEdit ? "Lưu thay đổi" : "Tạo sản phẩm")
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Cột trái: Thông tin chi tiết & Hình ảnh -->
+        <div class="col-lg-8">
+            <div class="adm-card">
+                <div class="adm-card-header">
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-info-circle-fill text-primary"></i>
+                        <span>Thông tin chung sản phẩm</span>
+                    </h6>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label asp-for="Name" class="adm-form-label">Tên sản phẩm thương mại <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control" placeholder="VD: Smart Tivi Samsung QLED 4K 65 inch QA65Q70D" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Code" class="adm-form-label">Mã định danh (SKU) <span class="text-danger">*</span></label>
+                        <input asp-for="Code" class="form-control font-monospace" placeholder="VD: DMX-TV01" required />
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="ShortDescription" class="adm-form-label">Mô tả ngắn / Điểm nổi bật</label>
+                        <input asp-for="ShortDescription" class="form-control" placeholder="Tóm tắt các công nghệ nổi bật hiển thị trên thẻ sản phẩm..." />
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="PromotionText" class="adm-form-label">Chương trình khuyến mãi đi kèm (Phân tách bằng dấu ;)</label>
+                        <input asp-for="PromotionText" class="form-control" placeholder="VD: Miễn phí công lắp đặt; Đổi mới trong 30 ngày đầu; Hỗ trợ trả góp 0%" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="adm-card">
+                <div class="adm-card-header">
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-images text-primary"></i>
+                        <span>Hình ảnh sản phẩm (Nguồn dienmayxanh.com)</span>
+                    </h6>
+                </div>
+
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="border rounded-3 p-2 bg-light d-flex align-items-center justify-content-center" style="height: 135px;">
+                            <img id="liveImgPreview" src="@Model.ImageUrl" alt="Preview" style="max-width: 100%; max-height: 118px; object-fit: contain;" />
+                        </div>
+                        <div class="text-muted mt-1" style="font-size: 11px;">Xem trước ảnh đại diện</div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="mb-3">
+                            <label asp-for="ImageUrl" class="adm-form-label">URL Hình ảnh đại diện chính <span class="text-danger">*</span></label>
+                            <input asp-for="ImageUrl" id="imageUrlInput" class="form-control" placeholder="https://cdn.tgdd.vn/..." required />
+                        </div>
+                        <div>
+                            <label asp-for="ExtraImages" class="adm-form-label">URL Bộ sưu tập ảnh phụ (Cách nhau bởi dấu ;)</label>
+                            <input asp-for="ExtraImages" class="form-control" placeholder="https://cdn.tgdd.vn/anh1.jpg;https://cdn.tgdd.vn/anh2.jpg" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="adm-card mb-0">
+                <div class="adm-card-header">
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-file-earmark-richtext-fill text-primary"></i>
+                        <span>Thông số kỹ thuật & Bài viết đánh giá</span>
+                    </h6>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Specifications" class="adm-form-label">Bảng thông số kỹ thuật (Mỗi dòng: Tên thông số: Giá trị)</label>
+                        <textarea asp-for="Specifications" rows="7" class="form-control" placeholder="Kích cỡ màn hình: 65 inch&#10;Độ phân giải: 4K Ultra HD&#10;Hệ điều hành: Google TV"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Description" class="adm-form-label">Bài viết mô tả chi tiết sản phẩm</label>
+                        <textarea asp-for="Description" rows="7" class="form-control" placeholder="Nhập nội dung giới thiệu chi tiết thiết kế, công nghệ và tính năng..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Phân loại, Giá bán & Trạng thái hiển thị -->
+        <div class="col-lg-4">
+            <div class="adm-card">
+                <div class="adm-card-header">
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-tags-fill text-primary"></i>
+                        <span>Phân loại & Bảo hành</span>
+                    </h6>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryId" class="adm-form-label">Danh mục ngành hàng <span class="text-danger">*</span></label>
+                    <select asp-for="CategoryId" class="form-select">
+                        @foreach (var c in categories)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="BrandId" class="adm-form-label">Thương hiệu sản xuất <span class="text-danger">*</span></label>
+                    <select asp-for="BrandId" class="form-select">
+                        @foreach (var b in brands)
+                        {
+                            <option value="@b.Id">@b.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label asp-for="WarrantyMonths" class="adm-form-label">Thời gian bảo hành chính hãng (Tháng)</label>
+                    <input asp-for="WarrantyMonths" type="number" min="0" class="form-control" />
+                </div>
+            </div>
+
+            <div class="adm-card">
+                <div class="adm-card-header">
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-currency-exchange text-primary"></i>
+                        <span>Chính sách giá & Tồn kho</span>
+                    </h6>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="OriginalPrice" class="adm-form-label">Giá niêm yết gốc (VNĐ) <span class="text-danger">*</span></label>
+                    <input asp-for="OriginalPrice" id="origPriceInput" type="number" step="1000" class="form-control" required />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Price" class="adm-form-label">Giá bán khuyến mãi (VNĐ) <span class="text-danger">*</span></label>
+                    <input asp-for="Price" id="salePriceInput" type="number" step="1000" class="form-control fw-bold text-danger" required />
+                </div>
+
+                <div class="p-2 px-3 rounded-3 bg-primary-subtle border border-primary-subtle small mb-3 d-flex justify-content-between align-items-center">
+                    <span class="text-primary fw-semibold">Mức ưu đãi dự kiến:</span>
+                    <span id="discountPreviewBadge" class="fw-bold text-danger">0%</span>
+                </div>
+
+                <div>
+                    <label class="adm-form-label d-flex align-items-center justify-content-between">
+                        <span>Số lượng tồn kho (Chỉ đọc)</span>
+                        <span class="badge bg-secondary-subtle text-secondary border"><i class="bi bi-lock-fill me-1"></i>Khóa sửa tay</span>
+                    </label>
+                    <div class="p-3 rounded-3 bg-light border">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="fw-extrabold fs-5 @(Model.StockQuantity <= 0 ? "text-danger" : "text-primary")">
+                                    @(isEdit ? Model.StockQuantity : 0) sản phẩm
+                                </div>
+                                <div class="text-muted" style="font-size: 11.5px;">
+                                    @(isEdit ? $"Đã xuất bán: {Model.SoldCount} sản phẩm" : "Mặc định bằng 0 khi tạo sản phẩm mới")
+                                </div>
+                            </div>
+                            @if (isEdit)
+                            {
+                                <a asp-action="Warehouse" asp-route-productId="@Model.Id" class="btn btn-outline-primary btn-sm fw-semibold">
+                                    <i class="bi bi-box-arrow-in-down me-1"></i>Nhập kho
+                                </a>
+                            }
+                        </div>
+                        <div class="text-muted mt-2 pt-2 border-top" style="font-size: 11.5px;">
+                            <i class="bi bi-info-circle me-1"></i>Tồn kho không cho phép sửa tay, chỉ tăng khi lập <strong>Phiếu nhập kho</strong> và giảm khi khách mua hàng.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="adm-card mb-0">
+                <div class="adm-card-header">
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-sliders text-primary"></i>
+                        <span>Cấu hình hiển thị</span>
+                    </h6>
+                </div>
+
+                <div class="d-flex flex-column gap-3">
+                    <div class="form-check form-switch">
+                        <input asp-for="IsActive" class="form-check-input" role="switch" />
+                        <label asp-for="IsActive" class="form-check-label fw-semibold">Mở bán công khai trên website</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input asp-for="IsFlashSale" class="form-check-input" role="switch" />
+                        <label asp-for="IsFlashSale" class="form-check-label fw-semibold">Đưa vào khung Flash Sale Giờ vàng</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input asp-for="IsFeatured" class="form-check-input" role="switch" />
+                        <label asp-for="IsFeatured" class="form-check-label fw-semibold">Sản phẩm nổi bật tại Trang chủ</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input asp-for="IsInstallment0Percent" class="form-check-input" role="switch" />
+                        <label asp-for="IsInstallment0Percent" class="form-check-label fw-semibold">Gắn nhãn hỗ trợ Trả góp 0%</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const imgInput = document.getElementById("imageUrlInput");
+            const imgPreview = document.getElementById("liveImgPreview");
+            const origInput = document.getElementById("origPriceInput");
+            const saleInput = document.getElementById("salePriceInput");
+            const discountBadge = document.getElementById("discountPreviewBadge");
+
+            if (imgInput && imgPreview) {
+                imgInput.addEventListener("input", function () {
+                    const url = this.value.trim();
+                    if (url) imgPreview.src = url;
+                });
+            }
+
+            function calcDiscount() {
+                const orig = parseFloat(origInput.value) || 0;
+                const sale = parseFloat(saleInput.value) || 0;
+                if (orig > sale && orig > 0) {
+                    const pct = Math.round(((orig - sale) / orig) * 100);
+                    const diff = (orig - sale).toLocaleString("vi-VN");
+                    discountBadge.textContent = `Giảm ${pct}% (-${diff} đ)`;
+                } else {
+                    discountBadge.textContent = "Không giảm giá";
+                }
+            }
+
+            if (origInput && saleInput) {
+                origInput.addEventListener("input", calcDiscount);
+                saleInput.addEventListener("input", calcDiscount);
+                calcDiscount();
+            }
+        });
+    </script>
+}

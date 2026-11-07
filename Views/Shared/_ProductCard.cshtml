@@ -1,0 +1,99 @@
+@model WebsiteDienMay.Models.Product
+
+<div class="dmx-product-card">
+    <div class="dmx-card-badges">
+        @if (Model.IsInstallment0Percent)
+        {
+            <span class="dmx-badge-installment">Trả góp 0%</span>
+        }
+        else
+        {
+            <span></span>
+        }
+        @if (Model.IsFlashSale)
+        {
+            <span class="dmx-badge-flash"><i class="bi bi-lightning-charge-fill"></i> Giá sốc</span>
+        }
+        else if (Model.DiscountPercent >= 20)
+        {
+            <span class="dmx-badge-flash">Giảm sâu</span>
+        }
+    </div>
+
+    <a asp-controller="Product" asp-action="Detail" asp-route-id="@Model.Id" class="dmx-card-img-wrap">
+        <img src="@Model.ImageUrl" alt="@Model.Name" loading="lazy" />
+    </a>
+
+    <div class="dmx-card-tags">
+        @if (Model.Brand != null)
+        {
+            <span class="dmx-card-tag">@Model.Brand.Name</span>
+        }
+        <span class="dmx-card-tag">BH @Model.WarrantyMonths tháng</span>
+    </div>
+
+    <a asp-controller="Product" asp-action="Detail" asp-route-id="@Model.Id" class="dmx-card-title" title="@Model.Name">
+        @Model.Name
+    </a>
+
+    <div class="dmx-card-price-row">
+        <span class="dmx-price-current">@Model.Price.ToString("N0") đ</span>
+        <div class="dmx-price-old-wrap">
+            @if (Model.OriginalPrice > Model.Price)
+            {
+                <span class="dmx-price-old">@Model.OriginalPrice.ToString("N0") đ</span>
+                <span class="dmx-price-discount">-@Model.DiscountPercent%</span>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ShortDescription))
+    {
+        <div class="dmx-card-promo">
+            <i class="bi bi-gift-fill text-primary me-1"></i><span>@Model.ShortDescription</span>
+        </div>
+    }
+
+    <div class="dmx-card-rating">
+        <span>
+            <i class="bi bi-star-fill text-warning"></i>
+            <strong class="text-dark">@Model.RatingAverage.ToString("0.0")</strong>
+            <span class="text-muted">(@Model.RatingCount)</span>
+        </span>
+        <span class="dmx-sold-pill">Đã bán @Model.SoldCount</span>
+    </div>
+
+    <div class="dmx-card-actions">
+        @if (Model.StockQuantity > 0)
+        {
+            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="m-0">
+                <input type="hidden" name="productId" value="@Model.Id" />
+                <input type="hidden" name="quantity" value="1" />
+                <input type="hidden" name="buyNow" value="false" />
+                <button type="submit" class="btn btn-outline-primary btn-sm w-100 h-100 d-flex align-items-center justify-content-center" title="Thêm vào giỏ hàng">
+                    <i class="bi bi-cart-plus fs-6"></i>
+                </button>
+            </form>
+            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="m-0">
+                <input type="hidden" name="productId" value="@Model.Id" />
+                <input type="hidden" name="quantity" value="1" />
+                <input type="hidden" name="buyNow" value="true" />
+                <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-bold">
+                    Mua ngay
+                </button>
+            </form>
+        }
+        else
+        {
+            <button type="button" class="btn btn-secondary btn-sm w-100 py-2 fw-semibold" style="grid-column: 1 / -1;" disabled>
+                Tạm hết hàng
+            </button>
+        }
+    </div>
+
+    <div class="mt-2 pt-2 border-top text-center">
+        <button type="button" class="btn btn-link btn-sm text-secondary text-decoration-none p-0 small btn-card-compare" data-id="@Model.Id" style="font-size: 12px;">
+            <i class="bi bi-arrow-left-right text-primary me-1"></i>So sánh thông số
+        </button>
+    </div>
+</div>

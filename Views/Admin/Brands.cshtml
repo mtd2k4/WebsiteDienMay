@@ -1,0 +1,207 @@
+@model List<WebsiteDienMay.Models.Brand>
+@{
+    ViewData["Title"] = "Quản lý Thương hiệu hãng";
+}
+
+<div class="row g-4">
+    <!-- Cột trái: Form Thêm mới / Cập nhật Thương hiệu -->
+    <div class="col-lg-4">
+        <div class="adm-card position-sticky" style="top: 90px;">
+            <div class="adm-card-header">
+                <h6 class="adm-card-title" id="brandFormTitle">
+                    <i class="bi bi-tag-fill text-primary"></i>
+                    <span>Thêm thương hiệu mới</span>
+                </h6>
+                <span class="adm-badge adm-badge-info" id="brandModeBadge">Tạo mới</span>
+            </div>
+
+            <form asp-action="SaveBrand" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="brandId" value="0" />
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Tên thương hiệu / Hãng <span class="text-danger">*</span></label>
+                    <input type="text" name="name" id="brandName" class="form-control" placeholder="VD: Samsung, Sony, LG, Panasonic..." required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Đường dẫn tĩnh (Slug)</label>
+                    <input type="text" name="slug" id="brandSlug" class="form-control font-monospace" placeholder="VD: samsung, lg, sony" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Quốc gia xuất xứ / Xuất xứ</label>
+                    <input type="text" name="origin" id="brandOrigin" class="form-control" placeholder="VD: Hàn Quốc, Nhật Bản, Việt Nam..." value="Chính hãng" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Logo thương hiệu (URL)</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <img id="brandLogoPreview" src="https://cdnv2.tgdd.vn/pim/cdn/images/202610/Tivi110032.png" alt="Logo" class="adm-thumb" style="width: 44px; height: 44px; object-fit: contain; background: #fff; padding: 4px;" />
+                        <input type="text" name="logoUrl" id="brandLogo" class="form-control" placeholder="https://cdn.tgdd.vn/..." />
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 pt-2 border-top">
+                    <button type="submit" class="btn btn-primary fw-bold flex-grow-1">
+                        <i class="bi bi-save me-1"></i>Lưu thương hiệu
+                    </button>
+                    <button type="button" class="btn btn-light border" id="btnResetBrand" title="Đặt lại form">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cột phải: Bảng Danh sách Thương hiệu -->
+    <div class="col-lg-8">
+        <div class="adm-card mb-0">
+            <div class="adm-card-header">
+                <div>
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-award text-primary"></i>
+                        <span>Danh sách thương hiệu đối tác (@Model.Count hãng)</span>
+                    </h6>
+                    <div class="text-muted small mt-1">Các hãng điện máy và thiết bị điện tử đang phân phối</div>
+                </div>
+            </div>
+
+            <div class="adm-table-wrap">
+                <div class="table-responsive">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Logo & Thương hiệu</th>
+                                <th>Đường dẫn Slug</th>
+                                <th>Xuất xứ</th>
+                                <th class="text-center">Số sản phẩm</th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Chưa có thương hiệu nào.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var b in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-3">
+                                                @if (!string.IsNullOrWhiteSpace(b.LogoUrl))
+                                                {
+                                                    <img src="@b.LogoUrl" alt="@b.Name" class="adm-thumb" style="width: 40px; height: 40px; object-fit: contain; background: #fff; padding: 2px;" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="adm-thumb d-flex align-items-center justify-content-center bg-light text-primary fw-bold">
+                                                        @b.Name.Substring(0, Math.Min(2, b.Name.Length)).ToUpper()
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <div class="fw-bold text-dark">@b.Name</div>
+                                                    <div class="text-muted small">ID: #@b.Id</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge bg-light text-secondary border font-monospace">@b.Slug</span></td>
+                                        <td><span class="badge bg-info-subtle text-info border border-info-subtle fw-semibold">@b.Origin</span></td>
+                                        <td class="text-center fw-bold text-primary">@b.Products.Count</td>
+                                        <td class="text-end">
+                                            <div class="d-inline-flex gap-1">
+                                                <button type="button" class="btn btn-outline-primary btn-sm btn-edit-brand"
+                                                        data-id="@b.Id"
+                                                        data-name="@b.Name"
+                                                        data-slug="@b.Slug"
+                                                        data-logo="@b.LogoUrl"
+                                                        data-origin="@b.Origin"
+                                                        title="Sửa thương hiệu">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+
+                                                @if (!b.Products.Any())
+                                                {
+                                                    <form asp-action="DeleteBrand" method="post" class="d-inline swal-confirm-form"
+                                                          data-swal-title="Xóa thương hiệu @b.Name?"
+                                                          data-swal-text="Bạn có chắc chắn muốn xóa hãng này khỏi hệ thống không?">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@b.Id" />
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Xóa thương hiệu">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="btn btn-light btn-sm text-muted" title="Không thể xóa vì đang có sản phẩm thuộc hãng này" disabled>
+                                                        <i class="bi bi-lock-fill"></i>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const formTitle = document.getElementById("brandFormTitle");
+            const modeBadge = document.getElementById("brandModeBadge");
+            const brandId = document.getElementById("brandId");
+            const brandName = document.getElementById("brandName");
+            const brandSlug = document.getElementById("brandSlug");
+            const brandOrigin = document.getElementById("brandOrigin");
+            const brandLogo = document.getElementById("brandLogo");
+            const logoPreview = document.getElementById("brandLogoPreview");
+            const btnReset = document.getElementById("btnResetBrand");
+
+            brandLogo.addEventListener("input", function () {
+                logoPreview.src = this.value || "https://cdnv2.tgdd.vn/pim/cdn/images/202610/Tivi110032.png";
+            });
+
+            document.querySelectorAll(".btn-edit-brand").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    formTitle.querySelector("span").textContent = "Cập nhật thương hiệu";
+                    modeBadge.className = "adm-badge adm-badge-warning";
+                    modeBadge.textContent = "Chỉnh sửa";
+
+                    brandId.value = this.dataset.id;
+                    brandName.value = this.dataset.name;
+                    brandSlug.value = this.dataset.slug;
+                    brandOrigin.value = this.dataset.origin;
+                    brandLogo.value = this.dataset.logo;
+                    logoPreview.src = this.dataset.logo || "https://cdnv2.tgdd.vn/pim/cdn/images/202610/Tivi110032.png";
+
+                    brandName.focus();
+                });
+            });
+
+            btnReset.addEventListener("click", function () {
+                formTitle.querySelector("span").textContent = "Thêm thương hiệu mới";
+                modeBadge.className = "adm-badge adm-badge-info";
+                modeBadge.textContent = "Tạo mới";
+
+                brandId.value = "0";
+                brandName.value = "";
+                brandSlug.value = "";
+                brandOrigin.value = "Chính hãng";
+                brandLogo.value = "";
+                logoPreview.src = "https://cdnv2.tgdd.vn/pim/cdn/images/202610/Tivi110032.png";
+            });
+        });
+    </script>
+}
+

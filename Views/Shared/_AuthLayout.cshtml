@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Cổng Tài Khoản Điện Máy Xanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #003572 0%, #0d5bb5 50%, #1c73d8 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .auth-header {
+            padding: 16px 0;
+            background: rgba(0, 24, 56, 0.35);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        .auth-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffd400;
+            color: #004899;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 900;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        .auth-logo:hover {
+            background: #ffe033;
+            color: #003572;
+        }
+
+        .auth-logo-sub {
+            background: #004899;
+            color: #ffd400;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .auth-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 16px;
+        }
+
+        .auth-card-wrapper {
+            width: 100%;
+            max-width: 980px;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            display: grid;
+            grid-template-columns: 5fr 7fr;
+        }
+
+        .auth-left-panel {
+            background: linear-gradient(180deg, #004899 0%, #002b5e 100%);
+            color: #ffffff;
+            padding: 36px 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .auth-banner-img {
+            width: 100%;
+            border-radius: 10px;
+            margin: 18px 0;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        }
+
+        .auth-benefit-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 13px;
+        }
+
+        .auth-benefit-list li {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            color: #e0f2fe;
+        }
+
+        .auth-right-panel {
+            padding: 36px 40px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .auth-footer {
+            text-align: center;
+            padding: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12.5px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        @@media (max-width: 767.98px) {
+            .auth-card-wrapper {
+                grid-template-columns: 1fr;
+            }
+            .auth-left-panel {
+                display: none;
+            }
+            .auth-right-panel {
+                padding: 28px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="auth-header">
+        <div class="container d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <a asp-controller="Home" asp-action="Index" class="auth-logo">
+                    <span>ĐIỆN MÁY XANH</span>
+                    <span class="auth-logo-sub">.COM</span>
+                </a>
+                <span class="text-white fw-semibold d-none d-sm-inline border-start ps-3 border-light border-opacity-25">
+                    Cổng Xác Thực Tài Khoản Thành Viên & Quản Trị
+                </span>
+            </div>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light btn-sm fw-semibold">
+                <i class="bi bi-arrow-left me-1"></i>Quay về Trang chủ mua sắm
+            </a>
+        </div>
+    </header>
+
+    <main class="auth-container">
+        <div class="auth-card-wrapper">
+            <!-- Cột trái: Thông tin hệ thống & Hình ảnh từ dienmayxanh.com -->
+            <div class="auth-left-panel">
+                <div>
+                    <span class="badge bg-warning text-dark fw-bold mb-2">HỆ THỐNG THƯƠNG MẠI ĐIỆN TỬ</span>
+                    <h4 class="fw-black mb-2">Siêu thị Điện Máy Xanh</h4>
+                    <p class="small text-white-50 mb-0">
+                        Mua sắm Tivi, Tủ lạnh, Máy giặt, Máy lạnh, Điện thoại, Laptop chính hãng với dịch vụ giao lắp tận nơi.
+                    </p>
+
+                    <img src="https://cdnv2.tgdd.vn/mwg-static/common/Banner/5c/e5/5ce5c8d856c99ef01528033c294d6389.png"
+                         alt="Khuyến mãi Điện Máy Xanh"
+                         class="auth-banner-img" />
+
+                    <ul class="auth-benefit-list">
+                        <li>
+                            <i class="bi bi-check-circle-fill text-warning mt-1"></i>
+                            <span>Tra cứu lịch sử đơn hàng và thời hạn bảo hành điện tử nhanh chóng.</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle-fill text-warning mt-1"></i>
+                            <span>Nhận mã giảm giá đặc quyền dành riêng cho khách hàng thành viên.</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle-fill text-warning mt-1"></i>
+                            <span>Hỗ trợ trả góp 0% lãi suất và miễn phí công lắp đặt tiêu chuẩn.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="p-3 rounded-3 mt-3" style="background: rgba(255,255,255,0.08); font-size: 12px;">
+                    <div class="fw-bold text-warning">TỔNG ĐÀI HỖ TRỢ MIỄN PHÍ</div>
+                    <div>Gọi mua hàng: <strong>1900 232 461</strong> (8:00 - 21:30)</div>
+                    <div>Bảo hành kỹ thuật: <strong>1900 232 465</strong> (8:00 - 21:00)</div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Nội dung Form Đăng nhập / Đăng ký -->
+            <div class="auth-right-panel">
+                @RenderBody()
+            </div>
+        </div>
+    </main>
+
+    <footer class="auth-footer">
+        Hệ thống Siêu thị Điện Máy Xanh - Chuyên phân phối thiết bị điện tử, điện lạnh và gia dụng chính hãng
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            window.dmxNotification = { type: "success", message: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["SuccessMessage"])) };
+        </script>
+    }
+    else if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            window.dmxNotification = { type: "error", message: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ErrorMessage"])) };
+        </script>
+    }
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

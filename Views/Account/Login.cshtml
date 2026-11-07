@@ -1,0 +1,71 @@
+@model WebsiteDienMay.Models.LoginViewModel
+@{
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+    ViewData["Title"] = "Đăng nhập hệ thống";
+}
+
+<div>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="fw-black text-primary mb-1">Đăng nhập tài khoản</h4>
+            <div class="small text-muted">Nhập thông tin tài khoản khách hàng hoặc quản trị viên</div>
+        </div>
+        <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-outline-primary btn-sm fw-semibold">Đăng ký mới</a>
+    </div>
+
+    <form asp-action="Login" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ReturnUrl" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Tên đăng nhập / Email / Số điện thoại</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-person-fill text-primary"></i></span>
+                <input asp-for="Username" id="loginUsername" class="form-control" placeholder="Nhập username, email hoặc SĐT" required />
+            </div>
+            <span asp-validation-for="Username" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Mật khẩu</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-lock-fill text-primary"></i></span>
+                <input asp-for="Password" id="loginPassword" type="password" class="form-control" placeholder="Nhập mật khẩu" required />
+            </div>
+            <span asp-validation-for="Password" class="text-danger small"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mb-3">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập vào hệ thống
+        </button>
+    </form>
+
+    <!-- Tài khoản mẫu phục vụ kiểm thử -->
+    <div class="p-3 rounded-3 bg-light border small mb-3">
+        <div class="fw-bold text-primary mb-2">
+            <i class="bi bi-key-fill me-1"></i>Tài khoản dùng thử nhanh (Nhấn để tự động điền):
+        </div>
+        <div class="row g-2">
+            <div class="col-sm-6">
+                <button type="button" class="btn btn-outline-primary btn-sm w-100 text-start"
+                        onclick="document.getElementById('loginUsername').value='admin'; document.getElementById('loginPassword').value='123456';">
+                    <div class="fw-bold">Quản trị viên (Admin)</div>
+                    <div class="text-muted">TK: admin | MK: 123456</div>
+                </button>
+            </div>
+            <div class="col-sm-6">
+                <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-start"
+                        onclick="document.getElementById('loginUsername').value='giangnt'; document.getElementById('loginPassword').value='123456';">
+                    <div class="fw-bold">Tài khoản Khách hàng</div>
+                    <div class="text-muted">TK: giangnt | MK: 123456</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center small text-muted">
+        Bạn chưa có tài khoản thành viên? <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="text-primary fw-bold">Đăng ký ngay tại đây</a>
+    </div>
+</div>

@@ -1,0 +1,141 @@
+@model List<WebsiteDienMay.Models.Order>
+@{
+    ViewData["Title"] = "Quản lý đơn đặt hàng";
+    var selectedStatus = ViewBag.SelectedStatus as string ?? "";
+    var keyword = ViewBag.Keyword as string ?? "";
+
+    var statuses = new[]
+    {
+        new { Key = "", Label = "Tất cả đơn", Icon = "bi-collection" },
+        new { Key = "Chờ xác nhận", Label = "Chờ xác nhận", Icon = "bi-hourglass-split" },
+        new { Key = "Đã xác nhận", Label = "Đã xác nhận", Icon = "bi-check2-square" },
+        new { Key = "Đang giao hàng", Label = "Đang giao hàng", Icon = "bi-truck" },
+        new { Key = "Hoàn thành", Label = "Hoàn thành", Icon = "bi-patch-check" },
+        new { Key = "Đã hủy", Label = "Đã hủy", Icon = "bi-x-octagon" }
+    };
+}
+
+<div class="adm-card">
+    <div class="adm-card-header">
+        <div>
+            <h5 class="adm-card-title">
+                <i class="bi bi-receipt-cutoff text-primary"></i>
+                <span>Trung tâm điều phối đơn đặt hàng (@Model.Count đơn)</span>
+            </h5>
+            <div class="text-muted small mt-1">Theo dõi trạng thái vận chuyển, thanh toán và xác nhận lắp đặt tận nơi</div>
+        </div>
+    </div>
+
+    <!-- Bộ lọc nhanh theo trạng thái -->
+    <div class="adm-filter-pills mb-3">
+        @foreach (var s in statuses)
+        {
+            <a asp-action="Orders"
+               asp-route-status="@s.Key"
+               asp-route-keyword="@keyword"
+               class="adm-filter-pill @(selectedStatus == s.Key ? "active" : "")">
+                <i class="bi @s.Icon"></i>
+                <span>@s.Label</span>
+            </a>
+        }
+    </div>
+
+    <!-- Thanh tìm kiếm đơn hàng -->
+    <form asp-action="Orders" method="get" class="row g-2 align-items-center mb-4 p-3 rounded-3 bg-light border">
+        <input type="hidden" name="status" value="@selectedStatus" />
+        <div class="col-md-9">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="keyword" value="@keyword" class="form-control border-start-0" placeholder="Tìm theo Mã đơn hàng (DMX...), Họ tên người nhận hoặc Số điện thoại..." />
+            </div>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary fw-semibold w-100">Tìm đơn hàng</button>
+            <a asp-action="Orders" class="btn btn-white bg-white border px-3" title="Đặt lại">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+        </div>
+    </form>
+
+    <!-- Bảng đơn hàng -->
+    <div class="adm-table-wrap">
+        <div class="table-responsive">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th>Mã đơn & Ngày đặt</th>
+                        <th>Khách hàng & Địa chỉ giao</th>
+                        <th>Phương thức thanh toán</th>
+                        <th class="text-center">Số SP</th>
+                        <th class="text-end">Tổng thanh toán</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                Chưa có đơn đặt hàng nào khớp với bộ lọc hiện tại.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var o in Model)
+                        {
+                            var statusBadge = o.OrderStatus switch
+                            {
+                                "Hoàn thành" => "adm-badge-success",
+                                "Đã hủy" => "adm-badge-danger",
+                                "Đang giao hàng" => "adm-badge-info",
+                                "Đã xác nhận" => "adm-badge-info",
+                                _ => "adm-badge-warning"
+                            };
+                            var itemQty = o.OrderDetails?.Sum(d => d.Quantity) ?? 0;
+
+                            <tr>
+                                <td>
+                                    <a asp-action="OrderDetail" asp-route-id="@o.Id" class="fw-bold text-primary text-decoration-none font-monospace">
+                                        #@o.OrderCode
+                                    </a>
+                                    <div class="text-muted small mt-1">
+                                        <i class="bi bi-calendar3 me-1"></i>@o.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                </td>
+                                <td style="max-width: 280px;">
+                                    <div class="fw-bold text-dark">@o.CustomerName <span class="text-muted fw-normal">• @o.CustomerPhone</span></div>
+                                    <div class="text-muted small text-truncate" title="@o.ShippingAddress">
+                                        <i class="bi bi-geo-alt me-1"></i>@o.ShippingAddress
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@o.PaymentMethod</span>
+                                    <div class="text-muted small mt-1">@o.PaymentStatus</div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2">@itemQty SP</span>
+                                </td>
+                                <td class="text-end fw-extrabold text-danger fs-6">
+                                    @o.TotalAmount.ToString("N0") đ
+                                </td>
+                                <td class="text-center">
+                                    <span class="adm-badge @statusBadge">
+                                        <span class="adm-badge-dot"></span>@o.OrderStatus
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="OrderDetail" asp-route-id="@o.Id" class="btn btn-primary btn-sm fw-semibold rounded-3 px-3">
+                                        Xử lý <i class="bi bi-arrow-right-short"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

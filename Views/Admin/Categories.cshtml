@@ -1,0 +1,181 @@
+@model List<WebsiteDienMay.Models.Category>
+@{
+    ViewData["Title"] = "Danh mục ngành hàng";
+}
+
+<div class="row g-4">
+    <!-- Cột trái: Form Thêm mới / Chỉnh sửa Danh mục -->
+    <div class="col-lg-4">
+        <div class="adm-card position-sticky" style="top: 90px;">
+            <div class="adm-card-header">
+                <h6 class="adm-card-title" id="catFormTitle">
+                    <i class="bi bi-folder-plus text-primary"></i>
+                    <span>Thêm danh mục mới</span>
+                </h6>
+                <span class="adm-badge adm-badge-info" id="catModeBadge">Tạo mới</span>
+            </div>
+
+            <form asp-action="SaveCategory" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="catId" value="0" />
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Tên danh mục ngành hàng <span class="text-danger">*</span></label>
+                    <input type="text" name="name" id="catName" class="form-control" placeholder="VD: Tivi, Tủ lạnh, Máy giặt..." required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Đường dẫn tĩnh (Slug)</label>
+                    <input type="text" name="slug" id="catSlug" class="form-control font-monospace" placeholder="VD: tivi, tu-lanh" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">URL Biểu tượng (Nguồn dienmayxanh.com) <span class="text-danger">*</span></label>
+                    <div class="d-flex align-items-center gap-2">
+                        <img id="catIconPreview" src="https://cdnv2.tgdd.vn/pim/cdn/images/202610/Tivi110032.png" alt="Icon" class="adm-thumb" />
+                        <input type="text" name="iconUrl" id="catIcon" class="form-control" value="https://cdnv2.tgdd.vn/pim/cdn/images/202610/Tivi110032.png" required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Mô tả ngắn ngành hàng</label>
+                    <textarea name="description" id="catDesc" rows="3" class="form-control" placeholder="Mô tả các dòng sản phẩm thuộc danh mục này..."></textarea>
+                </div>
+
+                <div class="row g-2 mb-3 align-items-center">
+                    <div class="col-6">
+                        <label class="adm-form-label">Thứ tự hiển thị</label>
+                        <input type="number" name="displayOrder" id="catOrder" value="@(Model.Count + 1)" class="form-control" />
+                    </div>
+                    <div class="col-6 pt-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="isActive" id="catActive" value="true" checked />
+                            <label class="form-check-label fw-semibold small" for="catActive">Hiển thị</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 pt-2 border-top">
+                    <button type="submit" class="btn btn-primary fw-bold flex-grow-1">
+                        <i class="bi bi-save me-1"></i>Lưu danh mục
+                    </button>
+                    <button type="button" id="resetCatBtn" class="btn btn-light border fw-semibold">
+                        Làm mới
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cột phải: Bảng danh sách Danh mục -->
+    <div class="col-lg-8">
+        <div class="adm-card mb-0">
+            <div class="adm-card-header">
+                <div>
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-layers-fill text-primary"></i>
+                        <span>Hệ thống danh mục thiết bị điện tử (@Model.Count ngành hàng)</span>
+                    </h6>
+                    <div class="text-muted small mt-1">Nhấn nút Chỉnh sửa ở từng dòng để nạp thông tin vào biểu mẫu bên trái</div>
+                </div>
+            </div>
+
+            <div class="adm-table-wrap">
+                <div class="table-responsive">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 68px;" class="text-center">Icon</th>
+                                <th>Tên ngành hàng & Slug</th>
+                                <th>Mô tả</th>
+                                <th class="text-center">Sản phẩm</th>
+                                <th class="text-center">Thứ tự</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model)
+                            {
+                                <tr>
+                                    <td class="text-center">
+                                        <img src="@c.IconUrl" alt="@c.Name" class="adm-thumb" style="width: 44px; height: 44px;" />
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">@c.Name</div>
+                                        <span class="badge bg-light text-secondary border font-monospace mt-1">/@c.Slug</span>
+                                    </td>
+                                    <td class="text-muted small" style="max-width: 260px;">@c.Description</td>
+                                    <td class="text-center">
+                                        <span class="adm-badge adm-badge-info">@c.Products.Count SP</span>
+                                    </td>
+                                    <td class="text-center fw-bold text-secondary">#@c.DisplayOrder</td>
+                                    <td class="text-end">
+                                        <button type="button"
+                                                class="btn btn-outline-primary btn-sm fw-semibold rounded-3 btn-edit-cat"
+                                                data-id="@c.Id"
+                                                data-name="@c.Name"
+                                                data-slug="@c.Slug"
+                                                data-icon="@c.IconUrl"
+                                                data-desc="@c.Description"
+                                                data-order="@c.DisplayOrder"
+                                                data-active="@(c.IsActive ? "true" : "false")">
+                                            <i class="bi bi-pencil-square me-1"></i>Sửa
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const catId = document.getElementById("catId");
+            const catName = document.getElementById("catName");
+            const catSlug = document.getElementById("catSlug");
+            const catIcon = document.getElementById("catIcon");
+            const catIconPreview = document.getElementById("catIconPreview");
+            const catDesc = document.getElementById("catDesc");
+            const catOrder = document.getElementById("catOrder");
+            const catActive = document.getElementById("catActive");
+            const catModeBadge = document.getElementById("catModeBadge");
+            const resetBtn = document.getElementById("resetCatBtn");
+
+            catIcon.addEventListener("input", function () {
+                if (this.value.trim()) catIconPreview.src = this.value.trim();
+            });
+
+            document.querySelectorAll(".btn-edit-cat").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    catId.value = this.dataset.id;
+                    catName.value = this.dataset.name || "";
+                    catSlug.value = this.dataset.slug || "";
+                    catIcon.value = this.dataset.icon || "";
+                    catIconPreview.src = this.dataset.icon || "";
+                    catDesc.value = this.dataset.desc || "";
+                    catOrder.value = this.dataset.order || "1";
+                    catActive.checked = this.dataset.active === "true";
+                    catModeBadge.textContent = "Đang sửa ID #" + this.dataset.id;
+                    catModeBadge.className = "adm-badge adm-badge-warning";
+                    catName.focus();
+                });
+            });
+
+            resetBtn.addEventListener("click", function () {
+                catId.value = "0";
+                catName.value = "";
+                catSlug.value = "";
+                catDesc.value = "";
+                catOrder.value = "@(Model.Count + 1)";
+                catActive.checked = true;
+                catModeBadge.textContent = "Tạo mới";
+                catModeBadge.className = "adm-badge adm-badge-info";
+            });
+        });
+    </script>
+}

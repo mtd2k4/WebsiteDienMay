@@ -1,0 +1,202 @@
+@model List<WebsiteDienMay.Models.Product>
+@{
+    ViewData["Title"] = "Quản lý kho sản phẩm";
+    var categories = ViewBag.Categories as List<WebsiteDienMay.Models.Category> ?? new List<WebsiteDienMay.Models.Category>();
+    var selectedCat = ViewBag.SelectedCategoryId as int?;
+    var keyword = ViewBag.Keyword as string;
+
+    var activeCount = Model.Count(x => x.IsActive);
+    var flashSaleCount = Model.Count(x => x.IsFlashSale);
+    var lowStockCount = Model.Count(x => x.StockQuantity <= 10);
+}
+
+<!-- Thống kê nhanh kho sản phẩm -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="adm-kpi-card py-3">
+            <div class="adm-kpi-label">Tổng mặt hàng</div>
+            <div class="fs-4 fw-extrabold text-dark mt-1">@Model.Count sản phẩm</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="adm-kpi-card py-3">
+            <div class="adm-kpi-label">Đang kinh doanh</div>
+            <div class="fs-4 fw-extrabold text-success mt-1">@activeCount sản phẩm</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="adm-kpi-card py-3">
+            <div class="adm-kpi-label">Đang chạy Flash Sale</div>
+            <div class="fs-4 fw-extrabold text-danger mt-1">@flashSaleCount sản phẩm</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="adm-kpi-card py-3">
+            <div class="adm-kpi-label">Sắp hết hàng (&le; 10)</div>
+            <div class="fs-4 fw-extrabold text-warning mt-1">@lowStockCount sản phẩm</div>
+        </div>
+    </div>
+</div>
+
+<div class="adm-card">
+    <div class="adm-card-header">
+        <div>
+            <h5 class="adm-card-title">
+                <i class="bi bi-box-seam-fill text-primary"></i>
+                <span>Danh mục sản phẩm thiết bị điện tử</span>
+            </h5>
+            <div class="text-muted small mt-1">Tồn kho chỉ tự động tăng khi lập Phiếu nhập kho và giảm khi phát sinh đơn bán</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="Warehouse" class="btn btn-outline-primary fw-semibold px-3 py-2 rounded-3">
+                <i class="bi bi-box-arrow-in-down me-1"></i>Quản lý & Nhập kho
+            </a>
+            <a asp-action="CreateProduct" class="btn btn-primary fw-semibold px-3 py-2 rounded-3">
+                <i class="bi bi-plus-lg me-1"></i>Thêm sản phẩm mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Thanh công cụ lọc dữ liệu -->
+    <form asp-action="Products" method="get" class="row g-2 align-items-center mb-4 p-3 rounded-3 bg-light border">
+        <div class="col-lg-4 col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-funnel"></i></span>
+                <select name="categoryId" class="form-select border-start-0" onchange="this.form.submit()">
+                    <option value="">Tất cả danh mục ngành hàng</option>
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c.Id" selected="@(selectedCat == c.Id)">@c.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="col-lg-5 col-md-7">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="keyword" value="@keyword" class="form-control border-start-0" placeholder="Tìm kiếm theo tên thiết bị hoặc mã SKU (VD: DMX-TV01)..." />
+            </div>
+        </div>
+        <div class="col-lg-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary fw-semibold w-100">Lọc kết quả</button>
+            <a asp-action="Products" class="btn btn-white bg-white border fw-semibold px-3" title="Đặt lại bộ lọc">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+        </div>
+    </form>
+
+    <!-- Bảng dữ liệu sản phẩm -->
+    <div class="adm-table-wrap">
+        <div class="table-responsive">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th style="width: 72px;">Hình ảnh</th>
+                        <th>Thông tin thiết bị</th>
+                        <th>Ngành hàng / Hãng</th>
+                        <th class="text-end">Giá niêm yết & KM</th>
+                        <th class="text-center">Tồn kho / Đã bán</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end" style="width: 135px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                Không tìm thấy sản phẩm nào phù hợp với điều kiện lọc.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <img src="@item.ImageUrl" alt="@item.Name" class="adm-thumb" />
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="badge bg-light text-secondary border font-monospace">@item.Code</span>
+                                        @if (item.IsFlashSale)
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                                <i class="bi bi-lightning-charge-fill"></i> Flash Sale
+                                            </span>
+                                        }
+                                        @if (item.IsInstallment0Percent)
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Trả góp 0%</span>
+                                        }
+                                    </div>
+                                    <a asp-action="EditProduct" asp-route-id="@item.Id" class="fw-bold text-dark text-decoration-none d-block">
+                                        @item.Name
+                                    </a>
+                                    <div class="text-muted" style="font-size: 12px;">Bảo hành chính hãng @item.WarrantyMonths tháng</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@item.Category?.Name</div>
+                                    <span class="badge bg-light text-primary border mt-1">@item.Brand?.Name</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="fw-extrabold text-danger fs-6">@item.Price.ToString("N0") đ</div>
+                                    @if (item.OriginalPrice > item.Price)
+                                    {
+                                        <div class="text-muted text-decoration-line-through small">@item.OriginalPrice.ToString("N0") đ</div>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <span class="adm-badge @(item.StockQuantity <= 5 ? "adm-badge-danger" : item.StockQuantity <= 15 ? "adm-badge-warning" : "adm-badge-info")">
+                                        Kho: @item.StockQuantity
+                                    </span>
+                                    <div class="text-muted small mt-1">Đã bán: <strong>@item.SoldCount</strong></div>
+                                </td>
+                                <td class="text-center">
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="adm-badge adm-badge-success">
+                                            <span class="adm-badge-dot"></span>Đang bán
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="adm-badge adm-badge-neutral">
+                                            <span class="adm-badge-dot"></span>Ngừng bán
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex align-items-center gap-1">
+                                        <a asp-action="Warehouse" asp-route-productId="@item.Id" class="adm-icon-btn" title="Nhập thêm hàng vào kho">
+                                            <i class="bi bi-box-arrow-in-down text-primary"></i>
+                                        </a>
+                                        <a asp-controller="Product" asp-action="Detail" asp-route-id="@item.Id" target="_blank" class="adm-icon-btn" title="Xem trên cửa hàng">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="EditProduct" asp-route-id="@item.Id" class="adm-icon-btn" title="Chỉnh sửa thông tin sản phẩm">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <form asp-action="DeleteProduct" method="post"
+                                              class="swal-confirm-form d-inline"
+                                              data-swal-title="Xóa sản phẩm khỏi kho?"
+                                              data-swal-text="Bạn có chắc chắn muốn xóa sản phẩm '@item.Name'?"
+                                              data-swal-confirm="Xác nhận xóa">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="adm-icon-btn danger" title="Xóa sản phẩm">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

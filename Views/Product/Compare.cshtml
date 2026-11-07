@@ -1,0 +1,326 @@
+@model WebsiteDienMay.Models.ProductCompareViewModel
+@{
+    ViewData["Title"] = "So sánh sản phẩm điện máy";
+    var count = Model.Products.Count;
+}
+
+<div class="container my-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">Trang chủ</a></li>
+            @if (Model.Category != null)
+            {
+                <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index" asp-route-categoryId="@Model.Category.Id" class="text-decoration-none">@Model.Category.Name</a></li>
+            }
+            <li class="breadcrumb-item active" aria-current="page">So sánh thông số kỹ thuật</li>
+        </ol>
+    </nav>
+
+    <!-- Header bar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-3 bg-white rounded-3 shadow-sm border">
+        <div>
+            <h1 class="h4 fw-bold text-dark mb-1">
+                <i class="bi bi-arrow-left-right text-primary me-2"></i>So sánh thiết bị điện máy
+            </h1>
+            <p class="text-muted small mb-0">
+                Đối chiếu trực quan bảng thông số kỹ thuật, giá bán và công nghệ giữa các dòng sản phẩm (Tối đa 3 sản phẩm).
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            @if (count > 0)
+            {
+                <button type="button" class="btn btn-outline-danger btn-sm fw-semibold" id="btnClearAllCompare">
+                    <i class="bi bi-trash3 me-1"></i>Xóa tất cả
+                </button>
+            }
+            @if (count < 3 && Model.CandidateProducts.Any())
+            {
+                <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addCompareModal">
+                    <i class="bi bi-plus-circle me-1"></i>Thêm sản phẩm so sánh (@count/3)
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (count == 0)
+    {
+        <div class="card border-0 shadow-sm rounded-4 text-center py-5">
+            <div class="card-body">
+                <div class="display-1 text-muted mb-3">
+                    <i class="bi bi-ui-checks-grid"></i>
+                </div>
+                <h4 class="fw-bold text-dark">Chưa có sản phẩm nào trong bảng so sánh</h4>
+                <p class="text-muted mb-4">Vui lòng chọn tối đa 3 sản phẩm trên website hoặc tìm sản phẩm bên dưới để bắt đầu đối chiếu thông số.</p>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-primary px-4 py-2 fw-bold rounded-pill">
+                    <i class="bi bi-cart-plus me-1"></i>Khám phá danh sách sản phẩm
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Bảng đối chiếu so sánh chính -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0 text-center" style="min-width: 780px;">
+                    <!-- Header: Ảnh, Tên, Giá, Mua ngay -->
+                    <thead>
+                        <tr class="bg-light">
+                            <th style="width: 22%; text-align: left; vertical-align: middle;" class="p-3">
+                                <span class="fw-bold text-uppercase text-secondary small">Sản phẩm so sánh</span>
+                            </th>
+                            @foreach (var prod in Model.Products)
+                            {
+                                <th style="width: @(78 / Math.Max(1, count))%;" class="p-3 position-relative">
+                                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2 btn-remove-compare"
+                                            data-id="@prod.Id" title="Bỏ sản phẩm này" aria-label="Close"></button>
+
+                                    <div class="text-center">
+                                        <a asp-controller="Product" asp-action="Detail" asp-route-id="@prod.Id" class="text-decoration-none">
+                                            <img src="@prod.ImageUrl" alt="@prod.Name" class="img-fluid mb-2 rounded" style="max-height: 140px; object-fit: contain;" />
+                                            <div class="badge bg-light text-secondary border font-monospace mb-1">@prod.Code</div>
+                                            <h6 class="fw-bold text-dark line-clamp-2 mb-2" title="@prod.Name" style="height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                                @prod.Name
+                                            </h6>
+                                        </a>
+
+                                        <div class="mb-2">
+                                            <span class="fs-5 fw-extrabold text-danger">@prod.Price.ToString("N0") đ</span>
+                                            @if (prod.OriginalPrice > prod.Price)
+                                            {
+                                                <div class="small text-muted text-decoration-line-through">@prod.OriginalPrice.ToString("N0") đ</div>
+                                            }
+                                        </div>
+
+                                        @if (prod.StockQuantity > 0)
+                                        {
+                                            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="productId" value="@prod.Id" />
+                                                <input type="hidden" name="quantity" value="1" />
+                                                <button type="submit" class="btn btn-primary btn-sm fw-bold w-100 py-1 rounded-pill">
+                                                    <i class="bi bi-cart-plus me-1"></i>Chọn mua
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-secondary btn-sm fw-semibold w-100 py-1 rounded-pill" disabled>
+                                                Tạm hết hàng
+                                            </button>
+                                        }
+                                    </div>
+                                </th>
+                            }
+
+                            <!-- Ô trống nếu chưa đủ 3 sản phẩm -->
+                            @for (int i = count; i < 3; i++)
+                            {
+                                <th style="width: @(78 / Math.Max(1, count))%;" class="p-3 bg-white">
+                                    <div class="p-4 border border-2 border-dashed rounded-3 text-center text-muted">
+                                        <i class="bi bi-plus-circle-dotted display-6 text-primary mb-2 d-block"></i>
+                                        <div class="small fw-semibold mb-2">Thêm thiết bị so sánh</div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm fw-semibold rounded-pill" data-bs-toggle="modal" data-bs-target="#addCompareModal">
+                                            + Chọn sản phẩm
+                                        </button>
+                                    </div>
+                                </th>
+                            }
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <!-- Nhóm 1: Thông tin cơ bản -->
+                        <tr class="table-primary text-start">
+                            <td colspan="@(count + (3 - count) + 1)" class="fw-bold py-2 px-3 text-primary">
+                                <i class="bi bi-info-circle-fill me-1"></i>1. THÔNG TIN BÁN HÀNG & BẢO HÀNH
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-semibold text-secondary px-3">Thương hiệu / Hãng</td>
+                            @foreach (var prod in Model.Products)
+                            {
+                                <td class="fw-bold text-dark">@(prod.Brand?.Name ?? "Điện Máy")</td>
+                            }
+                            @for (int i = count; i < 3; i++) { <td>-</td> }
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-semibold text-secondary px-3">Thời gian bảo hành</td>
+                            @foreach (var prod in Model.Products)
+                            {
+                                <td><span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">@prod.WarrantyMonths tháng chính hãng</span></td>
+                            }
+                            @for (int i = count; i < 3; i++) { <td>-</td> }
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-semibold text-secondary px-3">Ưu đãi trả góp</td>
+                            @foreach (var prod in Model.Products)
+                            {
+                                <td>
+                                    @if (prod.IsInstallment0Percent)
+                                    {
+                                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle fw-semibold">Trả góp 0% lãi suất</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Theo chính sách thẻ</span>
+                                    }
+                                </td>
+                            }
+                            @for (int i = count; i < 3; i++) { <td>-</td> }
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-semibold text-secondary px-3">Tình trạng tồn kho</td>
+                            @foreach (var prod in Model.Products)
+                            {
+                                <td>
+                                    @if (prod.StockQuantity > 0)
+                                    {
+                                        <span class="text-success fw-bold"><i class="bi bi-check2-circle me-1"></i>Sẵn hàng (@prod.StockQuantity máy)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i>Tạm hết hàng</span>
+                                    }
+                                </td>
+                            }
+                            @for (int i = count; i < 3; i++) { <td>-</td> }
+                        </tr>
+
+                        <!-- Nhóm 2: Bảng đối chiếu thông số kỹ thuật chi tiết -->
+                        <tr class="table-primary text-start">
+                            <td colspan="@(count + (3 - count) + 1)" class="fw-bold py-2 px-3 text-primary">
+                                <i class="bi bi-cpu-fill me-1"></i>2. THÔNG SỐ KỸ THUẬT CHI TIẾT
+                            </td>
+                        </tr>
+
+                        @if (Model.SpecKeys.Any())
+                        {
+                            @foreach (var key in Model.SpecKeys)
+                            {
+                                <tr>
+                                    <td class="text-start fw-semibold text-secondary px-3">@key</td>
+                                    @foreach (var prod in Model.Products)
+                                    {
+                                        var specs = Model.ProductSpecs.ContainsKey(prod.Id) ? Model.ProductSpecs[prod.Id] : null;
+                                        var val = specs != null && specs.ContainsKey(key) ? specs[key] : "-";
+                                        <td class="text-dark fw-medium">@val</td>
+                                    }
+                                    @for (int i = count; i < 3; i++) { <td>-</td> }
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="@(count + (3 - count) + 1)" class="py-3 text-muted">
+                                    Đang cập nhật thông số kỹ thuật chi tiết cho các sản phẩm này.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal thêm sản phẩm so sánh -->
+<div class="modal fade" id="addCompareModal" tabindex="-1" aria-labelledby="addCompareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom py-3">
+                <h5 class="modal-title fw-bold text-dark" id="addCompareModalLabel">
+                    <i class="bi bi-plus-circle text-primary me-2"></i>Chọn sản phẩm thêm vào so sánh
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                @if (Model.CandidateProducts.Any())
+                {
+                    <div class="row g-3">
+                        @foreach (var cand in Model.CandidateProducts)
+                        {
+                            <div class="col-md-6">
+                                <div class="p-2 border rounded-3 d-flex align-items-center justify-content-between gap-2 hover-shadow">
+                                    <div class="d-flex align-items-center gap-2 min-w-0">
+                                        <img src="@cand.ImageUrl" alt="@cand.Name" class="rounded" style="width: 50px; height: 50px; object-fit: contain;" />
+                                        <div class="min-w-0">
+                                            <div class="fw-semibold text-dark text-truncate small" title="@cand.Name">@cand.Name</div>
+                                            <div class="text-danger fw-bold small">@cand.Price.ToString("N0") đ</div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm fw-semibold btn-add-candidate" data-id="@cand.Id">
+                                        + So sánh
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        Không còn sản phẩm tương tự nào khác trong cùng danh mục.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Xóa sản phẩm khỏi bảng so sánh
+            document.querySelectorAll(".btn-remove-compare").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    const prodId = this.dataset.id;
+                    fetch('/Product/RemoveFromCompare?productId=' + prodId, { method: 'POST' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.reload();
+                            }
+                        });
+                });
+            });
+
+            // Xóa tất cả so sánh
+            const btnClear = document.getElementById("btnClearAllCompare");
+            if (btnClear) {
+                btnClear.addEventListener("click", function () {
+                    fetch('/Product/ClearCompare', { method: 'POST' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.reload();
+                            }
+                        });
+                });
+            }
+
+            // Thêm sản phẩm từ modal
+            document.querySelectorAll(".btn-add-candidate").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    const prodId = this.dataset.id;
+                    fetch('/Product/AddToCompare?productId=' + prodId, { method: 'POST' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.reload();
+                            } else {
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: 'Thông báo',
+                                    text: data.message
+                                });
+                            }
+                        });
+                });
+            });
+        });
+    </script>
+}
+

@@ -1,0 +1,430 @@
+@model WebsiteDienMay.Models.RevenueReportViewModel
+@{
+    ViewData["Title"] = "Báo cáo thống kê doanh thu";
+}
+
+<!-- Tiêu đề & Nút xuất báo cáo PDF -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h4 class="fw-extrabold text-dark m-0">
+            <i class="bi bi-graph-up-arrow text-primary me-2"></i>Báo cáo Thống kê Doanh thu & Hiệu quả Kinh doanh
+        </h4>
+        <div class="text-muted small mt-1">
+            Kỳ báo cáo: Từ <strong>@Model.FromDate.ToString("dd/MM/yyyy")</strong> đến <strong>@Model.ToDate.ToString("dd/MM/yyyy")</strong>
+            • Trích xuất lúc: @Model.ExportedAt.ToString("HH:mm dd/MM/yyyy")
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="ExportRevenuePdf"
+           asp-route-fromDate="@Model.FromDate.ToString("yyyy-MM-dd")"
+           asp-route-toDate="@Model.ToDate.ToString("yyyy-MM-dd")"
+           asp-route-quickFilter="@Model.QuickFilter"
+           asp-route-categoryId="@Model.SelectedCategoryId"
+           asp-route-status="@Model.SelectedStatus"
+           target="_blank"
+           class="btn btn-danger fw-bold shadow-sm px-3">
+            <i class="bi bi-file-earmark-pdf-fill me-1"></i>Xuất Báo Cáo Dạng PDF
+        </a>
+    </div>
+</div>
+
+<!-- Bộ lọc thời gian & Ngành hàng -->
+<div class="adm-card mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 border-bottom pb-3">
+        <!-- Quick Filter Pills -->
+        <div class="adm-filter-pills m-0">
+            <a asp-action="RevenueReport" asp-route-quickFilter="today" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-status="@Model.SelectedStatus"
+               class="adm-filter-pill @(Model.QuickFilter == "today" ? "active" : "")">Hôm nay</a>
+            <a asp-action="RevenueReport" asp-route-quickFilter="7days" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-status="@Model.SelectedStatus"
+               class="adm-filter-pill @(Model.QuickFilter == "7days" ? "active" : "")">7 ngày qua</a>
+            <a asp-action="RevenueReport" asp-route-quickFilter="30days" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-status="@Model.SelectedStatus"
+               class="adm-filter-pill @(Model.QuickFilter == "30days" ? "active" : "")">30 ngày qua</a>
+            <a asp-action="RevenueReport" asp-route-quickFilter="thismonth" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-status="@Model.SelectedStatus"
+               class="adm-filter-pill @(Model.QuickFilter == "thismonth" ? "active" : "")">Tháng này</a>
+            <a asp-action="RevenueReport" asp-route-quickFilter="lastmonth" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-status="@Model.SelectedStatus"
+               class="adm-filter-pill @(Model.QuickFilter == "lastmonth" ? "active" : "")">Tháng trước</a>
+            <a asp-action="RevenueReport" asp-route-quickFilter="thisyear" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-status="@Model.SelectedStatus"
+               class="adm-filter-pill @(Model.QuickFilter == "thisyear" ? "active" : "")">Năm nay</a>
+            <a asp-action="RevenueReport" asp-route-quickFilter="all" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-status="@Model.SelectedStatus"
+               class="adm-filter-pill @(Model.QuickFilter == "all" ? "active" : "")">Tất cả</a>
+        </div>
+    </div>
+
+    <!-- Form tùy chọn ngày chi tiết -->
+    <form asp-action="RevenueReport" method="get" class="row g-2 align-items-end">
+        <input type="hidden" name="quickFilter" value="custom" />
+        <div class="col-md-3">
+            <label class="adm-form-label">Từ ngày</label>
+            <input type="date" name="fromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-3">
+            <label class="adm-form-label">Đến ngày</label>
+            <input type="date" name="toDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-3">
+            <label class="adm-form-label">Ngành hàng</label>
+            <select name="categoryId" class="form-select form-select-sm">
+                <option value="">Tất cả ngành hàng</option>
+                @foreach (var c in Model.Categories)
+                {
+                    <option value="@c.Id" selected="@(Model.SelectedCategoryId == c.Id)">@c.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="adm-form-label">Trạng thái đơn</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="valid" selected="@(Model.SelectedStatus == "valid")">Đơn hợp lệ (trừ Đã hủy)</option>
+                <option value="completed" selected="@(Model.SelectedStatus == "completed")">Chỉ Đơn hoàn thành</option>
+                <option value="all" selected="@(Model.SelectedStatus == "all")">Tất cả trạng thái</option>
+            </select>
+        </div>
+        <div class="col-md-1 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm fw-semibold w-100" title="Xem báo cáo">Lọc</button>
+            <a asp-action="RevenueReport" class="btn btn-light border btn-sm px-2" title="Đặt lại"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- 5 Thẻ KPI Tài chính -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Doanh thu thuần thực tế</div>
+                    <div class="adm-kpi-value text-primary" style="font-size: 20px;">@Model.NetRevenue.ToString("N0") đ</div>
+                    <div class="adm-kpi-sub">
+                        @if (Model.TotalDiscount > 0)
+                        {
+                            <span>Đã trừ Voucher: <strong class="text-danger">-@Model.TotalDiscount.ToString("N0") đ</strong></span>
+                        }
+                        else
+                        {
+                            <span>Sau chiết khấu khuyến mãi</span>
+                        }
+                    </div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #eff6ff; color: #2563eb;">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Lợi nhuận gộp ước tính</div>
+                    <div class="adm-kpi-value text-success" style="font-size: 20px;">@Model.EstimatedGrossProfit.ToString("N0") đ</div>
+                    <div class="adm-kpi-sub">
+                        Tỷ suất lợi nhuận: <strong class="text-success">@Model.ProfitMarginPercent%</strong>
+                    </div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #ecfdf5; color: #059669;">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-sm-4">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Đơn thành công</div>
+                    <div class="adm-kpi-value text-dark">@Model.TotalOrders</div>
+                    <div class="adm-kpi-sub">Đơn hàng trong kỳ</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #f1f5f9; color: #334155;">
+                    <i class="bi bi-bag-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-sm-4">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Số thiết bị bán</div>
+                    <div class="adm-kpi-value text-warning">@Model.TotalSoldProducts</div>
+                    <div class="adm-kpi-sub">Sản phẩm xuất kho</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #fffbeb; color: #d97706;">
+                    <i class="bi bi-boxes"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-sm-4">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <div class="adm-kpi-label">Giá trị TB / đơn</div>
+                    <div class="adm-kpi-value text-info" style="font-size: 16px;">@Model.AverageOrderValue.ToString("N0") đ</div>
+                    <div class="adm-kpi-sub">Chỉ số AOV trung bình</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #f0fdfa; color: #0d9488;">
+                    <i class="bi bi-pie-chart"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2 Biểu đồ Thống kê Trực quan (Chart.js) -->
+<div class="row g-4 mb-4">
+    <!-- Cột trái: Biểu đồ doanh thu & lợi nhuận theo ngày -->
+    <div class="col-lg-8">
+        <div class="adm-card mb-0">
+            <div class="adm-card-header">
+                <div>
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-bar-chart-fill text-primary"></i>
+                        <span>Diễn biến Doanh thu & Lợi nhuận theo ngày</span>
+                    </h6>
+                    <div class="text-muted small mt-1">Đơn vị: VNĐ</div>
+                </div>
+            </div>
+            <div style="height: 320px;" class="p-2 position-relative">
+                <canvas id="revenueTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Cơ cấu doanh thu theo Danh mục ngành hàng -->
+    <div class="col-lg-4">
+        <div class="adm-card mb-0">
+            <div class="adm-card-header">
+                <div>
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-pie-chart-fill text-primary"></i>
+                        <span>Cơ cấu doanh thu theo Ngành hàng</span>
+                    </h6>
+                    <div class="text-muted small mt-1">Tỷ trọng phần trăm (%)</div>
+                </div>
+            </div>
+            <div style="height: 320px;" class="p-2 position-relative d-flex align-items-center justify-content-center">
+                <canvas id="categoryPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2 Bảng chi tiết: Top sản phẩm & Bảng thống kê từng ngày -->
+<div class="row g-4">
+    <!-- Bảng Top Sản phẩm đóng góp Doanh thu -->
+    <div class="col-lg-6">
+        <div class="adm-card mb-0">
+            <div class="adm-card-header">
+                <h6 class="adm-card-title">
+                    <i class="bi bi-trophy text-primary"></i>
+                    <span>Top 10 thiết bị đóng góp doanh thu lớn nhất</span>
+                </h6>
+            </div>
+            <div class="adm-table-wrap">
+                <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Thiết bị điện tử</th>
+                                <th class="text-center">Số lượng bán</th>
+                                <th class="text-end">Doanh thu thu về</th>
+                                <th class="text-center">Tỷ trọng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.TopProducts.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">Không có dữ liệu trong khoảng thời gian này.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var p in Model.TopProducts)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <img src="@p.ImageUrl" alt="@p.ProductName" class="adm-thumb" style="width: 40px; height: 40px;" />
+                                                <div class="min-w-0">
+                                                    <span class="badge bg-light text-secondary border font-monospace" style="font-size: 10px;">@p.ProductCode</span>
+                                                    <div class="fw-semibold text-dark text-truncate" style="max-width: 220px;" title="@p.ProductName">@p.ProductName</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center fw-bold text-dark">@p.QuantitySold</td>
+                                        <td class="text-end fw-extrabold text-danger text-nowrap">@p.TotalRevenue.ToString("N0") đ</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">@p.RevenuePercentage%</span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng Thống kê Doanh thu theo từng ngày -->
+    <div class="col-lg-6">
+        <div class="adm-card mb-0">
+            <div class="adm-card-header">
+                <h6 class="adm-card-title">
+                    <i class="bi bi-calendar2-range text-primary"></i>
+                    <span>Chi tiết biến động doanh thu theo ngày</span>
+                </h6>
+            </div>
+            <div class="adm-table-wrap">
+                <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Ngày ghi nhận</th>
+                                <th class="text-center">Đơn</th>
+                                <th class="text-center">SL bán</th>
+                                <th class="text-end">Doanh thu thuần</th>
+                                <th class="text-end">Lợi nhuận gộp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.DailyRevenues.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Không có doanh thu phát sinh trong kỳ này.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var d in Model.DailyRevenues.OrderByDescending(x => x.Date))
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-dark">@d.FullDateString</div>
+                                            @if (d.DiscountAmount > 0)
+                                            {
+                                                <div class="text-danger small" style="font-size: 11px;">Giảm Voucher: -@d.DiscountAmount.ToString("N0") đ</div>
+                                            }
+                                        </td>
+                                        <td class="text-center fw-semibold">@d.OrdersCount</td>
+                                        <td class="text-center text-muted">@d.ProductsCount</td>
+                                        <td class="text-end fw-bold text-primary text-nowrap">@d.NetRevenue.ToString("N0") đ</td>
+                                        <td class="text-end fw-bold text-success text-nowrap">@d.EstimatedProfit.ToString("N0") đ</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. Dữ liệu cho Biểu đồ Doanh thu theo ngày
+            const dailyLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailyRevenues.Select(x => x.DateString)));
+            const dailyRevenues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailyRevenues.Select(x => x.NetRevenue)));
+            const dailyProfits = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailyRevenues.Select(x => x.EstimatedProfit)));
+
+            const trendCtx = document.getElementById('revenueTrendChart');
+            if (trendCtx) {
+                new Chart(trendCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: dailyLabels.length ? dailyLabels : ['Chưa có số liệu'],
+                        datasets: [
+                            {
+                                label: 'Doanh thu thuần (đ)',
+                                data: dailyRevenues.length ? dailyRevenues : [0],
+                                backgroundColor: '#2563eb',
+                                borderRadius: 6,
+                                barPercentage: 0.6
+                            },
+                            {
+                                label: 'Lợi nhuận gộp (đ)',
+                                data: dailyProfits.length ? dailyProfits : [0],
+                                backgroundColor: '#10b981',
+                                borderRadius: 6,
+                                barPercentage: 0.6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return ctx.dataset.label + ': ' + Number(ctx.raw).toLocaleString('vi-VN') + ' đ';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        if (value >= 1000000) return (value / 1000000) + ' Tr';
+                                        return value.toLocaleString('vi-VN');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Dữ liệu cho Biểu đồ Cơ cấu Doanh thu Ngành hàng
+            const catLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CategoryRevenues.Select(x => x.CategoryName)));
+            const catData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CategoryRevenues.Select(x => x.TotalRevenue)));
+
+            const pieCtx = document.getElementById('categoryPieChart');
+            if (pieCtx) {
+                new Chart(pieCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: catLabels.length ? catLabels : ['Chưa có số liệu'],
+                        datasets: [{
+                            data: catData.length ? catData : [1],
+                            backgroundColor: [
+                                '#2563eb', '#10b981', '#f59e0b', '#ef4444',
+                                '#8b5cf6', '#06b6d4', '#ec4899', '#64748b'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return ctx.label + ': ' + Number(ctx.raw).toLocaleString('vi-VN') + ' đ';
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            }
+        });
+    </script>
+}
+

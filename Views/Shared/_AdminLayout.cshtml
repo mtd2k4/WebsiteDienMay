@@ -1,0 +1,288 @@
+@using Microsoft.AspNetCore.Http
+@using WebsiteDienMay.Data
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ApplicationDbContext DbContext
+@{
+    var session = HttpContextAccessor.HttpContext?.Session;
+    var rawFullName = session?.GetString("USER_FULLNAME") ?? "Quản trị viên";
+    var userFullName = rawFullName.Replace("(Quản trị viên)", "", StringComparison.OrdinalIgnoreCase).Trim();
+    var userName = session?.GetString("USER_NAME") ?? "admin";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+    var initial = !string.IsNullOrEmpty(userFullName) ? userFullName.Substring(0, 1).ToUpper() : "A";
+
+    var productCount = DbContext.Products.Count();
+    var lowOrOutStockCount = DbContext.Products.Count(p => p.StockQuantity <= 10);
+    var categoryCount = DbContext.Categories.Count();
+    var brandCount = DbContext.Brands.Count();
+    var couponCount = DbContext.Coupons.Count();
+    var pendingOrderCount = DbContext.Orders.Count(o => o.OrderStatus == "Chờ xác nhận");
+    var totalOrderCount = DbContext.Orders.Count();
+    var userCount = DbContext.Users.Count();
+    var reviewCount = DbContext.ProductReviews.Count();
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Quản trị Điện Máy Xanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="adm-body">
+    <div class="adm-wrapper">
+        <div class="adm-sidebar-backdrop" id="admBackdrop"></div>
+
+        <!-- Sidebar Quản trị Chuyên nghiệp -->
+        <aside class="adm-sidebar" id="admSidebar">
+            <!-- Brand Identity -->
+            <a asp-controller="Admin" asp-action="Index" class="adm-brand">
+                <span class="adm-brand-mark">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </span>
+                <div class="adm-brand-info">
+                    <div class="adm-brand-name">ĐIỆN MÁY XANH</div>
+                    <div class="adm-brand-sub">
+                        <span class="adm-online-dot"></span>
+                        <span>Hệ thống Quản trị</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Main Navigation -->
+            <nav class="adm-nav-scroll" aria-label="Menu quản trị">
+                <div class="adm-nav-section">
+                    <div class="adm-nav-group-title">Bảng điều khiển</div>
+                    <a asp-controller="Admin" asp-action="Index"
+                       class="adm-nav-link @(currentAction == "Index" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-grid-1x2"></i></span>
+                        <span class="adm-nav-text">Tổng quan hệ thống</span>
+                    </a>
+                </div>
+
+                <div class="adm-nav-section">
+                    <div class="adm-nav-group-title">Sản phẩm & Kho hàng</div>
+                    <a asp-controller="Admin" asp-action="Products"
+                       class="adm-nav-link @(currentAction == "Products" || currentAction == "EditProduct" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-box-seam"></i></span>
+                        <span class="adm-nav-text">Danh sách sản phẩm</span>
+                        <span class="adm-nav-badge">@productCount</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="CreateProduct"
+                       class="adm-nav-link @(currentAction == "CreateProduct" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-plus-square"></i></span>
+                        <span class="adm-nav-text">Thêm sản phẩm mới</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="Warehouse"
+                       class="adm-nav-link @(currentAction == "Warehouse" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-boxes"></i></span>
+                        <span class="adm-nav-text">Kho hàng & Nhập kho</span>
+                        @if (lowOrOutStockCount > 0)
+                        {
+                            <span class="adm-nav-badge warning" title="@lowOrOutStockCount mặt hàng sắp hết hoặc hết hàng">@lowOrOutStockCount lưu ý</span>
+                        }
+                    </a>
+                    <a asp-controller="Admin" asp-action="Categories"
+                       class="adm-nav-link @(currentAction == "Categories" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-layers"></i></span>
+                        <span class="adm-nav-text">Danh mục ngành hàng</span>
+                        <span class="adm-nav-badge">@categoryCount</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="Brands"
+                       class="adm-nav-link @(currentAction == "Brands" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-award"></i></span>
+                        <span class="adm-nav-text">Thương hiệu hãng</span>
+                        <span class="adm-nav-badge">@brandCount</span>
+                    </a>
+                </div>
+
+                <div class="adm-nav-section">
+                    <div class="adm-nav-group-title">Kinh doanh & Dịch vụ</div>
+                    <a asp-controller="Admin" asp-action="RevenueReport"
+                       class="adm-nav-link @(currentAction == "RevenueReport" || currentAction == "ExportRevenuePdf" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-graph-up-arrow"></i></span>
+                        <span class="adm-nav-text">Báo cáo doanh thu</span>
+                        <span class="adm-nav-badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">PDF</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="Orders"
+                       class="adm-nav-link @(currentAction == "Orders" || currentAction == "OrderDetail" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-receipt-cutoff"></i></span>
+                        <span class="adm-nav-text">Đơn đặt hàng</span>
+                        @if (pendingOrderCount > 0)
+                        {
+                            <span class="adm-nav-badge warning" title="@pendingOrderCount đơn chờ xác nhận">@pendingOrderCount chờ</span>
+                        }
+                        else
+                        {
+                            <span class="adm-nav-badge">@totalOrderCount</span>
+                        }
+                    </a>
+                    <a asp-controller="Admin" asp-action="Coupons"
+                       class="adm-nav-link @(currentAction == "Coupons" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-ticket-perforated"></i></span>
+                        <span class="adm-nav-text">Mã giảm giá & Voucher</span>
+                        <span class="adm-nav-badge">@couponCount</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="Users"
+                       class="adm-nav-link @(currentAction == "Users" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-people"></i></span>
+                        <span class="adm-nav-text">Tài khoản người dùng</span>
+                        <span class="adm-nav-badge">@userCount</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="Reviews"
+                       class="adm-nav-link @(currentAction == "Reviews" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-chat-square-quote"></i></span>
+                        <span class="adm-nav-text">Đánh giá & Nhận xét</span>
+                        <span class="adm-nav-badge">@reviewCount</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Bottom Pinned Dock -->
+            <div class="adm-sidebar-dock">
+                <a asp-controller="Home" asp-action="Index" class="adm-store-switch">
+                    <span class="d-flex align-items-center gap-2">
+                        <i class="bi bi-shop text-primary"></i>
+                        <span>Mở giao diện Cửa hàng</span>
+                    </span>
+                    <i class="bi bi-arrow-up-right text-secondary small"></i>
+                </a>
+
+                <div class="adm-user-dock">
+                    <div class="d-flex align-items-center gap-2 min-w-0">
+                        <span class="adm-avatar" style="width: 34px; height: 34px; font-size: 13px; border-radius: 8px;">@initial</span>
+                        <div class="min-w-0 lh-sm">
+                            <div class="text-white fw-semibold text-truncate" style="font-size: 12.5px; max-width: 145px;">@userFullName</div>
+                            <div class="text-secondary" style="font-size: 11px;">Quản trị viên</div>
+                        </div>
+                    </div>
+                    <a asp-controller="Account" asp-action="Logout"
+                       class="adm-dock-logout swal-confirm-link"
+                       title="Đăng xuất hệ thống"
+                       data-swal-title="Đăng xuất khỏi Quản trị?"
+                       data-swal-text="Bạn có chắc chắn muốn kết thúc phiên làm việc Quản trị viên?">
+                        <i class="bi bi-box-arrow-right fs-6"></i>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Khu vực Nội dung chính -->
+        <div class="adm-main">
+            <header class="adm-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button type="button" class="btn btn-light border d-lg-none" id="admMenuToggle" aria-label="Mở menu">
+                        <i class="bi bi-list fs-5"></i>
+                    </button>
+                    <div>
+                        <div class="text-muted" style="font-size: 11.5px; font-weight: 600;">
+                            HỆ THỐNG QUẢN TRỊ <i class="bi bi-chevron-right mx-1" style="font-size: 9px;"></i> <span class="text-primary">@ViewData["Title"]</span>
+                        </div>
+                        <h5 class="fw-bold m-0 text-dark" style="font-size: 17px;">@ViewData["Title"]</h5>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 gap-md-3">
+                    <a asp-controller="Admin" asp-action="CreateProduct" class="btn btn-primary btn-sm fw-semibold d-none d-md-inline-flex align-items-center gap-1 px-3 py-2 rounded-3">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Thêm sản phẩm</span>
+                    </a>
+
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-light border btn-sm fw-semibold d-none d-sm-inline-flex align-items-center gap-1 px-3 py-2 rounded-3 text-secondary">
+                        <i class="bi bi-box-arrow-up-right text-primary"></i>
+                        <span>Cửa hàng</span>
+                    </a>
+
+                    <div class="vr d-none d-sm-block my-2"></div>
+
+                    <div class="dropdown">
+                        <button class="btn btn-light border-0 bg-transparent d-flex align-items-center gap-2 p-1 rounded-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="adm-avatar">@initial</span>
+                            <div class="text-start d-none d-md-block lh-sm">
+                                <div class="fw-bold text-dark" style="font-size: 13px;">@userFullName</div>
+                                <div class="text-muted" style="font-size: 11px;">@@@userName • Admin</div>
+                            </div>
+                            <i class="bi bi-chevron-down text-muted small d-none d-md-inline"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2 py-2" style="min-width: 220px;">
+                            <li class="px-3 py-2 border-bottom">
+                                <div class="fw-bold text-dark small">@userFullName</div>
+                                <div class="text-muted" style="font-size: 11.5px;">Quản trị viên cấp cao</div>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2 small" asp-controller="Account" asp-action="Profile">
+                                    <i class="bi bi-person-gear text-primary me-2"></i>Hồ sơ cá nhân
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2 small" asp-controller="Home" asp-action="Index">
+                                    <i class="bi bi-shop text-primary me-2"></i>Trang chủ bán hàng
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1" /></li>
+                            <li>
+                                <a class="dropdown-item py-2 small text-danger fw-semibold swal-confirm-link"
+                                   asp-controller="Account" asp-action="Logout"
+                                   data-swal-title="Đăng xuất khỏi Quản trị?"
+                                   data-swal-text="Bạn có chắc chắn muốn kết thúc phiên làm việc Quản trị viên?">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <main class="adm-content">
+                @RenderBody()
+            </main>
+
+            <footer class="adm-footer">
+                <div><strong>Điện Máy Xanh Admin CMS</strong> — Hệ thống quản lý kinh doanh thiết bị điện tử & gia dụng</div>
+                <div class="d-flex align-items-center gap-3">
+                    <span><i class="bi bi-shield-check text-success me-1"></i>Bảo mật phân quyền Admin</span>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            window.dmxNotification = { type: "success", message: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["SuccessMessage"])) };
+        </script>
+    }
+    else if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            window.dmxNotification = { type: "error", message: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ErrorMessage"])) };
+        </script>
+    }
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const toggleBtn = document.getElementById("admMenuToggle");
+            const sidebar = document.getElementById("admSidebar");
+            const backdrop = document.getElementById("admBackdrop");
+            if (toggleBtn && sidebar && backdrop) {
+                toggleBtn.addEventListener("click", function () {
+                    sidebar.classList.toggle("show");
+                    backdrop.classList.toggle("show");
+                });
+                backdrop.addEventListener("click", function () {
+                    sidebar.classList.remove("show");
+                    backdrop.classList.remove("show");
+                });
+            }
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

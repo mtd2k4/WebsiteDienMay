@@ -1,0 +1,347 @@
+@model WebsiteDienMay.Models.PrintInvoiceViewModel
+@{
+    Layout = null;
+    var order = Model.Order;
+    var stt = 1;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hóa đơn bán lẻ & Phiếu xuất kho #@order.OrderCode - Điện Máy Xanh</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #1e293b;
+            font-size: 13.5px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 24px 0;
+        }
+
+        .invoice-sheet {
+            background: #ffffff;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 20mm;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #0071e3;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+
+        .brand-badge {
+            background: #fed700;
+            color: #004899;
+            font-weight: 900;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .invoice-title {
+            text-align: center;
+            margin: 24px 0;
+        }
+
+        .invoice-title h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 6px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .invoice-info-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .invoice-table th, .invoice-table td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 10px;
+            vertical-align: middle;
+        }
+
+        .invoice-table th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            color: #0f172a;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .invoice-summary {
+            margin-left: auto;
+            width: 340px;
+            margin-bottom: 24px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+
+        .summary-row.total {
+            border-top: 2px solid #0f172a;
+            padding-top: 8px;
+            font-weight: 800;
+            font-size: 16px;
+            color: #004899;
+        }
+
+        .invoice-signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .sig-col {
+            width: 30%;
+        }
+
+        .sig-col .title {
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .sig-col .sub {
+            font-size: 12px;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .sig-col .space {
+            height: 70px;
+        }
+
+        .no-print-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px 24px;
+            z-index: 10000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        @@media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+            .no-print-bar {
+                display: none !important;
+            }
+            .invoice-sheet {
+                box-shadow: none;
+                padding: 10mm;
+                width: 100%;
+                min-height: auto;
+                margin: 0;
+            }
+            @@page {
+                size: A4 portrait;
+                margin: 8mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Thanh thao tác in nhanh trên màn hình -->
+    <div class="no-print-bar">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark font-monospace fw-bold">#@order.OrderCode</span>
+            <span class="fw-semibold">Xem trước Hóa đơn bán hàng & Phiếu xuất kho</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" onclick="window.print()" class="btn btn-primary btn-sm fw-bold px-3">
+                <i class="bi bi-printer-fill me-1"></i>In hóa đơn ngay (Ctrl + P)
+            </button>
+            <button type="button" onclick="window.close()" class="btn btn-outline-light btn-sm px-3">
+                <i class="bi bi-x-lg me-1"></i>Đóng
+            </button>
+        </div>
+    </div>
+
+    <div style="height: 38px;" class="d-print-none"></div>
+
+    <!-- Trang hóa đơn A4 -->
+    <div class="invoice-sheet">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div>
+                <div class="brand-badge">ĐIỆN MÁY XANH</div>
+                <div class="fw-bold fs-6 text-dark">@Model.StoreName</div>
+                <div class="text-muted" style="font-size: 12.5px;">Địa chỉ: @Model.StoreAddress</div>
+                <div class="text-muted" style="font-size: 12.5px;">Tổng đài hỗ trợ: @Model.StoreHotline</div>
+                <div class="text-muted" style="font-size: 12.5px;">Mã số thuế: @Model.StoreTaxCode | Website: @Model.StoreWebsite</div>
+            </div>
+            <div class="text-end">
+                <div class="text-secondary small">MÃ CHỨNG TỪ:</div>
+                <div class="fw-extrabold fs-5 text-primary font-monospace">#@order.OrderCode</div>
+                <div class="text-muted small mt-1">Ngày lập: @order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                <div class="badge bg-light text-dark border font-monospace mt-1">Giao dịch: @order.PaymentMethod</div>
+            </div>
+        </div>
+
+        <!-- Title -->
+        <div class="invoice-title">
+            <h2>HÓA ĐƠN BÁN LẺ KIÊM PHIẾU XUẤT KHO</h2>
+            <div class="text-muted small">Căn cứ theo Đơn hàng trực tuyến #@order.OrderCode ngày @order.CreatedAt.ToString("dd/MM/yyyy")</div>
+        </div>
+
+        <!-- Customer & Order Information -->
+        <div class="invoice-info-box">
+            <div class="row g-2">
+                <div class="col-6">
+                    <div><strong>Khách hàng / Người nhận:</strong> @order.CustomerName</div>
+                    <div><strong>Số điện thoại:</strong> @order.CustomerPhone</div>
+                    @if (!string.IsNullOrWhiteSpace(order.CustomerEmail))
+                    {
+                        <div><strong>Email:</strong> @order.CustomerEmail</div>
+                    }
+                </div>
+                <div class="col-6">
+                    <div><strong>Địa chỉ giao nhận:</strong> @order.ShippingAddress</div>
+                    <div><strong>Trạng thái thanh toán:</strong> <span class="fw-bold">@order.PaymentStatus</span></div>
+                    <div><strong>Ghi chú đơn hàng:</strong> @(string.IsNullOrWhiteSpace(order.Note) ? "Không có" : order.Note)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Table -->
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">STT</th>
+                    <th style="width: 15%;">Mã SP</th>
+                    <th style="text-align: left;">Tên thiết bị điện tử / Phụ kiện</th>
+                    <th style="width: 8%;">ĐVT</th>
+                    <th style="width: 8%;">SL</th>
+                    <th style="width: 18%; text-align: right;">Đơn giá (VNĐ)</th>
+                    <th style="width: 18%; text-align: right;">Thành tiền (VNĐ)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in order.OrderDetails)
+                {
+                    var lineTotal = item.UnitPrice * item.Quantity;
+                    <tr>
+                        <td class="text-center font-monospace">@(stt++)</td>
+                        <td class="text-center font-monospace small">@(item.Product?.Code ?? $"SP-{item.ProductId}")</td>
+                        <td>
+                            <div class="fw-bold text-dark">@item.ProductName</div>
+                            <div class="text-muted small" style="font-size: 11px;">Bảo hành chính hãng @(item.Product?.WarrantyMonths ?? 24) tháng</div>
+                        </td>
+                        <td class="text-center">Cái</td>
+                        <td class="text-center fw-bold">@item.Quantity</td>
+                        <td class="text-end font-monospace">@item.UnitPrice.ToString("N0")</td>
+                        <td class="text-end font-monospace fw-bold">@lineTotal.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Summary & In Words -->
+        <div class="d-flex justify-content-between align-items-start">
+            <div style="max-width: 55%;">
+                <div class="p-3 rounded-2 bg-light border small">
+                    <div class="fw-bold text-dark mb-1"><i class="bi bi-shield-check me-1 text-primary"></i>Cam kết Siêu thị Điện Máy Xanh:</div>
+                    <ul class="mb-0 ps-3 text-muted" style="font-size: 11.5px;">
+                        <li>Hàng chính hãng 100%, nguyên đai nguyên kiện mới hoàn toàn.</li>
+                        <li>Bảo hành 1 đổi 1 trong 30 ngày nếu có lỗi từ nhà sản xuất.</li>
+                        <li>Quý khách vui lòng kiểm tra thiết bị và phụ kiện trước khi ký nhận.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="invoice-summary">
+                <div class="summary-row">
+                    <span class="text-muted">Cộng tiền hàng:</span>
+                    <span class="font-monospace fw-semibold">@order.SubTotal.ToString("N0") đ</span>
+                </div>
+                @if (order.DiscountAmount > 0)
+                {
+                    <div class="summary-row text-danger">
+                        <span>Ưu đãi Voucher (@order.CouponCode):</span>
+                        <span class="font-monospace fw-semibold">-@order.DiscountAmount.ToString("N0") đ</span>
+                    </div>
+                }
+                <div class="summary-row">
+                    <span class="text-muted">Phí vận chuyển & lắp đặt:</span>
+                    <span class="text-success fw-bold">Miễn phí</span>
+                </div>
+                <div class="summary-row total">
+                    <span>TỔNG CỘNG THANH TOÁN:</span>
+                    <span class="font-monospace">@order.TotalAmount.ToString("N0") đ</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-2 p-2 bg-light border rounded small">
+            <strong>Số tiền viết bằng chữ:</strong> <span class="fst-italic text-primary fw-bold">@Model.AmountInWords</span>
+        </div>
+
+        <!-- 3 Signatures -->
+        <div class="invoice-signatures">
+            <div class="sig-col">
+                <div class="title">NGƯỜI MUA HÀNG</div>
+                <div class="sub">(Ký, ghi rõ họ tên)</div>
+                <div class="space"></div>
+                <div class="fw-bold text-dark">@order.CustomerName</div>
+            </div>
+
+            <div class="sig-col">
+                <div class="title">NHÂN VIÊN GIAO NHẬN</div>
+                <div class="sub">(Ký, ghi rõ họ tên)</div>
+                <div class="space"></div>
+                <div class="text-muted">...................................</div>
+            </div>
+
+            <div class="sig-col">
+                <div class="title">THỦ KHO / KẾ TOÁN</div>
+                <div class="sub">(Ký, đóng dấu)</div>
+                <div class="space"></div>
+                <div class="fw-bold text-dark">Quản trị viên hệ thống</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

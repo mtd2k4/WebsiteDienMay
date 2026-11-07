@@ -1,0 +1,119 @@
+@model WebsiteDienMay.Models.Order
+@{
+    ViewData["Title"] = "Hoàn tất đặt hàng - " + Model.OrderCode;
+}
+
+<!-- Thanh tiến trình mua hàng 3 bước -->
+<div class="dmx-stepper d-none d-md-flex">
+    <div class="dmx-step-item completed">
+        <span class="dmx-step-circle"><i class="bi bi-check-lg"></i></span>
+        <span>Giỏ hàng</span>
+    </div>
+    <div class="dmx-step-line"></div>
+    <div class="dmx-step-item completed">
+        <span class="dmx-step-circle"><i class="bi bi-check-lg"></i></span>
+        <span>Thông tin đặt hàng & Thanh toán</span>
+    </div>
+    <div class="dmx-step-line"></div>
+    <div class="dmx-step-item completed">
+        <span class="dmx-step-circle"><i class="bi bi-check-lg"></i></span>
+        <span>Hoàn tất đơn hàng</span>
+    </div>
+</div>
+
+<div class="dmx-section-card mx-auto" style="max-width: 860px;">
+    <div class="text-center border-bottom pb-4 mb-4">
+        <div class="mb-2">
+            <span class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle" style="width: 72px; height: 72px;">
+                <i class="bi bi-check-circle-fill fs-1"></i>
+            </span>
+        </div>
+        <h3 class="fw-black text-success mt-2">ĐẶT HÀNG THÀNH CÔNG</h3>
+        <p class="text-muted mb-2">Cảm ơn quý khách <strong>@Model.CustomerName</strong> đã tin tưởng mua sắm tại Siêu thị Điện Máy Xanh.</p>
+        <div class="d-inline-block px-4 py-2 rounded-pill bg-primary-subtle text-primary fw-bold fs-6 border border-primary-subtle">
+            Mã đơn hàng: @Model.OrderCode
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="p-3 border rounded-3 bg-light h-100">
+                <h6 class="fw-black text-primary text-uppercase mb-2"><i class="bi bi-person-lines-fill me-2"></i>Thông tin người nhận</h6>
+                <div class="small mb-1"><strong>Khách hàng:</strong> @Model.CustomerName</div>
+                <div class="small mb-1"><strong>Số điện thoại:</strong> @Model.CustomerPhone</div>
+                @if (!string.IsNullOrEmpty(Model.CustomerEmail))
+                {
+                    <div class="small mb-1"><strong>Email:</strong> @Model.CustomerEmail</div>
+                }
+                <div class="small mb-1"><strong>Địa chỉ giao & lắp đặt:</strong> @Model.ShippingAddress</div>
+                @if (!string.IsNullOrEmpty(Model.Note))
+                {
+                    <div class="small"><strong>Ghi chú:</strong> @Model.Note</div>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="p-3 border rounded-3 bg-light h-100">
+                <h6 class="fw-black text-primary text-uppercase mb-2"><i class="bi bi-receipt me-2"></i>Thông tin thanh toán & vận chuyển</h6>
+                <div class="small mb-1"><strong>Thời gian đặt:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                <div class="small mb-1"><strong>Hình thức thanh toán:</strong> @Model.PaymentMethod</div>
+                <div class="small mb-1"><strong>Trạng thái thanh toán:</strong> @Model.PaymentStatus</div>
+                <div class="small"><strong>Trạng thái xử lý:</strong> <span class="badge bg-warning text-dark">@Model.OrderStatus</span></div>
+            </div>
+        </div>
+    </div>
+
+    <h6 class="fw-black text-uppercase mb-2">Danh sách thiết bị đặt mua</h6>
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th class="text-center" style="width: 100px;">Số lượng</th>
+                    <th class="text-end" style="width: 150px;">Đơn giá</th>
+                    <th class="text-end" style="width: 150px;">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.OrderDetails)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="@item.ProductImage" alt="@item.ProductName" style="width: 50px; height: 50px; object-fit: contain;" />
+                                <span class="fw-semibold">@item.ProductName</span>
+                            </div>
+                        </td>
+                        <td class="text-center fw-bold">@item.Quantity</td>
+                        <td class="text-end">@item.UnitPrice.ToString("N0") đ</td>
+                        <td class="text-end fw-bold text-danger">@((item.UnitPrice * item.Quantity).ToString("N0")) đ</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="text-end">Tạm tính:</td>
+                    <td class="text-end fw-semibold">@Model.SubTotal.ToString("N0") đ</td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-end">Giảm giá ưu đãi:</td>
+                    <td class="text-end text-success fw-semibold">-@Model.DiscountAmount.ToString("N0") đ</td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-end fw-bold">Tổng thanh toán:</td>
+                    <td class="text-end fw-black fs-5 text-danger">@Model.TotalAmount.ToString("N0") đ</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+        <a asp-action="TrackOrder" asp-route-keyword="@Model.OrderCode" class="btn btn-outline-primary px-4 fw-bold">
+            <i class="bi bi-truck me-1"></i>Theo dõi tiến độ đơn hàng
+        </a>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary px-4 fw-bold">
+            <i class="bi bi-bag-check me-1"></i>Tiếp tục mua sắm
+        </a>
+    </div>
+</div>

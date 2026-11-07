@@ -1,0 +1,424 @@
+@model WebsiteDienMay.Models.ProductDetailViewModel
+@{
+    var p = Model.Product;
+    ViewData["Title"] = p.Name;
+    var savings = Math.Max(0, p.OriginalPrice - p.Price);
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white p-3 rounded-3 shadow-sm mb-0 border">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-primary fw-semibold">Trang chủ</a></li>
+        @if (p.Category != null)
+        {
+            <li class="breadcrumb-item">
+                <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@p.CategoryId" class="text-primary fw-semibold">@p.Category.Name</a>
+            </li>
+        }
+        <li class="breadcrumb-item active" aria-current="page">@p.Name</li>
+    </ol>
+</nav>
+
+<div class="dmx-section-card">
+    <!-- Header thông tin định danh sản phẩm -->
+    <div class="border-bottom pb-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                @if (p.Brand != null)
+                {
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">@p.Brand.Name - @p.Brand.Origin</span>
+                }
+                <span class="badge bg-light text-secondary border">Mã SP: @p.Code</span>
+            </div>
+            <h3 class="fw-black mb-1 text-dark">@p.Name</h3>
+            <div class="d-flex align-items-center flex-wrap gap-3 small text-muted">
+                <span>
+                    <i class="bi bi-star-fill text-warning"></i>
+                    <strong class="text-dark">@p.RatingAverage.ToString("0.0")</strong>
+                    <a href="#reviews-section" class="text-primary ms-1">(@p.RatingCount đánh giá)</a>
+                </span>
+                <span>|</span>
+                <span>Đã bán: <strong class="text-dark">@p.SoldCount sản phẩm</strong></span>
+                <span>|</span>
+                <span>Bảo hành: <strong class="text-primary">@p.WarrantyMonths tháng chính hãng</strong></span>
+            </div>
+        </div>
+
+        @if (p.StockQuantity > 0)
+        {
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6">
+                <i class="bi bi-check-circle-fill me-1"></i>Còn hàng (@p.StockQuantity máy sẵn sàng giao ngay)
+            </span>
+        }
+        else
+        {
+            <span class="badge bg-danger px-3 py-2 fs-6">Tạm hết hàng</span>
+        }
+    </div>
+
+    <div class="row g-4">
+        <!-- Cột trái: Bộ sưu tập ảnh + Chính sách cam kết + Bài viết đánh giá -->
+        <div class="col-lg-7">
+            <div class="dmx-detail-main-img mb-3">
+                <img id="mainProductImage" src="@p.ImageUrl" alt="@p.Name" />
+            </div>
+
+            @if (Model.GalleryImages.Count > 1)
+            {
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    @for (int i = 0; i < Model.GalleryImages.Count; i++)
+                    {
+                        var img = Model.GalleryImages[i];
+                        <div class="dmx-thumb-item @(i == 0 ? "active" : "")"
+                             onclick="document.getElementById('mainProductImage').src='@img'; document.querySelectorAll('.dmx-thumb-item').forEach(el => el.classList.remove('active')); this.classList.add('active');">
+                            <img src="@img" alt="@p.Name" />
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Khối 4 Chính sách Cam kết Vàng -->
+            <div class="p-3 rounded-4 border bg-light mb-4">
+                <h6 class="fw-black text-uppercase text-primary mb-3">
+                    <i class="bi bi-shield-fill-check me-2"></i>Chính sách bảo hành & Dịch vụ tiêu chuẩn Điện Máy Xanh
+                </h6>
+                <div class="row g-3 small">
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-2 bg-white p-2 rounded-3 border h-100">
+                            <i class="bi bi-arrow-repeat text-primary fs-5"></i>
+                            <div>
+                                <div class="fw-bold">Hư gì đổi nấy 30 ngày</div>
+                                <div class="text-muted">Đổi máy mới 100% tận nhà hoàn toàn miễn phí nếu lỗi NSX</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-2 bg-white p-2 rounded-3 border h-100">
+                            <i class="bi bi-patch-check-fill text-primary fs-5"></i>
+                            <div>
+                                <div class="fw-bold">Bảo hành chính hãng @p.WarrantyMonths tháng</div>
+                                <div class="text-muted">Có kỹ thuật viên hãng hỗ trợ kiểm tra bảo hành tận nơi</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-2 bg-white p-2 rounded-3 border h-100">
+                            <i class="bi bi-truck text-primary fs-5"></i>
+                            <div>
+                                <div class="fw-bold">Miễn phí giao & công lắp đặt</div>
+                                <div class="text-muted">Giao hàng nhanh trong ngày, hướng dẫn sử dụng chi tiết</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-2 bg-white p-2 rounded-3 border h-100">
+                            <i class="bi bi-box-seam-fill text-primary fs-5"></i>
+                            <div>
+                                <div class="fw-bold">Nguyên hộp, đầy đủ phụ kiện</div>
+                                <div class="text-muted">Mới 100%, nguyên niêm phong từ nhà sản xuất</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bài viết mô tả chi tiết -->
+            <div class="p-3 rounded-4 border bg-white">
+                <h5 class="fw-black border-bottom pb-2 mb-3 text-uppercase">
+                    <i class="bi bi-file-earmark-richtext text-primary me-2"></i>Đặc điểm nổi bật của @p.Name
+                </h5>
+                <div class="fw-semibold text-primary mb-2">@p.ShortDescription</div>
+                <p class="text-secondary mb-0" style="line-height: 1.8; text-align: justify;">@p.Description</p>
+            </div>
+        </div>
+
+        <!-- Cột phải: Khung Giá bán + Khuyến mãi + Đặt hàng + Thông số kỹ thuật -->
+        <div class="col-lg-5">
+            <!-- Khung Giá bán nổi bật -->
+            <div class="dmx-price-banner-box mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span class="small fw-bold text-uppercase text-danger">
+                        <i class="bi bi-lightning-charge-fill me-1"></i>Giá mua trực tuyến ưu đãi
+                    </span>
+                    @if (p.IsInstallment0Percent)
+                    {
+                        <span class="badge bg-primary">Trả góp 0% lãi suất</span>
+                    }
+                </div>
+                <div class="d-flex align-items-baseline gap-2 flex-wrap">
+                    <span class="fs-2 fw-black text-danger">@p.Price.ToString("N0") đ</span>
+                    @if (p.OriginalPrice > p.Price)
+                    {
+                        <span class="text-muted text-decoration-line-through fs-6">@p.OriginalPrice.ToString("N0") đ</span>
+                        <span class="badge bg-danger">-@p.DiscountPercent%</span>
+                    }
+                </div>
+                @if (savings > 0)
+                {
+                    <div class="small text-success fw-semibold mt-1">
+                        <i class="bi bi-piggy-bank-fill me-1"></i>Tiết kiệm ngay: @savings.ToString("N0") đ so với giá niêm yết
+                    </div>
+                }
+            </div>
+
+            <!-- Khung Quà tặng & Khuyến mãi -->
+            <div class="dmx-promo-box mb-3">
+                <div class="dmx-promo-box-header d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-gift-fill me-2"></i>Quà tặng & Khuyến mãi đặc quyền</span>
+                    <span class="badge bg-warning text-dark">Áp dụng ngay</span>
+                </div>
+                <div class="p-3">
+                    <ul class="list-unstyled mb-3 small">
+                        @for (int i = 0; i < Model.Promotions.Count; i++)
+                        {
+                            <li class="mb-2 d-flex align-items-start gap-2">
+                                <span class="badge rounded-pill bg-primary" style="min-width: 22px;">@(i + 1)</span>
+                                <span>@Model.Promotions[i]</span>
+                            </li>
+                        }
+                    </ul>
+
+                    <!-- Thẻ Voucher gợi ý -->
+                    <div class="p-2 rounded-3 bg-white border border-primary-subtle d-flex align-items-center justify-content-between small">
+                        <div>
+                            <i class="bi bi-ticket-perforated-fill text-primary me-1"></i>
+                            Mã giảm thêm <strong>500.000đ</strong> tại giỏ hàng:
+                        </div>
+                        <span class="badge bg-primary font-monospace">DMX500K</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Khung nút Đặt mua -->
+            <div class="p-3 rounded-4 border bg-white mb-3">
+                @if (p.StockQuantity > 0)
+                {
+                    <form asp-controller="Cart" asp-action="AddToCart" method="post" class="mb-2">
+                        <input type="hidden" name="productId" value="@p.Id" />
+                        <input type="hidden" name="buyNow" value="true" />
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div>
+                                <span class="fw-bold small d-block">Chọn số lượng đặt mua:</span>
+                                <span class="text-muted" style="font-size: 12px;">Kho hiện có: <strong class="text-primary">@p.StockQuantity</strong> sản phẩm</span>
+                            </div>
+                            <div class="input-group input-group-sm" style="width: 130px;">
+                                <button type="button" class="btn btn-outline-secondary fw-bold"
+                                        onclick="var q=document.getElementById('detailQty'); if(parseInt(q.value)>1) q.value=parseInt(q.value)-1; document.getElementById('addCartQty').value=q.value;">-</button>
+                                <input type="number" id="detailQty" name="quantity" value="1" min="1" max="@p.StockQuantity" class="form-control text-center fw-bold"
+                                       onchange="document.getElementById('addCartQty').value=this.value;" />
+                                <button type="button" class="btn btn-outline-secondary fw-bold"
+                                        onclick="var q=document.getElementById('detailQty'); if(parseInt(q.value)<@p.StockQuantity) q.value=parseInt(q.value)+1; document.getElementById('addCartQty').value=q.value;">+</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="dmx-buy-now-btn">
+                            <div class="fs-6 text-uppercase">MUA NGAY - GIAO NHANH TẬN NƠI</div>
+                            <div class="small fw-normal">Miễn phí lắp đặt hoặc nhận hàng tại siêu thị</div>
+                        </button>
+                    </form>
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                <input type="hidden" name="productId" value="@p.Id" />
+                                <input type="hidden" id="addCartQty" name="quantity" value="1" />
+                                <input type="hidden" name="buyNow" value="false" />
+                                <button type="submit" class="btn btn-outline-primary w-100 py-2 fw-bold">
+                                    <i class="bi bi-cart-plus me-1"></i>Thêm vào giỏ
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-6">
+                            <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                <input type="hidden" name="productId" value="@p.Id" />
+                                <input type="hidden" name="quantity" value="1" />
+                                <input type="hidden" name="buyNow" value="true" />
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                                    <i class="bi bi-credit-card me-1"></i>Trả góp 0%
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="mt-2 text-center">
+                        <button type="button" class="btn btn-light border btn-sm text-secondary w-100 fw-semibold btn-card-compare py-2" data-id="@p.Id">
+                            <i class="bi bi-arrow-left-right text-primary me-1"></i>So sánh với sản phẩm khác
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-3 rounded-3 bg-light border text-center">
+                        <div class="fw-bold text-danger fs-6 mb-1">
+                            <i class="bi bi-exclamation-circle me-1"></i>Sản phẩm hiện đang tạm hết hàng trong kho
+                        </div>
+                        <div class="small text-muted">Đang chờ nhập bổ sung lô hàng mới từ nhà phân phối chính hãng.</div>
+                    </div>
+                }
+            </div>
+
+            <!-- Bảng Thông số kỹ thuật -->
+            <div class="p-3 rounded-4 border bg-white">
+                <h6 class="fw-black text-uppercase border-bottom pb-2 mb-3">
+                    <i class="bi bi-sliders text-primary me-2"></i>Thông số kỹ thuật chi tiết
+                </h6>
+                <table class="table table-striped table-sm align-middle mb-0 small">
+                    <tbody>
+                        @foreach (var spec in Model.SpecList)
+                        {
+                            <tr>
+                                <td class="text-muted fw-semibold py-2" style="width: 42%;">@spec.Key</td>
+                                <td class="fw-medium py-2">@spec.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Khu vực Đánh giá & Nhận xét khách hàng -->
+<div id="reviews-section" class="dmx-section-card">
+    <div class="dmx-section-header">
+        <h4 class="dmx-section-title">Đánh giá & Nhận xét từ khách hàng (@Model.Reviews.Count)</h4>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <!-- Khung điểm đánh giá trung bình -->
+            <div class="p-3 rounded-3 bg-light border d-flex align-items-center gap-4 mb-3">
+                <div class="text-center pe-4 border-end">
+                    <div class="display-6 fw-black text-warning">@p.RatingAverage.ToString("0.0")<span class="fs-5 text-muted">/5</span></div>
+                    <div class="text-warning mb-1">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <div class="small text-muted">@p.RatingCount lượt đánh giá</div>
+                </div>
+                <div class="flex-grow-1 small">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span style="width: 45px;">5 sao</span>
+                        <div class="progress flex-grow-1" style="height: 8px;">
+                            <div class="progress-bar bg-warning" style="width: 88%;"></div>
+                        </div>
+                        <span class="text-muted" style="width: 35px;">88%</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span style="width: 45px;">4 sao</span>
+                        <div class="progress flex-grow-1" style="height: 8px;">
+                            <div class="progress-bar bg-warning" style="width: 12%;"></div>
+                        </div>
+                        <span class="text-muted" style="width: 35px;">12%</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="width: 45px;">1-3 sao</span>
+                        <div class="progress flex-grow-1" style="height: 8px;">
+                            <div class="progress-bar bg-warning" style="width: 0%;"></div>
+                        </div>
+                        <span class="text-muted" style="width: 35px;">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (!Model.Reviews.Any())
+            {
+                <div class="p-4 bg-light rounded-3 text-center text-muted border">
+                    Chưa có nhận xét nào cho sản phẩm này. Hãy là khách hàng đầu tiên chia sẻ cảm nhận.
+                </div>
+            }
+            else
+            {
+                @foreach (var rv in Model.Reviews)
+                {
+                    <div class="border rounded-3 p-3 mb-2 bg-white">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-size: 14px;">
+                                    @(string.IsNullOrEmpty(rv.CustomerName) ? "K" : rv.CustomerName.Substring(0, 1).ToUpper())
+                                </span>
+                                <div>
+                                    <div class="fw-bold">
+                                        @rv.CustomerName
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle ms-1 fw-normal">
+                                            <i class="bi bi-patch-check-fill"></i> Đã mua tại Điện Máy Xanh
+                                        </span>
+                                    </div>
+                                    <div>
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <i class="bi @(i <= rv.Rating ? "bi-star-fill text-warning" : "bi-star text-muted") small"></i>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="small text-muted">@rv.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <div class="text-secondary ps-1">@rv.Comment</div>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="col-lg-5">
+            <div class="p-4 bg-light border rounded-4">
+                <h6 class="fw-black text-uppercase text-primary mb-3">
+                    <i class="bi bi-pencil-square me-2"></i>Viết đánh giá của bạn
+                </h6>
+                <form asp-action="AddReview" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productId" value="@p.Id" />
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Họ và tên của bạn *</label>
+                        <input type="text" name="customerName" class="form-control form-control-sm" required placeholder="Nhập họ và tên" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Số điện thoại mua hàng</label>
+                        <input type="text" name="customerPhone" class="form-control form-control-sm" placeholder="Nhập số điện thoại" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Mức độ hài lòng</label>
+                        <select name="rating" class="form-select form-select-sm">
+                            <option value="5">5 sao - Rất hài lòng</option>
+                            <option value="4">4 sao - Hài lòng</option>
+                            <option value="3">3 sao - Bình thường</option>
+                            <option value="2">2 sao - Chưa tốt</option>
+                            <option value="1">1 sao - Không hài lòng</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Nội dung nhận xét *</label>
+                        <textarea name="comment" rows="3" class="form-control form-control-sm" required placeholder="Chia sẻ trải nghiệm thực tế của bạn về sản phẩm..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">
+                        <i class="bi bi-send-fill me-1"></i>Gửi đánh giá sản phẩm
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sản phẩm tương tự cùng danh mục -->
+@if (Model.RelatedProducts.Any())
+{
+    <div class="dmx-section-card">
+        <div class="dmx-section-header">
+            <h4 class="dmx-section-title">Sản phẩm tương tự cùng phân khúc</h4>
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@p.CategoryId" class="btn btn-outline-primary btn-sm fw-semibold">
+                Xem thêm <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row g-3">
+            @foreach (var item in Model.RelatedProducts)
+            {
+                <div class="col-xl-3 col-lg-4 col-sm-6">
+                    <partial name="_ProductCard" model="item" />
+                </div>
+            }
+        </div>
+    </div>
+}

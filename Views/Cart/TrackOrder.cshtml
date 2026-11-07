@@ -1,0 +1,137 @@
+@model List<WebsiteDienMay.Models.Order>
+@{
+    ViewData["Title"] = "Tra cứu lịch sử và tiến độ đơn hàng";
+    var keyword = ViewBag.Keyword as string;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white p-3 rounded-3 shadow-sm mb-0 border">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-primary fw-semibold">Trang chủ</a></li>
+        <li class="breadcrumb-item active fw-semibold" aria-current="page">Tra cứu đơn đặt hàng</li>
+    </ol>
+</nav>
+
+<div class="dmx-section-card mx-auto" style="max-width: 960px;">
+    <div class="text-center border-bottom pb-4 mb-4">
+        <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-2" style="width: 60px; height: 60px;">
+            <i class="bi bi-receipt-cutoff fs-2"></i>
+        </span>
+        <h3 class="fw-black text-primary mb-1">TRA CỨU ĐƠN HÀNG & BẢO HÀNH ĐIỆN TỬ</h3>
+        <p class="text-muted small mb-3">Nhập Mã đơn hàng hoặc Số điện thoại đặt mua để kiểm tra tiến độ giao hàng và lắp đặt theo thời gian thực.</p>
+
+        <form asp-action="TrackOrder" method="get" class="row g-2 justify-content-center mx-auto" style="max-width: 680px;">
+            <div class="col-sm-9">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search text-primary"></i></span>
+                    <input type="text" name="keyword" value="@keyword" class="form-control" placeholder="Nhập mã đơn hàng (VD: DMX2026110101) hoặc SĐT (VD: 0977654321)..." required />
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <button type="submit" class="btn btn-primary w-100 fw-bold">
+                    Tra cứu ngay
+                </button>
+            </div>
+        </form>
+
+        <div class="small text-muted mt-3">
+            Tra cứu nhanh đơn hàng mẫu:
+            <a asp-action="TrackOrder" asp-route-keyword="DMX2026110101" class="badge bg-light text-primary border ms-1">DMX2026110101</a>
+            <a asp-action="TrackOrder" asp-route-keyword="DMX2026110402" class="badge bg-light text-primary border ms-1">DMX2026110402</a>
+            <a asp-action="TrackOrder" asp-route-keyword="0977654321" class="badge bg-light text-primary border ms-1">SĐT: 0977654321</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(keyword))
+    {
+        if (!Model.Any())
+        {
+            <div class="text-center py-4">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <h5 class="fw-bold mt-2">Không tìm thấy đơn hàng khớp với "@keyword"</h5>
+                <p class="text-muted small mb-0">Vui lòng kiểm tra lại chính xác Mã đơn hàng hoặc Số điện thoại người nhận.</p>
+            </div>
+        }
+        else
+        {
+            foreach (var order in Model)
+            {
+                int step = order.OrderStatus switch
+                {
+                    "Chờ xác nhận" => 1,
+                    "Đã xác nhận" => 2,
+                    "Đang giao hàng" => 3,
+                    "Hoàn thành" => 4,
+                    _ => 0
+                };
+
+                <div class="border rounded-4 p-4 mb-4 bg-white shadow-sm">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-3 gap-2">
+                        <div>
+                            <span class="badge bg-primary me-2">MÃ ĐƠN: @order.OrderCode</span>
+                            <span class="text-muted small"><i class="bi bi-clock me-1"></i>Đặt lúc: @order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <span class="badge @(order.OrderStatus == "Hoàn thành" ? "bg-success" : order.OrderStatus == "Đã hủy" ? "bg-danger" : "bg-warning text-dark") fs-6 px-3 py-2">
+                            @order.OrderStatus
+                        </span>
+                    </div>
+
+                    <!-- Thanh Tiến Trình Trạng Thái Đơn Hàng 4 Bước -->
+                    @if (order.OrderStatus != "Đã hủy")
+                    {
+                        <div class="dmx-stepper bg-light border mb-3 py-3 d-none d-md-flex">
+                            <div class="dmx-step-item @(step >= 1 ? "completed" : "")">
+                                <span class="dmx-step-circle">1</span>
+                                <span>Đặt hàng</span>
+                            </div>
+                            <div class="dmx-step-line"></div>
+                            <div class="dmx-step-item @(step >= 2 ? "completed" : "")">
+                                <span class="dmx-step-circle">2</span>
+                                <span>Đã xác nhận</span>
+                            </div>
+                            <div class="dmx-step-line"></div>
+                            <div class="dmx-step-item @(step >= 3 ? "completed" : "")">
+                                <span class="dmx-step-circle">3</span>
+                                <span>Đang giao & lắp đặt</span>
+                            </div>
+                            <div class="dmx-step-line"></div>
+                            <div class="dmx-step-item @(step >= 4 ? "completed" : "")">
+                                <span class="dmx-step-circle">4</span>
+                                <span>Hoàn thành</span>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row g-3 small mb-3 p-3 rounded-3 bg-light border">
+                        <div class="col-md-6">
+                            <div><strong>Người nhận:</strong> @order.CustomerName</div>
+                            <div><strong>Số điện thoại:</strong> @order.CustomerPhone</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div><strong>Phương thức thanh toán:</strong> @order.PaymentMethod (@order.PaymentStatus)</div>
+                            <div><strong>Địa chỉ lắp đặt:</strong> @order.ShippingAddress</div>
+                        </div>
+                    </div>
+
+                    @foreach (var d in order.OrderDetails)
+                    {
+                        <div class="d-flex align-items-center justify-content-between py-2 border-top small">
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="@d.ProductImage" alt="@d.ProductName" class="border rounded p-1" style="width: 52px; height: 52px; object-fit: contain;" />
+                                <div>
+                                    <a asp-controller="Product" asp-action="Detail" asp-route-id="@d.ProductId" class="fw-bold text-dark">@d.ProductName</a>
+                                    <div class="text-muted">Số lượng: <strong>@d.Quantity</strong> x @d.UnitPrice.ToString("N0") đ</div>
+                                </div>
+                            </div>
+                            <span class="fw-black text-danger fs-6">@((d.UnitPrice * d.Quantity).ToString("N0")) đ</span>
+                        </div>
+                    }
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center border-top pt-3 mt-2">
+                        <span class="small text-muted">Ưu đãi giảm giá: <strong class="text-success">-@order.DiscountAmount.ToString("N0") đ</strong></span>
+                        <span class="fw-bold">Tổng thanh toán: <strong class="text-danger fs-4">@order.TotalAmount.ToString("N0") đ</strong></span>
+                    </div>
+                </div>
+            }
+        }
+    }
+</div>

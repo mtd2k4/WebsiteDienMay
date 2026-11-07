@@ -1,0 +1,201 @@
+@using Microsoft.AspNetCore.Http
+@model WebsiteDienMay.Models.CartViewModel
+@{
+    ViewData["Title"] = "Giỏ hàng trực tuyến";
+    var totalQty = Model.Items.Sum(x => x.Quantity);
+    var productSavings = Model.Items.Sum(x => Math.Max(0, x.OriginalPrice - x.UnitPrice) * x.Quantity);
+    var isLoggedIn = Context.Session.GetInt32("USER_ID").HasValue;
+}
+
+<!-- Thanh tiến trình mua hàng 3 bước -->
+<div class="dmx-stepper d-none d-md-flex">
+    <div class="dmx-step-item active">
+        <span class="dmx-step-circle">1</span>
+        <span>Giỏ hàng (@totalQty)</span>
+    </div>
+    <div class="dmx-step-line"></div>
+    <div class="dmx-step-item">
+        <span class="dmx-step-circle">2</span>
+        <span>Thông tin đặt hàng & Thanh toán</span>
+    </div>
+    <div class="dmx-step-line"></div>
+    <div class="dmx-step-item">
+        <span class="dmx-step-circle">3</span>
+        <span>Hoàn tất đơn hàng</span>
+    </div>
+</div>
+
+@if (!Model.Items.Any())
+{
+    <div class="dmx-section-card text-center py-5">
+        <div class="mb-3">
+            <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 84px; height: 84px;">
+                <i class="bi bi-cart-x fs-1"></i>
+            </span>
+        </div>
+        <h4 class="fw-black mt-2">Giỏ hàng của bạn đang trống</h4>
+        <p class="text-muted mb-4">Hãy lựa chọn các sản phẩm Tivi, Tủ lạnh, Máy giặt, Điện thoại, Laptop chính hãng đang giảm giá sâu.</p>
+        <a asp-controller="Product" asp-action="Index" class="btn btn-primary px-4 py-2 fw-bold">
+            <i class="bi bi-bag-plus-fill me-2"></i>Khám phá sản phẩm ngay
+        </a>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        <!-- Cột trái: Danh sách sản phẩm trong giỏ -->
+        <div class="col-lg-8">
+            <div class="dmx-section-card">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-3 mb-3">
+                    <div>
+                        <h5 class="fw-black m-0">Giỏ hàng của bạn <span class="text-primary">(@totalQty sản phẩm)</span></h5>
+                        <div class="small text-muted">Miễn phí giao hàng và công lắp đặt tiêu chuẩn cho đơn hàng</div>
+                    </div>
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-outline-primary btn-sm fw-semibold">
+                        <i class="bi bi-plus-lg me-1"></i>Chọn thêm sản phẩm khác
+                    </a>
+                </div>
+
+                @foreach (var item in Model.Items)
+                {
+                    <div class="p-3 rounded-3 border mb-3 bg-white d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <div class="d-flex align-items-center gap-3" style="max-width: 450px;">
+                            <a asp-controller="Product" asp-action="Detail" asp-route-id="@item.ProductId" class="border rounded-3 p-2 bg-white flex-shrink-0">
+                                <img src="@item.ImageUrl" alt="@item.ProductName" style="width: 82px; height: 82px; object-fit: contain;" />
+                            </a>
+                            <div>
+                                <span class="badge bg-light text-secondary border mb-1">Mã: @item.ProductCode</span>
+                                <a asp-controller="Product" asp-action="Detail" asp-route-id="@item.ProductId" class="fw-bold text-dark d-block mb-1">
+                                    @item.ProductName
+                                </a>
+                                <div class="d-flex align-items-baseline gap-2">
+                                    <span class="text-danger fw-black fs-6">@item.UnitPrice.ToString("N0") đ</span>
+                                    @if (item.OriginalPrice > item.UnitPrice)
+                                    {
+                                        <span class="text-muted text-decoration-line-through small">@item.OriginalPrice.ToString("N0") đ</span>
+                                    }
+                                </div>
+                                <div class="small text-success mt-1">
+                                    <i class="bi bi-check2-circle me-1"></i>Bảo hành chính hãng - Hỗ trợ lắp đặt tận nơi
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3 ms-auto">
+                            <form asp-action="UpdateQuantity" method="post" class="d-inline-flex align-items-center border rounded-3 bg-light p-1">
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <button type="submit" name="quantity" value="@(item.Quantity - 1)" class="btn btn-sm btn-white fw-bold px-2">-</button>
+                                <span class="px-3 fw-black">@item.Quantity</span>
+                                <button type="submit" name="quantity" value="@(item.Quantity + 1)" class="btn btn-sm btn-white fw-bold px-2">+</button>
+                            </form>
+
+                            <div class="text-end" style="min-width: 125px;">
+                                <div class="small text-muted">Thành tiền</div>
+                                <div class="fw-black text-danger fs-6">@item.Total.ToString("N0") đ</div>
+                            </div>
+
+                            <form asp-action="RemoveItem" method="post"
+                                  class="swal-confirm-form"
+                                  data-swal-title="Xóa sản phẩm khỏi giỏ?"
+                                  data-swal-text="Bạn có chắc chắn muốn bỏ '@item.ProductName' khỏi giỏ hàng?"
+                                  data-swal-confirm="Xóa khỏi giỏ">
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Xóa sản phẩm">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Cột phải: Mã giảm giá & Tổng kết thanh toán -->
+        <div class="col-lg-4">
+            <div class="dmx-section-card position-sticky" style="top: 120px;">
+                <h5 class="fw-black border-bottom pb-2 mb-3">
+                    <i class="bi bi-ticket-perforated-fill text-primary me-2"></i>Mã ưu đãi & Thanh toán
+                </h5>
+
+                <form asp-action="ApplyCoupon" method="post" id="couponForm" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" name="couponCode" id="couponInput" value="@Model.CouponCode" class="form-control form-control-sm fw-bold text-uppercase" placeholder="Nhập mã giảm giá..." />
+                        <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">Áp dụng</button>
+                    </div>
+                </form>
+
+                <!-- Danh sách thẻ Voucher chọn nhanh 1 chạm -->
+                <div class="small fw-semibold text-muted mb-2">Chọn nhanh Voucher khả dụng:</div>
+                <div class="d-flex flex-column gap-2 mb-3">
+                    <div class="dmx-voucher-card d-flex align-items-center justify-content-between"
+                         onclick="document.getElementById('couponInput').value='DMX500K'; document.getElementById('couponForm').submit();">
+                        <div>
+                            <div class="fw-bold text-primary small">Mã: DMX500K</div>
+                            <div class="text-muted" style="font-size: 11.5px;">Giảm 500.000đ cho đơn từ 5 triệu</div>
+                        </div>
+                        <span class="badge bg-primary">Dùng ngay</span>
+                    </div>
+                    <div class="dmx-voucher-card d-flex align-items-center justify-content-between"
+                         onclick="document.getElementById('couponInput').value='DMX100K'; document.getElementById('couponForm').submit();">
+                        <div>
+                            <div class="fw-bold text-primary small">Mã: DMX100K</div>
+                            <div class="text-muted" style="font-size: 11.5px;">Giảm trực tiếp 100.000đ cho đơn từ 1 triệu</div>
+                        </div>
+                        <span class="badge bg-primary">Dùng ngay</span>
+                    </div>
+                    <div class="dmx-voucher-card d-flex align-items-center justify-content-between"
+                         onclick="document.getElementById('couponInput').value='TRIAN5PT'; document.getElementById('couponForm').submit();">
+                        <div>
+                            <div class="fw-bold text-primary small">Mã: TRIAN5PT</div>
+                            <div class="text-muted" style="font-size: 11.5px;">Giảm 5% tối đa 1.500.000đ cho đơn từ 3 triệu</div>
+                        </div>
+                        <span class="badge bg-primary">Dùng ngay</span>
+                    </div>
+                </div>
+
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tạm tính (@totalQty sản phẩm):</span>
+                        <span class="fw-bold">@Model.SubTotal.ToString("N0") đ</span>
+                    </div>
+                    @if (productSavings > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-2 small">
+                            <span class="text-muted">Tiết kiệm khuyến mãi gốc:</span>
+                            <span class="text-success fw-semibold">-@productSavings.ToString("N0") đ</span>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Giảm giá Voucher @(string.IsNullOrEmpty(Model.CouponCode) ? "" : $"({Model.CouponCode})"):</span>
+                        <span class="text-success fw-bold">-@Model.DiscountAmount.ToString("N0") đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Phí giao hàng & lắp đặt:</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">Miễn phí</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center border-top pt-3 mb-3">
+                        <span class="fw-bold fs-6">Tổng thanh toán:</span>
+                        <span class="fw-black fs-4 text-danger">@Model.FinalTotal.ToString("N0") đ</span>
+                    </div>
+
+                    @if (isLoggedIn)
+                    {
+                        <a asp-action="Checkout" class="dmx-buy-now-btn d-block text-uppercase">
+                            Tiến hành đặt hàng <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="p-2 rounded-3 bg-warning-subtle text-dark border border-warning-subtle small mb-2">
+                            <i class="bi bi-shield-lock-fill text-primary me-1"></i>Quý khách cần <strong>đăng nhập tài khoản</strong> để tiến hành đặt hàng và thanh toán.
+                        </div>
+                        <a asp-action="Checkout" class="dmx-buy-now-btn d-block text-uppercase">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập để thanh toán
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

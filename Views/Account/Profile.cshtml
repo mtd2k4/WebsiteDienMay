@@ -1,0 +1,118 @@
+@model WebsiteDienMay.Models.User
+@{
+    ViewData["Title"] = "Thông tin tài khoản & Lịch sử mua hàng";
+    var orders = ViewBag.Orders as List<WebsiteDienMay.Models.Order> ?? new List<WebsiteDienMay.Models.Order>();
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-white p-3 rounded-3 shadow-sm mb-0">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-primary">Trang chủ</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Tài khoản của tôi</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="dmx-section-card">
+            <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
+                <h5 class="fw-bold m-0">Hồ sơ cá nhân</h5>
+                <span class="badge @(Model.Role == "Admin" ? "bg-danger" : "bg-primary")">@Model.Role</span>
+            </div>
+
+            <form asp-action="UpdateProfile" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Tên đăng nhập</label>
+                    <input type="text" value="@Model.Username" class="form-control form-control-sm" disabled />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Họ và tên</label>
+                    <input type="text" name="fullName" value="@Model.FullName" class="form-control form-control-sm" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Số điện thoại</label>
+                    <input type="text" name="phone" value="@Model.Phone" class="form-control form-control-sm" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Email</label>
+                    <input type="email" name="email" value="@Model.Email" class="form-control form-control-sm" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Địa chỉ mặc định</label>
+                    <input type="text" name="address" value="@Model.Address" class="form-control form-control-sm" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Đổi mật khẩu mới (Để trống nếu giữ nguyên)</label>
+                    <input type="password" name="newPassword" class="form-control form-control-sm" placeholder="Nhập mật khẩu mới..." />
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Lưu thay đổi</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="dmx-section-card">
+            <h5 class="fw-bold border-bottom pb-2 mb-3">Lịch sử đơn đặt hàng (@orders.Count đơn)</h5>
+
+            @if (!orders.Any())
+            {
+                <div class="text-center py-4 text-muted">
+                    Bạn chưa có đơn đặt hàng nào.
+                </div>
+            }
+            else
+            {
+                @foreach (var order in orders)
+                {
+                    <div class="border rounded-3 p-3 mb-3">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-2 mb-2">
+                            <div>
+                                <strong class="text-primary">Mã đơn: @order.OrderCode</strong>
+                                <span class="small text-muted ms-2">@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            <span class="badge @(order.OrderStatus == "Hoàn thành" ? "bg-success" : order.OrderStatus == "Đã hủy" ? "bg-danger" : "bg-warning text-dark")">
+                                @order.OrderStatus
+                            </span>
+                        </div>
+
+                        @foreach (var item in order.OrderDetails)
+                        {
+                            <div class="d-flex align-items-center justify-content-between py-2 small">
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="@item.ProductImage" alt="@item.ProductName" style="width: 44px; height: 44px; object-fit: contain;" />
+                                    <div>
+                                        <div class="fw-semibold">@item.ProductName</div>
+                                        <div class="text-muted">Số lượng: @item.Quantity x @item.UnitPrice.ToString("N0") đ</div>
+                                    </div>
+                                </div>
+                                <div class="fw-bold text-danger">@((item.UnitPrice * item.Quantity).ToString("N0")) đ</div>
+                            </div>
+                        }
+
+                        <div class="d-flex flex-wrap justify-content-between align-items-center border-top pt-2 mt-2">
+                            <div class="small text-muted">
+                                Thanh toán: <strong>@order.PaymentMethod</strong> (@order.PaymentStatus)
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <span>Tổng tiền: <strong class="text-danger fs-6">@order.TotalAmount.ToString("N0") đ</strong></span>
+                                @if (order.OrderStatus == "Chờ xác nhận")
+                                {
+                                    <form asp-action="CancelOrder" method="post"
+                                          class="swal-confirm-form"
+                                          data-swal-title="Hủy đơn hàng @order.OrderCode?"
+                                          data-swal-text="Bạn có chắc chắn muốn hủy đơn đặt hàng này không?"
+                                          data-swal-confirm="Đồng ý hủy đơn">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="orderId" value="@order.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Hủy đơn</button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,67 @@
+@model WebsiteDienMay.Models.RegisterViewModel
+@{
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+    ViewData["Title"] = "Đăng ký tài khoản thành viên";
+}
+
+<div>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h4 class="fw-black text-primary mb-1">Đăng ký tài khoản mới</h4>
+            <div class="small text-muted">Tạo tài khoản mua sắm và tra cứu bảo hành trực tuyến</div>
+        </div>
+        <a asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" class="btn btn-outline-primary btn-sm fw-semibold">Đã có tài khoản</a>
+    </div>
+
+    <form asp-action="Register" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+        <div class="row g-2">
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Họ và tên *</label>
+                <input asp-for="FullName" class="form-control form-control-sm" placeholder="Nhập họ và tên" required />
+                <span asp-validation-for="FullName" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Tên đăng nhập *</label>
+                <input asp-for="Username" class="form-control form-control-sm" placeholder="Nhập tên đăng nhập" required />
+                <span asp-validation-for="Username" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Số điện thoại *</label>
+                <input asp-for="Phone" class="form-control form-control-sm" placeholder="Nhập số điện thoại" required />
+                <span asp-validation-for="Phone" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Địa chỉ Email *</label>
+                <input asp-for="Email" type="email" class="form-control form-control-sm" placeholder="Nhập email" required />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <div class="col-md-12">
+                <label class="form-label small fw-semibold">Địa chỉ nhận hàng *</label>
+                <input asp-for="Address" class="form-control form-control-sm" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành..." required />
+                <span asp-validation-for="Address" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Mật khẩu *</label>
+                <input asp-for="Password" type="password" class="form-control form-control-sm" placeholder="Tối thiểu 6 ký tự" required />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Xác nhận mật khẩu *</label>
+                <input asp-for="ConfirmPassword" type="password" class="form-control form-control-sm" placeholder="Nhập lại mật khẩu" required />
+                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mt-3 mb-2">
+            <i class="bi bi-person-plus-fill me-1"></i>Hoàn tất đăng ký tài khoản
+        </button>
+
+        <div class="text-center small text-muted">
+            Đã có tài khoản? <a asp-action="Login" class="text-primary fw-bold">Đăng nhập ngay</a>
+        </div>
+    </form>
+</div>
