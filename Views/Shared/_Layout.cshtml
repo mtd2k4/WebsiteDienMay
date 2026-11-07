@@ -348,6 +348,122 @@
         </div>
     </div>
 
+    <!-- Floating Widget Dock (Tư vấn, Hotline, Chatbot, Cuộn đầu trang) -->
+    <div class="dmx-floating-dock">
+        <!-- Nút Cuộn về đầu trang -->
+        <button type="button" id="dmxScrollTopBtn" class="dmx-float-btn scroll-top-btn" title="Cuộn lên đầu trang">
+            <i class="bi bi-chevron-up"></i>
+        </button>
+
+        <!-- Nút Gọi Hotline tư vấn miễn phí -->
+        <a href="tel:18001061" class="dmx-float-btn call-btn" title="Gọi tổng đài tư vấn miễn phí 1800 1061">
+            <i class="bi bi-telephone-fill"></i>
+        </a>
+
+        <!-- Nút Yêu cầu gọi lại tư vấn nhanh -->
+        <button type="button" class="dmx-float-btn callback-btn" data-bs-toggle="modal" data-bs-target="#dmxCallbackModal" title="Đăng ký nhận cuộc gọi tư vấn">
+            <i class="bi bi-headset"></i>
+        </button>
+
+        <!-- Nút Mở Chatbot Trợ lý ảo AI -->
+        <button type="button" id="dmxChatbotToggle" class="dmx-float-btn chatbot-btn" title="Chat với trợ lý ảo Điện Máy Xanh">
+            <i class="bi bi-robot fs-5"></i>
+            <span>Tư vấn 24/7</span>
+        </button>
+    </div>
+
+    <!-- Hộp thoại Chatbot Trợ lý ảo -->
+    <div id="dmxChatbotWindow" class="dmx-chatbot-window d-none">
+        <div class="dmx-chatbot-header">
+            <div class="d-flex align-items-center gap-2">
+                <span class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                    <i class="bi bi-robot fs-6"></i>
+                </span>
+                <div>
+                    <div class="fw-bold fs-6">Trợ lý ảo Điện Máy Xanh</div>
+                    <div class="small opacity-75 d-flex align-items-center gap-1">
+                        <span class="badge bg-success rounded-circle p-1" style="width: 6px; height: 6px;"></span> Trực tuyến 24/7
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="dmxCloseChatbot" class="btn-close btn-close-white" aria-label="Close"></button>
+        </div>
+
+        <div class="dmx-chatbot-body" id="dmxChatMessages">
+            <div class="dmx-chat-bubble bot">
+                Xin chào quý khách! Tôi là <strong>Trợ lý ảo Siêu thị Điện Máy Xanh</strong>. Tôi có thể hỗ trợ quý khách tư vấn thiết bị, kiểm tra tồn kho, hướng dẫn mua trả góp 0% hoặc tra cứu bảo hành.
+            </div>
+            <div class="small text-muted fw-semibold">Gợi ý câu hỏi nhanh:</div>
+            <div class="dmx-chat-chips">
+                <span class="dmx-chat-chip" data-query="Tư vấn Smart Tivi 4K">Tư vấn Smart Tivi 4K</span>
+                <span class="dmx-chat-chip" data-query="Tủ lạnh Inverter tiết kiệm điện">Tủ lạnh Inverter</span>
+                <span class="dmx-chat-chip" data-query="Máy giặt cửa ngang">Máy giặt cửa ngang</span>
+                <span class="dmx-chat-chip" data-query="Chính sách trả góp 0%">Trả góp 0% lãi suất</span>
+                <span class="dmx-chat-chip" data-query="Tra cứu đơn hàng">Tra cứu đơn hàng</span>
+                <span class="dmx-chat-chip" data-query="Chính sách bảo hành">Bảo hành & Đổi trả</span>
+                <span class="dmx-chat-chip" data-query="Mã giảm giá hôm nay">Mã giảm giá Voucher</span>
+            </div>
+        </div>
+
+        <form id="dmxChatForm" class="dmx-chatbot-footer m-0" autocomplete="off">
+            <input type="text" id="dmxChatInput" class="dmx-chatbot-input" placeholder="Nhập câu hỏi (VD: Tivi 55 inch, trả góp...)" />
+            <button type="submit" class="dmx-chatbot-send" title="Gửi câu hỏi">
+                <i class="bi bi-send-fill" style="font-size: 13px;"></i>
+            </button>
+        </form>
+    </div>
+
+    <!-- Modal Yêu cầu gọi lại tư vấn miễn phí -->
+    <div class="modal fade" id="dmxCallbackModal" tabindex="-1" aria-labelledby="dmxCallbackModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-bottom py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                            <i class="bi bi-headset fs-5"></i>
+                        </span>
+                        <div>
+                            <h6 class="modal-title fw-bold text-dark mb-0" id="dmxCallbackModalLabel">YÊU CẦU GỌI LẠI TƯ VẤN MIỄN PHÍ</h6>
+                            <small class="text-muted">Chuyên viên Điện Máy Xanh sẽ liên hệ lại trong vòng 5 phút</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="dmxCallbackForm">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Họ và tên của bạn</label>
+                            <input type="text" id="callbackName" class="form-control" placeholder="Ví dụ: Nguyễn Văn An" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Số điện thoại nhận cuộc gọi <span class="text-danger">*</span></label>
+                            <input type="tel" id="callbackPhone" maxlength="10" pattern="0[35789][0-9]{8}" class="form-control fw-bold" placeholder="10 chữ số (VD: 0988123456)" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" required />
+                            <small class="text-muted" style="font-size: 11.5px;">Chúng tôi cam kết bảo mật số điện thoại của quý khách 100%.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Thiết bị bạn đang quan tâm</label>
+                            <select id="callbackTopic" class="form-select">
+                                <option value="Smart Tivi QLED / OLED 4K">Smart Tivi QLED / OLED 4K</option>
+                                <option value="Tủ lạnh Inverter / Side by Side">Tủ lạnh Inverter / Side by Side</option>
+                                <option value="Máy giặt Inverter cửa ngang / cửa trên">Máy giặt Inverter cửa ngang / cửa trên</option>
+                                <option value="Máy lạnh - Điều hòa tiết kiệm điện">Máy lạnh - Điều hòa tiết kiệm điện</option>
+                                <option value="Điện thoại iPhone / Laptop">Điện thoại iPhone / Laptop chính hãng</option>
+                                <option value="Đồ gia dụng & Máy lọc nước">Đồ gia dụng & Máy lọc nước</option>
+                                <option value="Hỗ trợ hồ sơ Trả góp 0%">Hỗ trợ hồ sơ Trả góp 0%</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top py-2 px-4 bg-light">
+                        <button type="button" class="btn btn-light border btn-sm px-3" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-primary btn-sm fw-bold px-4">
+                            <i class="bi bi-telephone-outbound-fill me-1"></i>Gửi yêu cầu gọi lại
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

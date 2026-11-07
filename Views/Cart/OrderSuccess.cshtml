@@ -35,6 +35,73 @@
         </div>
     </div>
 
+    @if (Model.PaymentMethod == "Banking" || Model.PaymentMethod.Contains("Chuyển khoản", StringComparison.OrdinalIgnoreCase))
+    {
+        var vietQrUrl = $"https://img.vietqr.io/image/MB-0988123456-compact2.png?amount={(long)Model.TotalAmount}&addInfo={Model.OrderCode}&accountName=SIEU%20THI%20DIEN%20MAY%20XANH";
+        <div class="card border-primary mb-4 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-primary text-white py-3 px-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-qr-code-scan fs-4"></i>
+                    <div>
+                        <h6 class="mb-0 fw-bold">QUÉT MÃ VIETQR ĐỂ THANH TOÁN TỰ ĐỘNG</h6>
+                        <small class="opacity-75">Hỗ trợ tất cả ứng dụng Ngân hàng (MB, VCB, Techcombank, Vietinbank, Momo...)</small>
+                    </div>
+                </div>
+                <span class="badge bg-warning text-dark font-monospace fw-bold">NAPAS 247</span>
+            </div>
+            <div class="card-body p-4 bg-light">
+                <div class="row align-items-center g-4">
+                    <div class="col-md-5 text-center">
+                        <div class="bg-white p-3 rounded-3 border d-inline-block shadow-sm">
+                            <img src="@vietQrUrl" alt="VietQR Thanh toán Điện Máy Xanh" class="img-fluid rounded" style="max-width: 230px;" />
+                            <div class="text-muted small mt-2">
+                                <i class="bi bi-shield-check text-success me-1"></i>Chuẩn thanh toán VietQR Quốc gia
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <h6 class="fw-bold text-dark mb-3">Thông tin chuyển khoản ngân hàng:</h6>
+                        <ul class="list-group list-group-flush border rounded-3 bg-white mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Ngân hàng thụ hưởng:</span>
+                                <strong class="text-dark">MBBank (Ngân hàng TMCP Quân Đội)</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Chủ tài khoản:</span>
+                                <strong class="text-primary text-uppercase">SIEU THI DIEN MAY XANH</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Số tài khoản:</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <strong class="font-monospace fs-6 text-dark">0988123456</strong>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="navigator.clipboard.writeText('0988123456'); if(typeof Swal !== 'undefined') Swal.fire({toast:true, position:'top-end', icon:'success', title:'Đã sao chép STK', timer:1500, showConfirmButton:false});" title="Sao chép STK">
+                                        <i class="bi bi-copy"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Số tiền cần thanh toán:</span>
+                                <strong class="fs-5 text-danger font-monospace">@Model.TotalAmount.ToString("N0") đ</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center bg-warning-subtle">
+                                <span class="fw-bold text-dark">Nội dung chuyển khoản (Bắt buộc):</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <strong class="font-monospace fs-6 text-primary">@Model.OrderCode</strong>
+                                    <button type="button" class="btn btn-primary btn-sm py-0 px-2" onclick="navigator.clipboard.writeText('@Model.OrderCode'); if(typeof Swal !== 'undefined') Swal.fire({toast:true, position:'top-end', icon:'success', title:'Đã sao chép Mã đơn', timer:1500, showConfirmButton:false});" title="Sao chép mã đơn">
+                                        <i class="bi bi-copy"></i>
+                                    </button>
+                                </div>
+                            </li>
+                        </ul>
+                        <div class="alert alert-info py-2 px-3 small mb-0">
+                            <i class="bi bi-info-circle-fill me-1"></i>Hệ thống sẽ tự động xác nhận đơn hàng ngay khi nhận được thanh toán từ tài khoản ngân hàng của quý khách.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <div class="row g-3 mb-4">
         <div class="col-md-6">
             <div class="p-3 border rounded-3 bg-light h-100">

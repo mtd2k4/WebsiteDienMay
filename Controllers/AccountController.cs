@@ -40,15 +40,25 @@ namespace WebsiteDienMay.Controllers
                 return View(model);
             }
 
-            var input = model.Username.Trim().ToLower();
+            var input = model.Username.Trim();
             var user = await _context.Users.FirstOrDefaultAsync(u =>
-                (u.Username.ToLower() == input || u.Email.ToLower() == input || u.Phone == input) &&
-                u.PasswordHash == model.Password &&
-                u.IsActive);
+                (u.Username.ToLower() == input.ToLower() || u.Email.ToLower() == input.ToLower() || u.Phone == input));
 
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không chính xác.");
+                ModelState.AddModelError(nameof(model.Username), "Tài khoản hoặc số điện thoại này chưa được đăng ký trong hệ thống.");
+                return View(model);
+            }
+
+            if (!user.IsActive)
+            {
+                ModelState.AddModelError(string.Empty, "Tài khoản của bạn hiện đang bị tạm khóa. Vui lòng liên hệ tổng đài 1800 1061 để được hỗ trợ.");
+                return View(model);
+            }
+
+            if (user.PasswordHash != model.Password)
+            {
+                ModelState.AddModelError(nameof(model.Password), "Mật khẩu không chính xác. Vui lòng kiểm tra lại.");
                 return View(model);
             }
 
@@ -108,14 +118,26 @@ namespace WebsiteDienMay.Controllers
                 return View(model);
             }
 
-            var exists = await _context.Users.AnyAsync(u =>
-                u.Username.ToLower() == model.Username.Trim().ToLower() ||
-                u.Email.ToLower() == model.Email.Trim().ToLower() ||
-                u.Phone == model.Phone.Trim());
-
-            if (exists)
+            var usernameExists = await _context.Users.AnyAsync(u => u.Username.ToLower() == model.Username.Trim().ToLower());
+            if (usernameExists)
             {
-                ModelState.AddModelError(string.Empty, "Tên đăng nhập, Email hoặc Số điện thoại đã được sử dụng.");
+                ModelState.AddModelError(nameof(model.Username), "Tên đăng nhập này đã tồn tại trong hệ thống. Vui lòng chọn tên khác.");
+            }
+
+            var phoneExists = await _context.Users.AnyAsync(u => u.Phone == model.Phone.Trim());
+            if (phoneExists)
+            {
+                ModelState.AddModelError(nameof(model.Phone), "Số điện thoại này đã được đăng ký cho tài khoản khác.");
+            }
+
+            var emailExists = await _context.Users.AnyAsync(u => u.Email.ToLower() == model.Email.Trim().ToLower());
+            if (emailExists)
+            {
+                ModelState.AddModelError(nameof(model.Email), "Địa chỉ Email này đã được sử dụng cho một tài khoản khác.");
+            }
+
+            if (!ModelState.IsValid)
+            {
                 return View(model);
             }
 

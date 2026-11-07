@@ -46,7 +46,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small">Số điện thoại liên hệ <span class="text-danger">*</span></label>
-                        <input asp-for="CustomerPhone" class="form-control" placeholder="Nhập số điện thoại nhận hàng" required />
+                        <input asp-for="CustomerPhone" type="tel" maxlength="10" pattern="0[35789][0-9]{8}" class="form-control" placeholder="10 chữ số (VD: 0988123456)" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" required />
                         <span asp-validation-for="CustomerPhone" class="text-danger small"></span>
                     </div>
                     <div class="col-md-12">

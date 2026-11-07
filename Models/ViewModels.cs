@@ -66,6 +66,7 @@ namespace WebsiteDienMay.Models
         public string CustomerName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Vui lòng nhập số điện thoại liên hệ")]
+        [RegularExpression(@"^0[35789][0-9]{8}$", ErrorMessage = "Số điện thoại nhận hàng không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09)")]
         public string CustomerPhone { get; set; } = string.Empty;
 
         public string? CustomerEmail { get; set; }
@@ -118,6 +119,7 @@ namespace WebsiteDienMay.Models
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
+        [RegularExpression(@"^0[35789][0-9]{8}$", ErrorMessage = "Số điện thoại không hợp lệ (gồm đúng 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09)")]
         public string Phone { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Vui lòng nhập địa chỉ nhận hàng")]

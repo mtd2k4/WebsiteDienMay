@@ -31,7 +31,7 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">Số điện thoại *</label>
-                <input asp-for="Phone" class="form-control form-control-sm" placeholder="Nhập số điện thoại" required />
+                <input asp-for="Phone" type="tel" maxlength="10" pattern="0[35789][0-9]{8}" class="form-control form-control-sm" placeholder="10 chữ số (VD: 0988123456)" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" required />
                 <span asp-validation-for="Phone" class="text-danger small"></span>
             </div>
             <div class="col-md-6">

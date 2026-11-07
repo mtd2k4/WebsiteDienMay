@@ -7,8 +7,8 @@ Hệ thống website thương mại điện tử chuyên ngành thiết bị đi
 ## 1. TỔNG QUAN HỆ THỐNG
 
 Dự án cung cấp một giải pháp phần mềm thương mại điện tử toàn diện bao gồm hai phân hệ độc lập:
-1. **Phân hệ Cửa hàng Bán lẻ (Storefront UX)**: Phục vụ khách hàng tìm kiếm, so sánh sản phẩm, chọn mua, áp dụng mã ưu đãi và thanh toán trực tuyến.
-2. **Phân hệ Quản trị Vận hành (Admin CMS)**: Cung cấp trung tâm điều hành tập trung cho nhà bán hàng để kiểm soát sản phẩm, quản lý kho hàng khép kín (nhập/xuất tự động), xử lý đơn hàng, quản lý khuyến mãi, in hóa đơn và báo cáo doanh thu tài chính chuyên sâu.
+1. **Phân hệ Cửa hàng Bán lẻ (Storefront UX)**: Phục vụ khách hàng tìm kiếm trực tiếp, so sánh thông số kỹ thuật, tương tác trợ lý ảo AI chatbot, chọn mua, áp dụng voucher ưu đãi, thanh toán quét mã VietQR tự động và tra cứu tiến độ đơn hàng.
+2. **Phân hệ Quản trị Vận hành (Admin CMS)**: Cung cấp trung tâm điều hành tập trung cho nhà bán hàng để kiểm soát danh mục sản phẩm, quản lý kho hàng khép kín (nhập/xuất tự động, khóa sửa tay tồn kho), xử lý đơn hàng, quản lý mã giảm giá, in hóa đơn chuẩn A4 và xuất báo cáo tài chính định dạng PDF chuyên sâu.
 
 ---
 
@@ -19,18 +19,21 @@ Dự án cung cấp một giải pháp phần mềm thương mại điện tử 
 - **ORM**: [Entity Framework Core 8.0.11](https://docs.microsoft.com/ef/core/) (Code-First với hệ thống Migration quản lý phiên bản cơ sở dữ liệu tự động).
 - **Cơ sở dữ liệu**: Microsoft SQL Server (Hỗ trợ SQL Server 2019/2022, SQL Server Express, LocalDB).
 - **Kiến trúc**: MVC (Model - View - Controller), Repository pattern thông qua `ApplicationDbContext`, Session-based Cart & Authentication.
+- **Bảo mật & Ràng buộc dữ liệu**: AntiForgeryToken, DataAnnotations (Regex 10 chữ số chuẩn đầu số viễn thông Việt Nam `^0[35789][0-9]{8}$`), kiểm tra chống trùng lặp tài khoản độc lập cho Username, Email và Số điện thoại.
 
 ### Frontend & Giao diện người dùng
 - **View Engine**: Razor View Engine (`.cshtml`) với cơ chế phân tách Layout độc lập:
-  - `_Layout.cshtml`: Giao diện khách hàng tối ưu theo phong cách Điện Máy Xanh (Tone màu Xanh dương `#0071e3` và Vàng `#fed700`).
+  - `_Layout.cshtml`: Giao diện khách hàng tối ưu theo phong cách Điện Máy Xanh (Tone màu Xanh dương `#0071e3` và Vàng `#fed700`), tích hợp thanh Floating Dock, Chatbot AI và Modal yêu cầu tư vấn.
   - `_AdminLayout.cshtml`: Giao diện quản trị hiện đại (Dark Navy Sidebar `#0d1726` kết hợp Card content sáng màu).
   - `_AuthLayout.cshtml`: Giao diện tinh gọn dành riêng cho màn hình Đăng nhập / Đăng ký.
 - **Framework CSS**: Bootstrap 5.3 + Bộ biểu tượng Bootstrap Icons (1.11.3).
-- **Thư viện tương tác**:
-  - `SweetAlert2 (v11)`: Hộp thoại thông báo Toast tự tắt và xác nhận xóa an toàn.
+- **Thư viện tương tác & Tiện ích mở rộng**:
+  - `SweetAlert2 (v11)`: Hộp thoại thông báo Toast tự tắt và xác nhận thao tác an toàn.
   - `Chart.js`: Biểu đồ cột kép và biểu đồ tròn phân tích doanh thu theo ngày và cơ cấu ngành hàng.
   - `html2pdf.js (0.10.1)`: Kết xuất báo cáo và hóa đơn thành tệp tin PDF chuẩn A4 trực tiếp trên trình duyệt.
-- **Tích hợp API hành chính**: API Đơn vị Hành chính Việt Nam mới (`https://provinces.open-api.vn/api/v2/`) cập nhật 34 Tỉnh/Thành phố và Phường/Xã với cơ chế Backend Proxy tránh lỗi CORS.
+- **Tích hợp Cổng thanh toán & Dịch vụ số**:
+  - `VietQR Dynamic API (img.vietqr.io)`: Tạo mã QR thanh toán động chuẩn Napas 247, tự động nạp Số tài khoản, Ngân hàng MBBank, Số tiền và Nội dung chuyển khoản theo mã đơn.
+  - `API Đơn vị Hành chính Mới (provinces.open-api.vn)`: Cập nhật 34 Tỉnh/Thành phố và Phường/Xã với cơ chế Backend Proxy tránh lỗi CORS.
 
 ---
 
@@ -39,28 +42,31 @@ Dự án cung cấp một giải pháp phần mềm thương mại điện tử 
 ```text
 WebsiteDienMay/
 ├── Controllers/                    # Bộ điều hướng xử lý nghiệp vụ
-│   ├── AccountController.cs       # Xác thực, đăng ký, đăng nhập, hồ sơ, hủy đơn
-│   ├── AdminController.cs         # Trung tâm điều hành CMS, kho hàng, hóa đơn, báo cáo
-│   ├── CartController.cs          # Giỏ hàng, kiểm tra tồn kho, áp dụng voucher, thanh toán
+│   ├── AccountController.cs       # Xác thực, đăng ký, đăng nhập, kiểm tra trùng lặp, hồ sơ, hủy đơn
+│   ├── AdminController.cs         # Trung tâm điều hành CMS, kho hàng, hóa đơn, báo cáo doanh thu PDF
+│   ├── CartController.cs          # Giỏ hàng, kiểm tra tồn kho, áp dụng voucher, thanh toán VietQR
 │   ├── HomeController.cs          # Trang chủ, giới thiệu, chính sách bảo hành
-│   └── ProductController.cs       # Danh sách, chi tiết, tìm kiếm trực tiếp, so sánh
+│   └── ProductController.cs       # Danh sách, chi tiết, tìm kiếm trực tiếp, so sánh sản phẩm
 ├── Data/                          # Cơ sở dữ liệu và khởi tạo dữ liệu mẫu
 │   ├── ApplicationDbContext.cs   # Cấu hình DbSet, khóa ngoại và ràng buộc dữ liệu
 │   └── DbInitializer.cs          # Tự động Migration và nạp dữ liệu mẫu ban đầu
 ├── Migrations/                    # Lịch sử các bản di chuyển cơ sở dữ liệu EF Core
+│   ├── 20261106071258_InitialCreate.cs
+│   ├── 20261107120936_AddWarehouseInventory.cs
+│   └── 20261107125842_AddCouponsTable.cs
 ├── Models/                        # Định nghĩa thực thể và mô hình dữ liệu
-│   ├── Entities.cs               # Category, Brand, Product, StockImport, Order, Coupon...
-│   └── ViewModels.cs             # ProductList, Cart, Checkout, Warehouse, RevenueReport...
+│   ├── Entities.cs               # Category, Brand, Product, StockImport, Order, Coupon, User...
+│   └── ViewModels.cs             # ProductList, Cart, Checkout, Warehouse, RevenueReport, Auth...
 ├── Views/                         # Giao diện người dùng Razor View
 │   ├── Account/                  # Login, Register, Profile, AccessDenied
 │   ├── Admin/                    # Dashboard, Products, Warehouse, Orders, Brands, Coupons, Reports...
-│   ├── Cart/                     # Index, Checkout, OrderSuccess, TrackOrder
+│   ├── Cart/                     # Index, Checkout, OrderSuccess (VietQR), TrackOrder (Inline VietQR)
 │   ├── Home/                     # Index, About, WarrantyPolicy, Privacy
 │   ├── Product/                  # Index, Detail, Compare
 │   └── Shared/                   # _Layout, _AdminLayout, _AuthLayout, _ProductCard...
 ├── wwwroot/                       # Tài nguyên tĩnh phía máy khách
-│   ├── css/                      # site.css, admin.css
-│   ├── js/                       # site.js (debounce live search, compare bar...)
+│   ├── css/                      # site.css (Floating Dock, Chatbot, Badge), admin.css
+│   ├── js/                       # site.js (Live search, Compare bar, Chatbot AI, Scroll top, Callback)
 │   └── lib/                      # bootstrap, jquery
 ├── appsettings.json               # Cấu hình chuỗi kết nối và thông số ứng dụng
 ├── Program.cs                     # Cấu hình Dependency Injection và HTTP Pipeline
@@ -76,17 +82,17 @@ Hệ thống cơ sở dữ liệu được thiết kế theo chuẩn quan hệ 3
 1. **Categories (`Categories`)**: Quản lý 8 danh mục ngành hàng chuẩn Điện Máy Xanh:
    - Tivi, Tủ lạnh, Máy giặt, Máy lạnh - Điều hòa, Điện thoại, Laptop, Gia dụng, Máy lọc nước.
 2. **Brands (`Brands`)**: Quản lý các thương hiệu chính hãng đối tác:
-   - Samsung, Sony, LG, Panasonic, Toshiba, Aqua, TCL, Sunhouse, Karofi...
+   - Samsung, Sony, LG, Panasonic, Toshiba, Aqua, TCL, Sunhouse, Karofi, Apple, Asus...
 3. **Products (`Products`)**: Quản lý thiết bị điện máy chi tiết:
    - Mã SKU, tên sản phẩm, giá niêm yết gốc, giá bán khuyến mãi, thông số kỹ thuật (dạng `Tên: Giá trị`), chính sách trả góp 0%, bảo hành (tháng), số lượng tồn kho khả dụng (`StockQuantity`) và số lượng đã xuất bán (`SoldCount`).
 4. **StockImports (`StockImports`)**: Nhật ký chứng từ nhập kho:
    - Mã phiếu nhập (`PNK...`), mã sản phẩm, số lượng nhập, đơn giá vốn, đối chiếu tồn trước và sau nhập (`StockBefore` -> `StockAfter`), nhà cung cấp, người lập phiếu, thời gian.
 5. **Coupons (`Coupons`)**: Bảng mã giảm giá và voucher ưu đãi:
-   - Mã Code, mô tả, loại giảm (`FixedAmount` hoặc `Percentage`), giá trị giảm, đơn hàng tối thiểu, mức giảm tối đa, giới hạn lượt dùng, số lượt đã sử dụng, thời hạn áp dụng, trạng thái.
+   - Mã Code, mô tả, loại giảm (`FixedAmount` hoặc `Percentage`), giá trị giảm, đơn hàng tối thiểu, mức giảm tối đa, giới hạn lượt dùng, số lượt đã sử dụng, thời hạn áp dụng, trạng thái kích hoạt.
 6. **Orders (`Orders`) & OrderDetails (`OrderDetails`)**:
-   - Quản lý giao dịch bán hàng, mã đơn hàng (`DMX...`), thông tin người nhận, địa chỉ hành chính chi tiết, mã voucher áp dụng, phương thức thanh toán (COD, Chuyển khoản, Trả góp 0%), trạng thái đơn hàng (Chờ xác nhận, Đang xử lý, Đang giao hàng, Hoàn thành, Đã hủy).
+   - Quản lý giao dịch bán hàng, mã đơn hàng (`DMX...`), thông tin người nhận, địa chỉ hành chính chi tiết, mã voucher áp dụng, phương thức thanh toán (COD, Chuyển khoản VietQR, Trả góp 0%), trạng thái đơn hàng (Chờ xác nhận, Đang xử lý, Đang giao hàng, Hoàn thành, Đã hủy).
 7. **ProductReviews (`ProductReviews`)**: Đánh giá và nhận xét chất lượng sản phẩm từ khách hàng (Rating từ 1 đến 5 sao).
-8. **Users (`Users`)**: Quản lý tài khoản đăng nhập (Admin, Customer) và trạng thái hoạt động.
+8. **Users (`Users`)**: Quản lý tài khoản đăng nhập (Admin, Customer), số điện thoại 10 số, email, địa chỉ và trạng thái kích hoạt tài khoản (`IsActive`).
 
 ---
 
@@ -97,9 +103,16 @@ Hệ thống cơ sở dữ liệu được thiết kế theo chuẩn quan hệ 3
   - Banner quảng cáo trượt (Hero slider), thanh truy cập nhanh danh mục ngành hàng.
   - Khối **Khuyến mãi Giờ vàng (Flash Sale)** với đồng hồ đếm ngược thời gian thực.
   - Phân vùng sản phẩm nổi bật, sản phẩm bán chạy nhất kèm nhãn Trả góp 0% và Giảm sâu.
+- **Thanh Widget Nổi Đa Năng (Floating Dock) & Trợ Lý Ảo Chatbot**:
+  - **Nút Cuộn về đầu trang (Scroll to Top)**: Tự động hiển thị khi khách hàng cuộn chuột xuống quá 300px, click để lướt mượt mà lên đầu trang.
+  - **Nút Gọi Hotline nhanh (`1800 1061`)**: Hiệu ứng vòng sóng rung nhẹ (pulse animation), hỗ trợ gọi trực tiếp tổng đài chăm sóc khách hàng miễn cước.
+  - **Nút Yêu cầu gọi lại tư vấn (Callback Request Modal)**: Mở hộp thoại đăng ký nhận cuộc gọi tư vấn miễn phí trong 5 phút, xác thực số điện thoại 10 chữ số, ghi nhận nhu cầu thiết bị và phản hồi qua SweetAlert2.
+  - **Chatbot Trợ lý ảo AI 24/7**:
+    - Cung cấp trạng thái trực tuyến 24/7, lời chào thân thiện và danh sách gợi ý câu hỏi 1 chạm: *Tư vấn Smart Tivi 4K, Tủ lạnh Inverter, Máy giặt cửa ngang, Trả góp 0%, Tra cứu đơn hàng, Chính sách bảo hành, Voucher giảm giá*.
+    - Bộ máy nhận diện từ khóa tự động phân tích câu hỏi người dùng, phản hồi thông số kỹ thuật tiêu biểu kèm nút điều hướng đến đúng danh mục mua sắm.
 - **Tìm kiếm thông minh trực tiếp (Live Search / Autocomplete)**:
   - Nhập từ 2 ký tự vào thanh tìm kiếm tại Header, hệ thống tự động gọi API và hiển thị kết quả gợi ý sau 250ms (debounce).
-  - Dropdown hiển thị ảnh thu nhỏ, tên SKU, ngành hàng, giá bán khuyến mãi, giá gốc gạch ngang và liên kết xem toàn bộ kết quả. Hỗ trợ phím Escape và click ngoài để đóng nhanh.
+  - Dropdown hiển thị ảnh thu nhỏ, tên SKU, ngành hàng, giá khuyến mãi, giá gốc và liên kết xem toàn bộ kết quả. Hỗ trợ phím Escape và click ngoài để đóng nhanh.
 - **Bộ lọc đa tiêu chí (Faceted Filtering)**:
   - Lọc đồng thời theo Danh mục, Thương hiệu, 5 Khoảng giá (Dưới 5 triệu, 5-10 triệu, 10-15 triệu, 15-25 triệu, Trên 25 triệu).
   - Sắp xếp linh hoạt theo: Giá tăng dần, Giá giảm dần, Bán chạy nhất, Khuyến mãi nhiều nhất. Phân trang sản phẩm 12 mục/trang.
@@ -117,13 +130,22 @@ Hệ thống cơ sở dữ liệu được thiết kế theo chuẩn quan hệ 3
   - Thêm, sửa số lượng, xóa sản phẩm khỏi giỏ hàng qua Session.
   - Hệ thống tự động kiểm tra số lượng tồn kho thực tế, ngăn chặn đặt mua vượt quá tồn khả dụng.
   - Hộp nhập Voucher liên kết động với cơ sở dữ liệu, tự động xác thực hạn sử dụng, lượt dùng và giá trị đơn hàng tối thiểu. Hỗ trợ danh sách thẻ gợi ý Voucher 1 chạm (`DMX500K`, `DMX100K`, `TRIAN5PT`).
-- **Thanh toán (Checkout)**:
-  - Bắt buộc đăng nhập tài khoản trước khi thanh toán nhằm lưu vết đơn hàng.
+- **Thanh toán (Checkout) & Mã VietQR Tự Động**:
+  - Ràng buộc nhập số điện thoại người nhận đúng 10 số (đầu số 03, 05, 07, 08, 09), tự động lọc bỏ ký tự không phải số.
   - Tích hợp API đơn vị hành chính Việt Nam mới: Select Option chọn Tỉnh/Thành phố (34 đơn vị) tự động kích hoạt tải Phường/Xã tương ứng.
-  - 3 phương thức thanh toán: Thanh toán khi nhận hàng (COD), Chuyển khoản ngân hàng (VietQR), Trả góp 0% qua thẻ tín dụng.
+  - 3 phương thức thanh toán: COD, Chuyển khoản ngân hàng (VietQR), Trả góp 0%.
+  - **Mã QR thanh toán VietQR động**:
+    - Khi chọn hình thức Chuyển khoản ngân hàng, hệ thống sinh mã VietQR chuẩn Napas 247 tại màn hình Đặt hàng thành công (`OrderSuccess`).
+    - Mã QR mã hóa đầy đủ thông tin: Ngân hàng MBBank, STK `0988123456`, Tên tài khoản `SIEU THI DIEN MAY XANH`, chính xác số tiền đơn hàng và nội dung chuyển khoản là Mã đơn hàng.
+    - Cung cấp nút sao chép nhanh STK và Mã đơn hàng kèm thông báo SweetAlert2.
 - **Theo dõi & Quản lý đơn hàng cá nhân**:
-  - Tra cứu đơn hàng theo mã đơn hoặc số điện thoại mà không cần đăng nhập.
+  - Tra cứu đơn hàng theo mã đơn hoặc số điện thoại mà không cần đăng nhập (`/Cart/TrackOrder`).
+  - Tích hợp khung VietQR trực tiếp tại trang tra cứu đối với các đơn hàng chưa thanh toán.
   - Khách hàng đăng nhập có thể xem hồ sơ cá nhân, lịch sử đơn hàng và có quyền tự bấm "Hủy đơn hàng" khi đơn ở trạng thái "Chờ xác nhận" (hệ thống sẽ tự động hoàn trả số lượng vào kho hàng).
+- **Đăng ký & Đăng nhập Bảo mật**:
+  - Giới hạn trường số điện thoại 10 chữ số tại cả giao diện và DataAnnotations.
+  - Bắt lỗi trùng lặp độc lập và trả về lỗi đúng ngay dưới từng ô nhập liệu: Tên đăng nhập đã tồn tại, Số điện thoại đã được đăng ký, Email đã sử dụng.
+  - Xử lý đăng nhập thông minh: Kiểm tra tài khoản không tồn tại, tài khoản bị tạm khóa (`IsActive == false`), và mật khẩu không trùng khớp.
 
 ---
 
@@ -205,8 +227,8 @@ Hoặc nhấn `F5` / `Ctrl + F5` trong Visual Studio 2022.
 Ứng dụng sẽ tự động kích hoạt bộ khởi tạo `DbInitializer` khi khởi động lần đầu, nạp đầy đủ dữ liệu mẫu gồm 8 danh mục, 32 sản phẩm, thương hiệu, tài khoản, chứng từ kho và các mã voucher hoạt động sẵn.
 
 Truy cập website tại địa chỉ:
-- Giao diện Cửa hàng: `https://localhost:7001` (hoặc cổng HTTP hiển thị trên màn hình console).
-- Giao diện Quản trị: `https://localhost:7001/Admin`
+- Giao diện Cửa hàng: `http://localhost:5245` (hoặc cổng HTTPS `https://localhost:7257`).
+- Giao diện Quản trị: `http://localhost:5245/Admin`
 
 ---
 
@@ -214,11 +236,13 @@ Truy cập website tại địa chỉ:
 
 Hệ thống đã nạp sẵn các tài khoản thử nghiệm:
 
-| Vai trò (Role) | Tên đăng nhập | Mật khẩu | Quyền hạn và phạm vi sử dụng |
-| :--- | :--- | :--- | :--- |
-| **Quản trị viên (Admin)** | `admin` | `123456` | Toàn quyền quản trị hệ thống, quản lý sản phẩm, kho hàng, duyệt đơn, in hóa đơn, xuất báo cáo PDF |
-| **Khách hàng mẫu 1** | `giangnt` | `123456` | Mua sắm, theo dõi lịch sử đơn hàng, gửi đánh giá nhận xét sản phẩm |
-| **Khách hàng mẫu 2** | `minhtuan` | `123456` | Mua sắm, thanh toán trực tuyến |
+| Vai trò (Role) | Tên đăng nhập | Mật khẩu | Số điện thoại | Quyền hạn và phạm vi sử dụng |
+| :--- | :--- | :--- | :--- | :--- |
+| **Quản trị viên (Admin)** | `admin` | `123456` | `0901234567` | Toàn quyền quản trị hệ thống, quản lý sản phẩm, kho hàng, duyệt đơn, in hóa đơn, xuất báo cáo PDF |
+| **Khách hàng mẫu 1** | `giangnt` | `123456` | `0988111222` | Mua sắm, thanh toán VietQR, theo dõi lịch sử đơn hàng, gửi đánh giá nhận xét sản phẩm |
+| **Khách hàng mẫu 2** | `minhtuan` | `123456` | `0977333444` | Mua sắm, áp dụng mã ưu đãi, thanh toán trực tuyến |
+
+*(Lưu ý: Màn hình Đăng nhập được trang bị sẵn 2 nút bấm tự động điền nhanh tài khoản Admin và Khách hàng để kiểm thử nhanh chóng).*
 
 ---
 
@@ -245,4 +269,3 @@ Các mã giảm giá đã được thiết lập sẵn trong cơ sở dữ liệ
 ---
 
 *(Bản quyền mã nguồn dự án thuộc về nhóm phát triển hệ thống Website Thương Mại Điện Tử Điện Máy).*
-
