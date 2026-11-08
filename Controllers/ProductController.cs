@@ -192,7 +192,8 @@ namespace WebsiteDienMay.Controllers
                 Reviews = reviews,
                 SpecList = specList,
                 Promotions = promotions,
-                GalleryImages = gallery.Distinct().ToList()
+                GalleryImages = gallery.Distinct().ToList(),
+                Variants = ProductVariantItem.ParseVariants(product.ProductVariants, product.Price, product.OriginalPrice)
             };
 
             return View(vm);

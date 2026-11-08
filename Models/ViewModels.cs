@@ -9,6 +9,57 @@ namespace WebsiteDienMay.Models
         public List<Product> FlashSaleProducts { get; set; } = new();
         public List<Product> FeaturedProducts { get; set; } = new();
         public Dictionary<Category, List<Product>> CategorySections { get; set; } = new();
+        public List<Banner> HeroBanners { get; set; } = new();
+        public List<Banner> SubBanners { get; set; } = new();
+    }
+
+    public class ProductVariantItem
+    {
+        public string VariantName { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public decimal OriginalPrice { get; set; }
+        public int DiscountPercent => (OriginalPrice > 0 && Price < OriginalPrice)
+            ? (int)Math.Round((OriginalPrice - Price) / OriginalPrice * 100)
+            : 0;
+
+        public static List<ProductVariantItem> ParseVariants(string? rawVariants, decimal defaultPrice, decimal defaultOriginalPrice)
+        {
+            var result = new List<ProductVariantItem>();
+            if (string.IsNullOrWhiteSpace(rawVariants)) return result;
+
+            var lines = rawVariants.Split(new[] { '\r', '\n', ';' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
+            {
+                var parts = line.Split('|', StringSplitOptions.TrimEntries);
+                if (parts.Length == 0 || string.IsNullOrWhiteSpace(parts[0])) continue;
+
+                var vName = parts[0];
+                var vPrice = defaultPrice;
+                var vOrigPrice = defaultOriginalPrice;
+
+                if (parts.Length >= 2 && decimal.TryParse(parts[1].Replace(".", "").Replace(",", "").Trim(), out var parsedPrice) && parsedPrice > 0)
+                {
+                    vPrice = parsedPrice;
+                }
+                if (parts.Length >= 3 && decimal.TryParse(parts[2].Replace(".", "").Replace(",", "").Trim(), out var parsedOrig) && parsedOrig > 0)
+                {
+                    vOrigPrice = parsedOrig;
+                }
+                else if (vOrigPrice < vPrice)
+                {
+                    vOrigPrice = Math.Round(vPrice * 1.15m / 10000m, 0) * 10000m;
+                }
+
+                result.Add(new ProductVariantItem
+                {
+                    VariantName = vName,
+                    Price = vPrice,
+                    OriginalPrice = vOrigPrice
+                });
+            }
+
+            return result;
+        }
     }
 
     public class ProductListViewModel
@@ -37,6 +88,7 @@ namespace WebsiteDienMay.Models
         public List<KeyValuePair<string, string>> SpecList { get; set; } = new();
         public List<string> Promotions { get; set; } = new();
         public List<string> GalleryImages { get; set; } = new();
+        public List<ProductVariantItem> Variants { get; set; } = new();
     }
 
     public class CartItemViewModel
@@ -44,6 +96,7 @@ namespace WebsiteDienMay.Models
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public string ProductCode { get; set; } = string.Empty;
+        public string? SelectedVariant { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
         public decimal UnitPrice { get; set; }
         public decimal OriginalPrice { get; set; }
@@ -53,11 +106,15 @@ namespace WebsiteDienMay.Models
 
     public class CartViewModel
     {
+        public const decimal VatRate = 0.08m; // Thuế GTGT 8% áp dụng cho thiết bị điện máy
+
         public List<CartItemViewModel> Items { get; set; } = new();
         public string? CouponCode { get; set; }
         public decimal DiscountAmount { get; set; }
         public decimal SubTotal => Items.Sum(x => x.Total);
-        public decimal FinalTotal => Math.Max(0, SubTotal - DiscountAmount);
+        public decimal TaxableAmount => Math.Max(0, SubTotal - DiscountAmount);
+        public decimal VatAmount => Math.Round(TaxableAmount * VatRate, 0);
+        public decimal FinalTotal => TaxableAmount + VatAmount;
     }
 
     public class CheckoutViewModel
@@ -89,6 +146,19 @@ namespace WebsiteDienMay.Models
         public string? Note { get; set; }
 
         public string PaymentMethod { get; set; } = "COD";
+
+        // Cấu hình các phương thức trả góp khi chọn PaymentMethod == "Installment"
+        public string InstallmentPartnerType { get; set; } = "CreditCard"; // "CreditCard" hoặc "FinanceCompany"
+        public string InstallmentBankOrProvider { get; set; } = "Vietcombank";
+        public int InstallmentMonths { get; set; } = 6;
+        public int InstallmentPrepayPercent { get; set; } = 0;
+
+        // Cấu hình xuất hóa đơn GTGT (VAT) công ty
+        public bool RequireVatInvoice { get; set; } = false;
+        public string? CompanyName { get; set; }
+        public string? CompanyTaxCode { get; set; }
+        public string? CompanyAddress { get; set; }
+        public string? CompanyEmail { get; set; }
 
         public string? CouponCode { get; set; }
 
@@ -202,6 +272,19 @@ namespace WebsiteDienMay.Models
         public string StoreAddress { get; set; } = "128 Trần Quang Khải, P. Tân Định, Quận 1, TP. Hồ Chí Minh";
         public string StoreHotline { get; set; } = "1800 1061 (Miễn phí từ 7:30 - 22:00)";
         public string StoreWebsite { get; set; } = "https://www.dienmayxanh.com";
+        public string StoreTaxCode { get; set; } = "0303217354";
+    }
+
+    public class PrintStockImportViewModel
+    {
+        public StockImport StockImport { get; set; } = null!;
+        public decimal SubTotal => StockImport.ImportPrice * StockImport.Quantity;
+        public decimal VatAmount => Math.Round(SubTotal * 0.08m, 0);
+        public decimal TotalAmount => SubTotal + VatAmount;
+        public string AmountInWords { get; set; } = string.Empty;
+        public string StoreName { get; set; } = "TRUNG TÂM ĐIỀU VẬN & KHO HÀNG ĐIỆN MÁY XANH";
+        public string StoreAddress { get; set; } = "128 Trần Quang Khải, P. Tân Định, Quận 1, TP. Hồ Chí Minh";
+        public string StoreHotline { get; set; } = "1800 1061";
         public string StoreTaxCode { get; set; } = "0303217354";
     }
 

@@ -19,6 +19,7 @@ namespace WebsiteDienMay.Data
         public DbSet<ProductReview> ProductReviews { get; set; }
         public DbSet<StockImport> StockImports { get; set; }
         public DbSet<Coupon> Coupons { get; set; }
+        public DbSet<Banner> Banners { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

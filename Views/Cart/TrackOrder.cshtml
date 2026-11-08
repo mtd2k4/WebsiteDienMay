@@ -105,9 +105,17 @@
                         <div class="col-md-6">
                             <div><strong>Người nhận:</strong> @order.CustomerName</div>
                             <div><strong>Số điện thoại:</strong> @order.CustomerPhone</div>
+                            @if (order.RequireVatInvoice)
+                            {
+                                <div class="text-success fw-semibold mt-1"><i class="bi bi-receipt-cutoff me-1"></i>Xuất HĐ GTGT: @order.CompanyName (MST: @order.CompanyTaxCode)</div>
+                            }
                         </div>
                         <div class="col-md-6">
                             <div><strong>Phương thức thanh toán:</strong> @order.PaymentMethod (@order.PaymentStatus)</div>
+                            @if (!string.IsNullOrEmpty(order.InstallmentInfo))
+                            {
+                                <div class="text-primary fw-semibold"><strong>Gói trả góp:</strong> @order.InstallmentInfo</div>
+                            }
                             <div><strong>Địa chỉ lắp đặt:</strong> @order.ShippingAddress</div>
                         </div>
                     </div>
@@ -138,6 +146,10 @@
                                 <img src="@d.ProductImage" alt="@d.ProductName" class="border rounded p-1" style="width: 52px; height: 52px; object-fit: contain;" />
                                 <div>
                                     <a asp-controller="Product" asp-action="Detail" asp-route-id="@d.ProductId" class="fw-bold text-dark">@d.ProductName</a>
+                                    @if (!string.IsNullOrEmpty(d.SelectedVariant))
+                                    {
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1">@d.SelectedVariant</span>
+                                    }
                                     <div class="text-muted">Số lượng: <strong>@d.Quantity</strong> x @d.UnitPrice.ToString("N0") đ</div>
                                 </div>
                             </div>
@@ -145,8 +157,14 @@
                         </div>
                     }
 
-                    <div class="d-flex flex-wrap justify-content-between align-items-center border-top pt-3 mt-2">
-                        <span class="small text-muted">Ưu đãi giảm giá: <strong class="text-success">-@order.DiscountAmount.ToString("N0") đ</strong></span>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center border-top pt-3 mt-2 gap-2">
+                        <div class="small text-muted">
+                            <span>Tạm tính: <strong>@order.SubTotal.ToString("N0") đ</strong></span>
+                            <span class="mx-2">|</span>
+                            <span>Ưu đãi: <strong class="text-success">-@order.DiscountAmount.ToString("N0") đ</strong></span>
+                            <span class="mx-2">|</span>
+                            <span>Thuế GTGT (VAT 8%): <strong>+@order.VatAmount.ToString("N0") đ</strong></span>
+                        </div>
                         <span class="fw-bold">Tổng thanh toán: <strong class="text-danger fs-4">@order.TotalAmount.ToString("N0") đ</strong></span>
                     </div>
                 </div>

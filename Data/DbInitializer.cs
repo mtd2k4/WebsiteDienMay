@@ -13,6 +13,8 @@ namespace WebsiteDienMay.Data
             {
                 SeedInitialStockImports(context);
                 SeedInitialCoupons(context);
+                SeedInitialBanners(context);
+                SeedProductVariantsAndVat(context);
                 return;
             }
 
@@ -1064,6 +1066,8 @@ namespace WebsiteDienMay.Data
 
             SeedInitialStockImports(context);
             SeedInitialCoupons(context);
+            SeedInitialBanners(context);
+            SeedProductVariantsAndVat(context);
         }
 
         private static void SeedInitialCoupons(ApplicationDbContext context)
@@ -1183,6 +1187,193 @@ namespace WebsiteDienMay.Data
 
             context.StockImports.AddRange(imports);
             context.SaveChanges();
+        }
+
+        private static void SeedInitialBanners(ApplicationDbContext context)
+        {
+            if (context.Banners.Any())
+            {
+                return;
+            }
+
+            var banners = new List<Banner>
+            {
+                new Banner
+                {
+                    Title = "Đại Tiệc Siêu Sale Điện Máy Xanh - Giảm Đến 50%",
+                    Subtitle = "Trả góp 0% lãi suất - Miễn phí công lắp đặt toàn quốc",
+                    ImageUrl = "https://cdnv2.tgdd.vn/mwg-static/common/Banner/75/19/7519c4a5b9aa9c47d3f5d17225b17314.jpg",
+                    LinkUrl = "/Product",
+                    Position = "Hero",
+                    DisplayOrder = 1,
+                    IsActive = true
+                },
+                new Banner
+                {
+                    Title = "Lễ Hội Tivi - Tủ Lạnh - Máy Giặt Chính Hãng",
+                    Subtitle = "Tặng thêm Voucher 1.000.000đ - Bảo hành tận nhà 24 tháng",
+                    ImageUrl = "https://cdnv2.tgdd.vn/mwg-static/common/Banner/e3/96/e3965d650c8be5f0ac30293be625496c.jpg",
+                    LinkUrl = "/Product",
+                    Position = "Hero",
+                    DisplayOrder = 2,
+                    IsActive = true
+                },
+                new Banner
+                {
+                    Title = "Khuyến mãi Smart Tivi OLED/QLED 4K",
+                    Subtitle = "Giảm sâu đến 35% kèm quà tặng loa thanh",
+                    ImageUrl = "https://cdnv2.tgdd.vn/mwg-static/common/Banner/5c/e5/5ce5c8d856c99ef01528033c294d6389.png",
+                    LinkUrl = "/Product?categoryId=1",
+                    Position = "SubBanner",
+                    DisplayOrder = 1,
+                    IsActive = true
+                },
+                new Banner
+                {
+                    Title = "Tủ lạnh Side by Side - Tiết kiệm điện Inverter",
+                    Subtitle = "Bảo hành máy nén 10 năm chính hãng",
+                    ImageUrl = "https://cdnv2.tgdd.vn/mwg-static/common/Banner/a6/97/a697dea35d2b2d853ade4d2ccb4d5382.png",
+                    LinkUrl = "/Product?categoryId=2",
+                    Position = "SubBanner",
+                    DisplayOrder = 2,
+                    IsActive = true
+                },
+                new Banner
+                {
+                    Title = "Máy giặt lồng ngang AI Inverter",
+                    Subtitle = "Giặt hơi nước diệt khuẩn 99.9%",
+                    ImageUrl = "https://cdnv2.tgdd.vn/mwg-static/common/Banner/d1/ef/d1efb16ffc7b86cc908e6abae633ad88.png",
+                    LinkUrl = "/Product?categoryId=3",
+                    Position = "SubBanner",
+                    DisplayOrder = 3,
+                    IsActive = true
+                },
+                new Banner
+                {
+                    Title = "Máy lạnh Inverter - Bao trọn gói lắp đặt",
+                    Subtitle = "Làm lạnh nhanh Turbo - Lọc bụi mịn PM2.5",
+                    ImageUrl = "https://cdnv2.tgdd.vn/mwg-static/common/Banner/f1/8c/f18c8e87c390c9ee07b16da74bc253fb.png",
+                    LinkUrl = "/Product?categoryId=4",
+                    Position = "SubBanner",
+                    DisplayOrder = 4,
+                    IsActive = true
+                }
+            };
+
+            context.Banners.AddRange(banners);
+            context.SaveChanges();
+        }
+
+        private static void SeedProductVariantsAndVat(ApplicationDbContext context)
+        {
+            var productsWithoutVariants = context.Products
+                .Include(p => p.Category)
+                .Where(p => string.IsNullOrEmpty(p.ProductVariants))
+                .ToList();
+
+            bool changed = false;
+            foreach (var p in productsWithoutVariants)
+            {
+                var catSlug = p.Category?.Slug ?? "";
+                if (p.Code == "DMX-DT01")
+                {
+                    p.ProductVariants =
+                        "256GB - Titan Tự Nhiên | 33990000 | 36990000\n" +
+                        "256GB - Titan Sa Mạc | 33990000 | 36990000\n" +
+                        "512GB - Titan Tự Nhiên | 39990000 | 42990000\n" +
+                        "1TB - Titan Đen | 45990000 | 48990000";
+                    changed = true;
+                }
+                else if (p.Code == "DMX-DT02")
+                {
+                    p.ProductVariants =
+                        "256GB - Titan Cam | 28490000 | 32990000\n" +
+                        "256GB - Titan Trắng | 28490000 | 32990000\n" +
+                        "512GB - Titan Cam | 33990000 | 37990000\n" +
+                        "1TB - Titan Đen | 38990000 | 42990000";
+                    changed = true;
+                }
+                else if (p.Code == "DMX-DT03")
+                {
+                    p.ProductVariants =
+                        "8GB/128GB - Trắng Ánh Sao | 8490000 | 9990000\n" +
+                        "8GB/256GB - Xanh Ngọc Bích | 9490000 | 10990000\n" +
+                        "12GB/256GB - Đen Thạch Anh | 10490000 | 11990000";
+                    changed = true;
+                }
+                else if (p.Code == "DMX-DT04")
+                {
+                    p.ProductVariants =
+                        "4GB/128GB - Đen Bán Dạ | 4590000 | 5490000\n" +
+                        "6GB/128GB - Xanh Băng Tuyết | 4990000 | 5990000\n" +
+                        "8GB/256GB - Tím Cực Quang | 5690000 | 6690000";
+                    changed = true;
+                }
+                else if (catSlug == "dien-thoai")
+                {
+                    p.ProductVariants =
+                        $"128GB - Đen Tiêu Chuẩn | {p.Price:0} | {p.OriginalPrice:0}\n" +
+                        $"256GB - Bạc Titan | {p.Price + 2500000:0} | {p.OriginalPrice + 2500000:0}\n" +
+                        $"512GB - Vàng Sa Mạc | {p.Price + 5500000:0} | {p.OriginalPrice + 5500000:0}";
+                    changed = true;
+                }
+                else if (catSlug == "laptop")
+                {
+                    p.ProductVariants =
+                        $"RAM 8GB / SSD 512GB - Bạc | {p.Price:0} | {p.OriginalPrice:0}\n" +
+                        $"RAM 16GB / SSD 512GB - Xám | {p.Price + 2000000:0} | {p.OriginalPrice + 2000000:0}\n" +
+                        $"RAM 16GB / SSD 1TB - Đen | {p.Price + 4200000:0} | {p.OriginalPrice + 4200000:0}";
+                    changed = true;
+                }
+                else if (catSlug == "tivi")
+                {
+                    p.ProductVariants =
+                        $"55 inch - 4K Tiêu Chuẩn | {p.Price:0} | {p.OriginalPrice:0}\n" +
+                        $"65 inch - 4K Màn Hình Lớn | {p.Price + 4000000:0} | {p.OriginalPrice + 4500000:0}\n" +
+                        $"75 inch - 4K Rạp Hát Tại Gia | {p.Price + 9500000:0} | {p.OriginalPrice + 10500000:0}";
+                    changed = true;
+                }
+                else if (catSlug == "may-lanh")
+                {
+                    p.ProductVariants =
+                        $"1 HP (9.000 BTU) - Dưới 15m2 | {p.Price:0} | {p.OriginalPrice:0}\n" +
+                        $"1.5 HP (12.000 BTU) - Từ 15-20m2 | {p.Price + 2200000:0} | {p.OriginalPrice + 2500000:0}\n" +
+                        $"2 HP (18.000 BTU) - Từ 20-30m2 | {p.Price + 5800000:0} | {p.OriginalPrice + 6500000:0}";
+                    changed = true;
+                }
+                else if (catSlug == "tu-lanh")
+                {
+                    p.ProductVariants =
+                        $"Bản Tiêu Chuẩn - Đen Ánh Kim | {p.Price:0} | {p.OriginalPrice:0}\n" +
+                        $"Bản Cao Cấp (Lấy nước ngoài) - Bạc | {p.Price + 1800000:0} | {p.OriginalPrice + 2000000:0}";
+                    changed = true;
+                }
+                else if (catSlug == "may-giat")
+                {
+                    p.ProductVariants =
+                        $"Khối lượng 9.5 Kg - Xám Đen | {p.Price:0} | {p.OriginalPrice:0}\n" +
+                        $"Khối lượng 10.5 Kg - Trắng Tinh Khôi | {p.Price + 1500000:0} | {p.OriginalPrice + 1800000:0}";
+                    changed = true;
+                }
+            }
+
+            var ordersWithoutVat = context.Orders.Where(o => o.VatAmount == 0 && o.SubTotal > 0).ToList();
+            foreach (var ord in ordersWithoutVat)
+            {
+                var taxable = Math.Max(0, ord.SubTotal - ord.DiscountAmount);
+                ord.VatAmount = Math.Round(taxable * 0.08m, 0);
+                ord.TotalAmount = taxable + ord.VatAmount;
+                if (ord.PaymentMethod == "Installment" && string.IsNullOrEmpty(ord.InstallmentInfo))
+                {
+                    ord.InstallmentInfo = "Trả góp 0% qua Thẻ tín dụng (Vietcombank) | Kỳ hạn: 6 tháng | Trả trước: 0%";
+                }
+                changed = true;
+            }
+
+            if (changed)
+            {
+                context.SaveChanges();
+            }
         }
     }
 }

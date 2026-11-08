@@ -102,6 +102,31 @@
         </div>
     }
 
+    @if (Model.PaymentMethod == "Installment" && !string.IsNullOrEmpty(Model.InstallmentInfo))
+    {
+        <div class="card border-warning mb-4 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-warning text-dark py-3 px-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-credit-card-2-front-fill fs-4"></i>
+                    <div>
+                        <h6 class="mb-0 fw-black">HỒ SƠ ĐĂNG KÝ TRẢ GÓP 0% LÃI SUẤT ĐÃ GHI NHẬN</h6>
+                        <small>Chuyên viên tài chính Điện Máy Xanh sẽ liên hệ xác nhận hồ sơ trong 5 - 10 phút</small>
+                    </div>
+                </div>
+                <span class="badge bg-dark text-warning fw-bold">LÃI SUẤT 0%</span>
+            </div>
+            <div class="card-body p-4 bg-warning-subtle">
+                <div class="fw-bold text-dark mb-1">Chi tiết phương án trả góp đã chọn:</div>
+                <div class="p-3 bg-white rounded-3 border border-warning fw-semibold text-primary mb-2">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i>@Model.InstallmentInfo
+                </div>
+                <div class="small text-muted">
+                    <i class="bi bi-info-circle me-1"></i>Vui lòng chuẩn bị sẵn CCCD gắn chip (nếu trả góp qua Công ty tài chính) hoặc Thẻ tín dụng chính chủ để hoàn tất thủ tục duyệt tự động.
+                </div>
+            </div>
+        </div>
+    }
+
     <div class="row g-3 mb-4">
         <div class="col-md-6">
             <div class="p-3 border rounded-3 bg-light h-100">
@@ -122,11 +147,23 @@
 
         <div class="col-md-6">
             <div class="p-3 border rounded-3 bg-light h-100">
-                <h6 class="fw-black text-primary text-uppercase mb-2"><i class="bi bi-receipt me-2"></i>Thông tin thanh toán & vận chuyển</h6>
+                <h6 class="fw-black text-primary text-uppercase mb-2"><i class="bi bi-receipt me-2"></i>Thông tin thanh toán & Thuế GTGT</h6>
                 <div class="small mb-1"><strong>Thời gian đặt:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
                 <div class="small mb-1"><strong>Hình thức thanh toán:</strong> @Model.PaymentMethod</div>
+                @if (!string.IsNullOrEmpty(Model.InstallmentInfo))
+                {
+                    <div class="small mb-1"><strong>Gói trả góp:</strong> <span class="text-primary fw-semibold">@Model.InstallmentInfo</span></div>
+                }
                 <div class="small mb-1"><strong>Trạng thái thanh toán:</strong> @Model.PaymentStatus</div>
-                <div class="small"><strong>Trạng thái xử lý:</strong> <span class="badge bg-warning text-dark">@Model.OrderStatus</span></div>
+                <div class="small mb-1"><strong>Trạng thái xử lý:</strong> <span class="badge bg-warning text-dark">@Model.OrderStatus</span></div>
+                @if (Model.RequireVatInvoice)
+                {
+                    <div class="mt-2 pt-2 border-top small">
+                        <div class="fw-bold text-success"><i class="bi bi-Patch-check-fill me-1"></i>Xuất hóa đơn GTGT (VAT 8%) Công ty:</div>
+                        <div><strong>Đơn vị:</strong> @Model.CompanyName (MST: <span class="font-monospace">@Model.CompanyTaxCode</span>)</div>
+                        <div><strong>Địa chỉ:</strong> @Model.CompanyAddress</div>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -149,7 +186,13 @@
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <img src="@item.ProductImage" alt="@item.ProductName" style="width: 50px; height: 50px; object-fit: contain;" />
-                                <span class="fw-semibold">@item.ProductName</span>
+                                <div>
+                                    <div class="fw-semibold">@item.ProductName</div>
+                                    @if (!string.IsNullOrEmpty(item.SelectedVariant))
+                                    {
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle mt-1">Phiên bản: @item.SelectedVariant</span>
+                                    }
+                                </div>
                             </div>
                         </td>
                         <td class="text-center fw-bold">@item.Quantity</td>
@@ -160,15 +203,19 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3" class="text-end">Tạm tính:</td>
+                    <td colspan="3" class="text-end">Tạm tính tiền hàng:</td>
                     <td class="text-end fw-semibold">@Model.SubTotal.ToString("N0") đ</td>
                 </tr>
                 <tr>
-                    <td colspan="3" class="text-end">Giảm giá ưu đãi:</td>
+                    <td colspan="3" class="text-end">Giảm giá ưu đãi @(string.IsNullOrEmpty(Model.CouponCode) ? "" : $"({Model.CouponCode})"):</td>
                     <td class="text-end text-success fw-semibold">-@Model.DiscountAmount.ToString("N0") đ</td>
                 </tr>
                 <tr>
-                    <td colspan="3" class="text-end fw-bold">Tổng thanh toán:</td>
+                    <td colspan="3" class="text-end">Thuế GTGT (VAT 8%):</td>
+                    <td class="text-end fw-semibold">+@Model.VatAmount.ToString("N0") đ</td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-end fw-bold">Tổng thanh toán (Đã gồm VAT):</td>
                     <td class="text-end fw-black fs-5 text-danger">@Model.TotalAmount.ToString("N0") đ</td>
                 </tr>
             </tfoot>

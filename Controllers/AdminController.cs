@@ -183,6 +183,7 @@ namespace WebsiteDienMay.Controllers
             existing.ShortDescription = model.ShortDescription;
             existing.Description = model.Description;
             existing.Specifications = model.Specifications;
+            existing.ProductVariants = model.ProductVariants;
             existing.PromotionText = model.PromotionText;
             existing.WarrantyMonths = model.WarrantyMonths;
             existing.IsFlashSale = model.IsFlashSale;
@@ -1102,6 +1103,124 @@ namespace WebsiteDienMay.Controllers
             };
 
             return vm;
+        }
+
+        // ================= XUẤT HÓA ĐƠN NHẬP KHO DẠNG PDF (A4) =================
+        [HttpGet]
+        public async Task<IActionResult> PrintStockImport(int id)
+        {
+            var stockImport = await _context.StockImports
+                .Include(si => si.Product)
+                .ThenInclude(p => p!.Category)
+                .Include(si => si.Product)
+                .ThenInclude(p => p!.Brand)
+                .FirstOrDefaultAsync(si => si.Id == id);
+
+            if (stockImport == null)
+            {
+                return NotFound();
+            }
+
+            var vm = new PrintStockImportViewModel
+            {
+                StockImport = stockImport
+            };
+            vm.AmountInWords = ConvertNumberToVietnameseWords((long)Math.Round(vm.TotalAmount, 0));
+
+            return View(vm);
+        }
+
+        // ================= QUẢN LÝ BANNER QUẢNG CÁO TRANG CHỦ =================
+        [HttpGet]
+        public async Task<IActionResult> Banners(int? editId)
+        {
+            var banners = await _context.Banners
+                .OrderBy(b => b.Position)
+                .ThenBy(b => b.DisplayOrder)
+                .ThenByDescending(b => b.Id)
+                .ToListAsync();
+
+            Banner? editingBanner = null;
+            if (editId.HasValue)
+            {
+                editingBanner = banners.FirstOrDefault(b => b.Id == editId.Value);
+            }
+
+            ViewBag.EditingBanner = editingBanner;
+            return View(banners);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveBanner(Banner model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Title) || string.IsNullOrWhiteSpace(model.ImageUrl))
+            {
+                TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ Tiêu đề và Đường dẫn hình ảnh Banner.";
+                return RedirectToAction(nameof(Banners));
+            }
+
+            if (string.IsNullOrWhiteSpace(model.LinkUrl))
+            {
+                model.LinkUrl = "/Product";
+            }
+
+            if (model.Id > 0)
+            {
+                var existing = await _context.Banners.FindAsync(model.Id);
+                if (existing != null)
+                {
+                    existing.Title = model.Title.Trim();
+                    existing.Subtitle = model.Subtitle?.Trim();
+                    existing.ImageUrl = model.ImageUrl.Trim();
+                    existing.LinkUrl = model.LinkUrl.Trim();
+                    existing.Position = model.Position;
+                    existing.DisplayOrder = model.DisplayOrder;
+                    existing.IsActive = model.IsActive;
+                    TempData["SuccessMessage"] = $"Đã cập nhật banner quảng cáo \"{existing.Title}\".";
+                }
+            }
+            else
+            {
+                model.Title = model.Title.Trim();
+                model.Subtitle = model.Subtitle?.Trim();
+                model.ImageUrl = model.ImageUrl.Trim();
+                model.LinkUrl = model.LinkUrl.Trim();
+                model.CreatedAt = DateTime.Now;
+                _context.Banners.Add(model);
+                TempData["SuccessMessage"] = $"Đã thêm banner quảng cáo mới \"{model.Title}\".";
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Banners));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleBanner(int id)
+        {
+            var banner = await _context.Banners.FindAsync(id);
+            if (banner != null)
+            {
+                banner.IsActive = !banner.IsActive;
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Đã chuyển trạng thái banner \"{banner.Title}\" sang {(banner.IsActive ? "Hiển thị" : "Đang ẩn")}.";
+            }
+            return RedirectToAction(nameof(Banners));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteBanner(int id)
+        {
+            var banner = await _context.Banners.FindAsync(id);
+            if (banner != null)
+            {
+                _context.Banners.Remove(banner);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Đã xóa banner quảng cáo \"{banner.Title}\".";
+            }
+            return RedirectToAction(nameof(Banners));
         }
     }
 }

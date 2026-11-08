@@ -59,13 +59,21 @@ namespace WebsiteDienMay.Controllers
                 }
             }
 
+            var activeBanners = await _context.Banners
+                .Where(b => b.IsActive)
+                .OrderBy(b => b.DisplayOrder)
+                .ThenByDescending(b => b.Id)
+                .ToListAsync();
+
             var vm = new HomeViewModel
             {
                 Categories = categories,
                 Brands = brands,
                 FlashSaleProducts = flashSaleProducts,
                 FeaturedProducts = featuredProducts,
-                CategorySections = categorySections
+                CategorySections = categorySections,
+                HeroBanners = activeBanners.Where(b => b.Position == "Hero").ToList(),
+                SubBanners = activeBanners.Where(b => b.Position == "SubBanner").ToList()
             };
 
             return View(vm);

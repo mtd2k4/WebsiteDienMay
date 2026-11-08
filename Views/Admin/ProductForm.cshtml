@@ -87,6 +87,47 @@
                 </div>
             </div>
 
+            <div class="adm-card">
+                <div class="adm-card-header">
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-layers-fill text-primary"></i>
+                        <span>Biến thể sản phẩm (Dung lượng, Màu sắc, Kích cỡ, Công suất)</span>
+                    </h6>
+                    <span class="adm-badge adm-badge-primary">Tùy chọn theo ngành hàng</span>
+                </div>
+
+                <div class="p-3 rounded-3 bg-light border mb-3">
+                    <div class="small fw-bold text-dark mb-2">Thêm nhanh dòng biến thể mới:</div>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label small text-muted mb-1">Tên phiên bản / Màu sắc / Cấu hình</label>
+                            <input type="text" id="quickVarName" class="form-control form-control-sm" placeholder="VD: 256GB - Titan Tự Nhiên" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted mb-1">Giá bán KM (VNĐ)</label>
+                            <input type="number" id="quickVarPrice" step="10000" class="form-control form-control-sm" placeholder="VD: 29490000" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted mb-1">Giá niêm yết gốc</label>
+                            <input type="number" id="quickVarOrig" step="10000" class="form-control form-control-sm" placeholder="VD: 34990000" />
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" id="btnAddQuickVariant" class="btn btn-primary btn-sm w-100 fw-bold" title="Thêm vào danh sách">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label asp-for="ProductVariants" class="adm-form-label">Danh sách biến thể (Mỗi dòng theo cú pháp: Tên biến thể | Giá bán | Giá gốc)</label>
+                    <textarea asp-for="ProductVariants" id="productVariantsTextarea" rows="4" class="form-control font-monospace small" placeholder="256GB - Titan Tự Nhiên | 33990000 | 36990000&#10;512GB - Titan Sa Mạc | 39990000 | 42990000"></textarea>
+                    <div class="text-muted mt-1" style="font-size: 11.5px;">
+                        <i class="bi bi-info-circle me-1"></i>Áp dụng cho Điện thoại (Dung lượng/Màu), Laptop (RAM/SSD), Tivi (Kích cỡ inch), Máy lạnh (Công suất HP). Để trống nếu sản phẩm chỉ có 1 phiên bản duy nhất.
+                    </div>
+                </div>
+            </div>
+
             <div class="adm-card mb-0">
                 <div class="adm-card-header">
                     <h6 class="adm-card-title">
@@ -259,6 +300,34 @@
                 origInput.addEventListener("input", calcDiscount);
                 saleInput.addEventListener("input", calcDiscount);
                 calcDiscount();
+            }
+
+            const btnAddVar = document.getElementById("btnAddQuickVariant");
+            const varTextarea = document.getElementById("productVariantsTextarea");
+            if (btnAddVar && varTextarea) {
+                btnAddVar.addEventListener("click", function () {
+                    const vNameEl = document.getElementById("quickVarName");
+                    const vPriceEl = document.getElementById("quickVarPrice");
+                    const vOrigEl = document.getElementById("quickVarOrig");
+
+                    const vName = (vNameEl.value || "").trim();
+                    const vPrice = (vPriceEl.value || saleInput.value || "0").trim();
+                    const vOrig = (vOrigEl.value || origInput.value || vPrice).trim();
+
+                    if (!vName) {
+                        vNameEl.focus();
+                        return;
+                    }
+
+                    const newLine = `${vName} | ${vPrice} | ${vOrig}`;
+                    const currentVal = varTextarea.value.trim();
+                    varTextarea.value = currentVal ? (currentVal + "\n" + newLine) : newLine;
+
+                    vNameEl.value = "";
+                    vPriceEl.value = "";
+                    vOrigEl.value = "";
+                    vNameEl.focus();
+                });
             }
         });
     </script>

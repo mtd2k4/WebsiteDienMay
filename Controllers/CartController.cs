@@ -81,7 +81,7 @@ namespace WebsiteDienMay.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddToCart(int productId, int quantity = 1, bool buyNow = false)
+        public async Task<IActionResult> AddToCart(int productId, int quantity = 1, bool buyNow = false, string? selectedVariant = null, string? defaultPaymentMethod = null)
         {
             var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId && p.IsActive);
             if (product == null)
@@ -95,36 +95,70 @@ namespace WebsiteDienMay.Controllers
                 return RedirectToAction("Detail", "Product", new { id = productId });
             }
 
+            // Phân giải biến thể sản phẩm (nếu có)
+            var variants = ProductVariantItem.ParseVariants(product.ProductVariants, product.Price, product.OriginalPrice);
+            string? resolvedVariant = null;
+            decimal resolvedPrice = product.Price;
+            decimal resolvedOrigPrice = product.OriginalPrice;
+
+            if (variants.Any())
+            {
+                var matched = !string.IsNullOrWhiteSpace(selectedVariant)
+                    ? variants.FirstOrDefault(v => string.Equals(v.VariantName, selectedVariant.Trim(), StringComparison.OrdinalIgnoreCase))
+                    : null;
+
+                matched ??= variants.First();
+                resolvedVariant = matched.VariantName;
+                resolvedPrice = matched.Price;
+                resolvedOrigPrice = matched.OriginalPrice;
+            }
+
             var reqQty = Math.Max(1, quantity);
             var cart = GetCartItems();
-            var existing = cart.FirstOrDefault(x => x.ProductId == productId);
+            var totalProdQtyInCart = cart.Where(x => x.ProductId == productId).Sum(x => x.Quantity);
+            var existing = cart.FirstOrDefault(x =>
+                x.ProductId == productId &&
+                string.Equals(x.SelectedVariant ?? "", resolvedVariant ?? "", StringComparison.OrdinalIgnoreCase));
+
             if (existing != null)
             {
+                var otherVariantsQty = totalProdQtyInCart - existing.Quantity;
+                var maxForThisVariant = Math.Max(0, product.StockQuantity - otherVariantsQty);
                 var newQty = existing.Quantity + reqQty;
-                if (newQty > product.StockQuantity)
+                if (newQty > maxForThisVariant)
                 {
-                    existing.Quantity = product.StockQuantity;
+                    existing.Quantity = maxForThisVariant;
                     SaveCartItems(cart);
                     TempData["ErrorMessage"] = $"Kho hiện chỉ còn {product.StockQuantity} sản phẩm \"{product.Name}\".";
                     return RedirectToAction(nameof(Index));
                 }
                 existing.Quantity = newQty;
+                existing.UnitPrice = resolvedPrice;
+                existing.OriginalPrice = resolvedOrigPrice;
             }
             else
             {
-                var allowedQty = Math.Min(reqQty, product.StockQuantity);
+                var remainingStock = Math.Max(0, product.StockQuantity - totalProdQtyInCart);
+                if (remainingStock <= 0)
+                {
+                    TempData["ErrorMessage"] = $"Bạn đã thêm tối đa số lượng tồn kho ({product.StockQuantity}) của \"{product.Name}\" vào giỏ hàng.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var allowedQty = Math.Min(reqQty, remainingStock);
                 cart.Add(new CartItemViewModel
                 {
                     ProductId = product.Id,
                     ProductName = product.Name,
                     ProductCode = product.Code,
+                    SelectedVariant = resolvedVariant,
                     ImageUrl = product.ImageUrl,
-                    UnitPrice = product.Price,
-                    OriginalPrice = product.OriginalPrice,
+                    UnitPrice = resolvedPrice,
+                    OriginalPrice = resolvedOrigPrice,
                     Quantity = allowedQty
                 });
 
-                if (reqQty > product.StockQuantity)
+                if (reqQty > remainingStock)
                 {
                     SaveCartItems(cart);
                     TempData["ErrorMessage"] = $"Kho hiện chỉ còn {product.StockQuantity} sản phẩm \"{product.Name}\".";
@@ -133,6 +167,11 @@ namespace WebsiteDienMay.Controllers
             }
 
             SaveCartItems(cart);
+
+            if (!string.IsNullOrWhiteSpace(defaultPaymentMethod))
+            {
+                TempData["DefaultPaymentMethod"] = defaultPaymentMethod;
+            }
 
             if (buyNow)
             {
@@ -144,15 +183,19 @@ namespace WebsiteDienMay.Controllers
                 return RedirectToAction(nameof(Checkout));
             }
 
-            TempData["SuccessMessage"] = $"Đã thêm \"{product.Name}\" vào giỏ hàng.";
+            var variantDisplay = !string.IsNullOrEmpty(resolvedVariant) ? $" ({resolvedVariant})" : "";
+            TempData["SuccessMessage"] = $"Đã thêm \"{product.Name}{variantDisplay}\" vào giỏ hàng.";
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateQuantity(int productId, int quantity)
+        public async Task<IActionResult> UpdateQuantity(int productId, int quantity, string? selectedVariant = null)
         {
             var cart = GetCartItems();
-            var item = cart.FirstOrDefault(x => x.ProductId == productId);
+            var item = cart.FirstOrDefault(x =>
+                x.ProductId == productId &&
+                string.Equals(x.SelectedVariant ?? "", selectedVariant ?? "", StringComparison.OrdinalIgnoreCase));
+
             if (item != null)
             {
                 if (quantity <= 0)
@@ -163,14 +206,17 @@ namespace WebsiteDienMay.Controllers
                 {
                     var product = await _context.Products.FindAsync(productId);
                     var maxStock = product?.StockQuantity ?? 0;
-                    if (maxStock <= 0)
+                    var otherVariantsQty = cart.Where(x => x != item && x.ProductId == productId).Sum(x => x.Quantity);
+                    var maxAllowed = Math.Max(0, maxStock - otherVariantsQty);
+
+                    if (maxAllowed <= 0)
                     {
                         cart.Remove(item);
-                        TempData["ErrorMessage"] = $"Sản phẩm \"{item.ProductName}\" vừa hết hàng trong kho.";
+                        TempData["ErrorMessage"] = $"Sản phẩm \"{item.ProductName}\" vừa hết hàng khả dụng trong kho.";
                     }
-                    else if (quantity > maxStock)
+                    else if (quantity > maxAllowed)
                     {
-                        item.Quantity = maxStock;
+                        item.Quantity = maxAllowed;
                         TempData["ErrorMessage"] = $"Kho chỉ còn tối đa {maxStock} sản phẩm \"{item.ProductName}\".";
                     }
                     else
@@ -184,10 +230,13 @@ namespace WebsiteDienMay.Controllers
         }
 
         [HttpPost]
-        public IActionResult RemoveItem(int productId)
+        public IActionResult RemoveItem(int productId, string? selectedVariant = null)
         {
             var cart = GetCartItems();
-            var item = cart.FirstOrDefault(x => x.ProductId == productId);
+            var item = cart.FirstOrDefault(x =>
+                x.ProductId == productId &&
+                string.Equals(x.SelectedVariant ?? "", selectedVariant ?? "", StringComparison.OrdinalIgnoreCase));
+
             if (item != null)
             {
                 cart.Remove(item);
@@ -258,11 +307,13 @@ namespace WebsiteDienMay.Controllers
                 return RedirectToAction("Login", "Account", new { returnUrl = "/Cart/Checkout" });
             }
 
+            var defaultPayment = TempData["DefaultPaymentMethod"]?.ToString() ?? "COD";
+
             var vm = new CheckoutViewModel
             {
                 Cart = cartVm,
                 CouponCode = cartVm.CouponCode,
-                PaymentMethod = "COD"
+                PaymentMethod = defaultPayment
             };
 
             var user = await _context.Users.FindAsync(userId.Value);
@@ -271,6 +322,7 @@ namespace WebsiteDienMay.Controllers
                 vm.CustomerName = user.FullName;
                 vm.CustomerPhone = user.Phone;
                 vm.CustomerEmail = user.Email;
+                vm.CompanyEmail = user.Email;
                 vm.ShippingAddress = user.Address;
             }
 
@@ -297,6 +349,22 @@ namespace WebsiteDienMay.Controllers
             model.Cart = cartVm;
             ModelState.Remove(nameof(model.ShippingAddress));
 
+            if (model.RequireVatInvoice)
+            {
+                if (string.IsNullOrWhiteSpace(model.CompanyName))
+                {
+                    ModelState.AddModelError(nameof(model.CompanyName), "Vui lòng nhập Tên công ty / Đơn vị xuất hóa đơn GTGT.");
+                }
+                if (string.IsNullOrWhiteSpace(model.CompanyTaxCode))
+                {
+                    ModelState.AddModelError(nameof(model.CompanyTaxCode), "Vui lòng nhập Mã số thuế doanh nghiệp.");
+                }
+                if (string.IsNullOrWhiteSpace(model.CompanyAddress))
+                {
+                    ModelState.AddModelError(nameof(model.CompanyAddress), "Vui lòng nhập Địa chỉ trụ sở đăng ký kinh doanh.");
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -305,18 +373,37 @@ namespace WebsiteDienMay.Controllers
             var fullShippingAddress = $"{model.AddressDetail.Trim()}, {model.WardName.Trim()}, {model.ProvinceName.Trim()}";
             model.ShippingAddress = fullShippingAddress;
 
-            // Kiểm tra chặt chẽ tồn kho thực tế trước khi tạo đơn hàng
-            foreach (var item in cartVm.Items)
+            // Kiểm tra chặt chẽ tồn kho thực tế trước khi tạo đơn hàng (Gộp theo ProductId nếu có nhiều biến thể)
+            var groupedItems = cartVm.Items.GroupBy(i => i.ProductId);
+            foreach (var grp in groupedItems)
             {
-                var stockProduct = await _context.Products.FindAsync(item.ProductId);
-                if (stockProduct == null || !stockProduct.IsActive || stockProduct.StockQuantity < item.Quantity)
+                var totalQtyRequested = grp.Sum(x => x.Quantity);
+                var stockProduct = await _context.Products.FindAsync(grp.Key);
+                if (stockProduct == null || !stockProduct.IsActive || stockProduct.StockQuantity < totalQtyRequested)
                 {
-                    TempData["ErrorMessage"] = $"Sản phẩm \"{item.ProductName}\" hiện chỉ còn {stockProduct?.StockQuantity ?? 0} sản phẩm trong kho, không đủ số lượng đặt mua ({item.Quantity}).";
+                    var sampleName = grp.First().ProductName;
+                    TempData["ErrorMessage"] = $"Sản phẩm \"{sampleName}\" hiện chỉ còn {stockProduct?.StockQuantity ?? 0} sản phẩm trong kho, không đủ số lượng đặt mua ({totalQtyRequested}).";
                     return RedirectToAction(nameof(Index));
                 }
             }
 
             var orderCode = "DMX" + DateTime.Now.ToString("yyyyMMddHHmmss");
+
+            string? installmentInfo = null;
+            if (model.PaymentMethod == "Installment")
+            {
+                var partnerLabel = model.InstallmentPartnerType == "FinanceCompany"
+                    ? "Công ty tài chính (Duyệt CCCD)"
+                    : "Thẻ tín dụng 0% (Visa/Mastercard/JCB)";
+                var provider = string.IsNullOrWhiteSpace(model.InstallmentBankOrProvider) ? "Vietcombank" : model.InstallmentBankOrProvider.Trim();
+                var months = model.InstallmentMonths > 0 ? model.InstallmentMonths : 6;
+                var prepayPct = model.InstallmentPartnerType == "CreditCard" ? 0 : Math.Clamp(model.InstallmentPrepayPercent, 0, 70);
+                var prepayAmt = Math.Round(cartVm.FinalTotal * prepayPct / 100m, 0);
+                var remainAmt = Math.Max(0, cartVm.FinalTotal - prepayAmt);
+                var monthlyAmt = Math.Round(remainAmt / months, 0);
+
+                installmentInfo = $"{partnerLabel} - {provider} | Kỳ hạn: {months} tháng | Trả trước: {prepayPct}% ({prepayAmt:N0} đ) | Góp mỗi tháng: {monthlyAmt:N0} đ (Lãi suất 0%)";
+            }
 
             var paymentStatus = model.PaymentMethod switch
             {
@@ -337,8 +424,15 @@ namespace WebsiteDienMay.Controllers
                 SubTotal = cartVm.SubTotal,
                 DiscountAmount = cartVm.DiscountAmount,
                 CouponCode = cartVm.CouponCode,
+                VatAmount = cartVm.VatAmount,
                 TotalAmount = cartVm.FinalTotal,
                 PaymentMethod = model.PaymentMethod,
+                InstallmentInfo = installmentInfo,
+                RequireVatInvoice = model.RequireVatInvoice,
+                CompanyName = model.RequireVatInvoice ? model.CompanyName?.Trim() : null,
+                CompanyTaxCode = model.RequireVatInvoice ? model.CompanyTaxCode?.Trim() : null,
+                CompanyAddress = model.RequireVatInvoice ? model.CompanyAddress?.Trim() : null,
+                CompanyEmail = model.RequireVatInvoice ? (model.CompanyEmail?.Trim() ?? model.CustomerEmail?.Trim()) : null,
                 PaymentStatus = paymentStatus,
                 OrderStatus = "Chờ xác nhận",
                 CreatedAt = DateTime.Now
@@ -350,6 +444,7 @@ namespace WebsiteDienMay.Controllers
                 {
                     ProductId = item.ProductId,
                     ProductName = item.ProductName,
+                    SelectedVariant = item.SelectedVariant,
                     ProductImage = item.ImageUrl,
                     UnitPrice = item.UnitPrice,
                     Quantity = item.Quantity

@@ -190,6 +190,9 @@
             <span class="fw-semibold">Xem trước Hóa đơn bán hàng & Phiếu xuất kho</span>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <button type="button" id="btnDownloadOrderPdf" class="btn btn-danger btn-sm fw-bold px-3">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i>Tải Hóa Đơn (.PDF)
+            </button>
             <button type="button" onclick="window.print()" class="btn btn-primary btn-sm fw-bold px-3">
                 <i class="bi bi-printer-fill me-1"></i>In hóa đơn ngay (Ctrl + P)
             </button>
@@ -202,7 +205,7 @@
     <div style="height: 38px;" class="d-print-none"></div>
 
     <!-- Trang hóa đơn A4 -->
-    <div class="invoice-sheet">
+    <div class="invoice-sheet" id="orderInvoicePrintArea">
         <!-- Header -->
         <div class="invoice-header">
             <div>
@@ -222,7 +225,7 @@
 
         <!-- Title -->
         <div class="invoice-title">
-            <h2>HÓA ĐƠN BÁN LẺ KIÊM PHIẾU XUẤT KHO</h2>
+            <h2>@(order.RequireVatInvoice ? "HÓA ĐƠN GIÁ TRỊ GIA TĂNG (VAT) KIÊM PHIẾU XUẤT KHO" : "HÓA ĐƠN BÁN LẺ KIÊM PHIẾU XUẤT KHO")</h2>
             <div class="text-muted small">Căn cứ theo Đơn hàng trực tuyến #@order.OrderCode ngày @order.CreatedAt.ToString("dd/MM/yyyy")</div>
         </div>
 
@@ -236,10 +239,22 @@
                     {
                         <div><strong>Email:</strong> @order.CustomerEmail</div>
                     }
+                    @if (order.RequireVatInvoice)
+                    {
+                        <div class="mt-1 pt-1 border-top">
+                            <div><strong>Đơn vị xuất HĐ GTGT:</strong> @order.CompanyName</div>
+                            <div><strong>Mã số thuế (MST):</strong> <span class="font-monospace fw-bold">@order.CompanyTaxCode</span></div>
+                            <div><strong>Địa chỉ GPKD:</strong> @order.CompanyAddress</div>
+                        </div>
+                    }
                 </div>
                 <div class="col-6">
                     <div><strong>Địa chỉ giao nhận:</strong> @order.ShippingAddress</div>
                     <div><strong>Trạng thái thanh toán:</strong> <span class="fw-bold">@order.PaymentStatus</span></div>
+                    @if (!string.IsNullOrEmpty(order.InstallmentInfo))
+                    {
+                        <div><strong>Gói trả góp:</strong> @order.InstallmentInfo</div>
+                    }
                     <div><strong>Ghi chú đơn hàng:</strong> @(string.IsNullOrWhiteSpace(order.Note) ? "Không có" : order.Note)</div>
                 </div>
             </div>
@@ -251,7 +266,7 @@
                 <tr>
                     <th style="width: 5%;">STT</th>
                     <th style="width: 15%;">Mã SP</th>
-                    <th style="text-align: left;">Tên thiết bị điện tử / Phụ kiện</th>
+                    <th style="text-align: left;">Tên thiết bị điện tử / Phiên bản</th>
                     <th style="width: 8%;">ĐVT</th>
                     <th style="width: 8%;">SL</th>
                     <th style="width: 18%; text-align: right;">Đơn giá (VNĐ)</th>
@@ -267,6 +282,10 @@
                         <td class="text-center font-monospace small">@(item.Product?.Code ?? $"SP-{item.ProductId}")</td>
                         <td>
                             <div class="fw-bold text-dark">@item.ProductName</div>
+                            @if (!string.IsNullOrEmpty(item.SelectedVariant))
+                            {
+                                <div class="small text-primary fw-semibold">Phiên bản: @item.SelectedVariant</div>
+                            }
                             <div class="text-muted small" style="font-size: 11px;">Bảo hành chính hãng @(item.Product?.WarrantyMonths ?? 24) tháng</div>
                         </td>
                         <td class="text-center">Cái</td>
@@ -293,7 +312,7 @@
 
             <div class="invoice-summary">
                 <div class="summary-row">
-                    <span class="text-muted">Cộng tiền hàng:</span>
+                    <span class="text-muted">Cộng tiền hàng (Chưa thuế):</span>
                     <span class="font-monospace fw-semibold">@order.SubTotal.ToString("N0") đ</span>
                 </div>
                 @if (order.DiscountAmount > 0)
@@ -303,6 +322,10 @@
                         <span class="font-monospace fw-semibold">-@order.DiscountAmount.ToString("N0") đ</span>
                     </div>
                 }
+                <div class="summary-row">
+                    <span class="text-muted">Thuế GTGT (VAT 8%):</span>
+                    <span class="font-monospace fw-semibold">+@order.VatAmount.ToString("N0") đ</span>
+                </div>
                 <div class="summary-row">
                     <span class="text-muted">Phí vận chuyển & lắp đặt:</span>
                     <span class="text-success fw-bold">Miễn phí</span>
@@ -342,6 +365,38 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var btn = document.getElementById("btnDownloadOrderPdf");
+            if (btn) {
+                btn.addEventListener("click", function () {
+                    var element = document.getElementById("orderInvoicePrintArea");
+                    if (!element || typeof html2pdf === "undefined") {
+                        window.print();
+                        return;
+                    }
+                    var origHtml = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xuất PDF...';
+
+                    var opt = {
+                        margin: [0, 0, 0, 0],
+                        filename: "HoaDonBanHang_@(order.OrderCode).pdf",
+                        image: { type: "jpeg", quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+                    };
+
+                    html2pdf().set(opt).from(element).save().then(function () {
+                        btn.disabled = false;
+                        btn.innerHTML = origHtml;
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>
 

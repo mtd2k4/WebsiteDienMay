@@ -282,13 +282,17 @@
         </div>
 
         <!-- Nhật ký Phiếu Nhập Kho gần đây -->
-        <div class="adm-card mb-0">
+        <div class="adm-card mb-0" id="warehouseReceiptsSection">
             <div class="adm-card-header">
                 <h6 class="adm-card-title">
                     <i class="bi bi-journal-check text-primary"></i>
-                    <span>Nhật ký phiếu nhập kho gần đây</span>
+                    <span>Nhật ký phiếu nhập kho & Xuất hóa đơn PDF</span>
                 </h6>
-                <span class="text-muted small">30 phiếu gần nhất</span>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" id="btnExportWarehousePdf" class="btn btn-danger btn-sm fw-bold rounded-3">
+                        <i class="bi bi-file-earmark-pdf-fill me-1"></i>Xuất Bảng Kê Hóa Đơn Kho (PDF)
+                    </button>
+                </div>
             </div>
 
             <div class="adm-table-wrap">
@@ -299,27 +303,29 @@
                                 <th>Mã phiếu & Thời gian</th>
                                 <th>Sản phẩm nhập</th>
                                 <th class="text-center">Đối chiếu tồn kho</th>
-                                <th class="text-end">Đơn giá nhập</th>
+                                <th class="text-end">Đơn giá & Tổng nhập</th>
                                 <th>Nguồn nhập & Người lập</th>
+                                <th class="text-end d-print-none">Hóa đơn PDF</th>
                             </tr>
                         </thead>
                         <tbody>
                             @if (!Model.RecentImports.Any())
                             {
                                 <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">Chưa có lịch sử phiếu nhập kho.</td>
+                                    <td colspan="6" class="text-center py-4 text-muted">Chưa có lịch sử phiếu nhập kho.</td>
                                 </tr>
                             }
                             else
                             {
                                 @foreach (var imp in Model.RecentImports)
                                 {
+                                    var totalImpVal = imp.ImportPrice * imp.Quantity;
                                     <tr>
                                         <td>
                                             <div class="fw-bold text-primary font-monospace">#@imp.ReceiptCode</div>
                                             <div class="text-muted" style="font-size: 11.5px;">@imp.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
                                         </td>
-                                        <td style="max-width: 220px;">
+                                        <td style="max-width: 200px;">
                                             <div class="fw-semibold text-dark text-truncate" title="@imp.Product?.Name">@(imp.Product?.Name ?? $"SP #{imp.ProductId}")</div>
                                             <div class="text-muted small">@imp.Note</div>
                                         </td>
@@ -329,12 +335,18 @@
                                             <i class="bi bi-arrow-right-short text-muted"></i>
                                             <strong class="text-dark">@imp.StockAfter</strong>
                                         </td>
-                                        <td class="text-end fw-semibold text-dark text-nowrap">
-                                            @imp.ImportPrice.ToString("N0") đ
+                                        <td class="text-end text-nowrap">
+                                            <div class="fw-semibold text-dark">@imp.ImportPrice.ToString("N0") đ/SP</div>
+                                            <div class="small text-danger fw-bold">Tổng: @totalImpVal.ToString("N0") đ</div>
                                         </td>
                                         <td>
                                             <div class="small fw-semibold text-dark">@imp.SupplierName</div>
                                             <div class="text-muted" style="font-size: 11.5px;">Lập bởi: @imp.CreatedBy</div>
+                                        </td>
+                                        <td class="text-end text-nowrap d-print-none">
+                                            <a asp-action="PrintStockImport" asp-route-id="@imp.Id" target="_blank" class="btn btn-outline-danger btn-sm fw-semibold rounded-3" title="Xem & Xuất hóa đơn nhập kho PDF">
+                                                <i class="bi bi-file-earmark-pdf-fill me-1"></i>Xuất PDF
+                                            </a>
                                         </td>
                                     </tr>
                                 }
@@ -348,8 +360,35 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            const btnExportPdf = document.getElementById("btnExportWarehousePdf");
+            if (btnExportPdf) {
+                btnExportPdf.addEventListener("click", function () {
+                    const targetEl = document.getElementById("warehouseReceiptsSection");
+                    if (!targetEl || typeof html2pdf === "undefined") {
+                        window.print();
+                        return;
+                    }
+                    const origHtml = btnExportPdf.innerHTML;
+                    btnExportPdf.disabled = true;
+                    btnExportPdf.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang tạo PDF...';
+
+                    const opt = {
+                        margin: [10, 10, 10, 10],
+                        filename: "BangKeHoaDonNhapKho_DienMayXanh.pdf",
+                        image: { type: "jpeg", quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: "mm", format: "a4", orientation: "landscape" }
+                    };
+
+                    html2pdf().set(opt).from(targetEl).save().then(function () {
+                        btnExportPdf.disabled = false;
+                        btnExportPdf.innerHTML = origHtml;
+                    });
+                });
+            }
             const prodSelect = document.getElementById("importProductSelect");
             const qtyInput = document.getElementById("importQtyInput");
             const priceInput = document.getElementById("importPriceInput");

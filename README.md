@@ -77,22 +77,24 @@ WebsiteDienMay/
 
 ## 4. KIẾN TRÚC DỮ LIỆU & CÁC THỰC THỂ CHÍNH
 
-Hệ thống cơ sở dữ liệu được thiết kế theo chuẩn quan hệ 3NF (Third Normal Form) gồm 8 bảng dữ liệu:
+Hệ thống cơ sở dữ liệu được thiết kế theo chuẩn quan hệ 3NF (Third Normal Form) gồm 9 bảng dữ liệu:
 
 1. **Categories (`Categories`)**: Quản lý 8 danh mục ngành hàng chuẩn Điện Máy Xanh:
    - Tivi, Tủ lạnh, Máy giặt, Máy lạnh - Điều hòa, Điện thoại, Laptop, Gia dụng, Máy lọc nước.
 2. **Brands (`Brands`)**: Quản lý các thương hiệu chính hãng đối tác:
    - Samsung, Sony, LG, Panasonic, Toshiba, Aqua, TCL, Sunhouse, Karofi, Apple, Asus...
-3. **Products (`Products`)**: Quản lý thiết bị điện máy chi tiết:
-   - Mã SKU, tên sản phẩm, giá niêm yết gốc, giá bán khuyến mãi, thông số kỹ thuật (dạng `Tên: Giá trị`), chính sách trả góp 0%, bảo hành (tháng), số lượng tồn kho khả dụng (`StockQuantity`) và số lượng đã xuất bán (`SoldCount`).
+3. **Products (`Products`)**: Quản lý thiết bị điện máy & biến thể chi tiết:
+   - Mã SKU, tên sản phẩm, giá niêm yết gốc, giá bán khuyến mãi, danh sách **Biến thể sản phẩm (`ProductVariants`)** (Dung lượng, Màu sắc, Kích cỡ, Công suất kèm giá riêng), thông số kỹ thuật, chính sách trả góp 0%, bảo hành (tháng), số lượng tồn kho khả dụng (`StockQuantity`) và số lượng đã xuất bán (`SoldCount`).
 4. **StockImports (`StockImports`)**: Nhật ký chứng từ nhập kho:
-   - Mã phiếu nhập (`PNK...`), mã sản phẩm, số lượng nhập, đơn giá vốn, đối chiếu tồn trước và sau nhập (`StockBefore` -> `StockAfter`), nhà cung cấp, người lập phiếu, thời gian.
+   - Mã phiếu nhập (`PNK...`), mã sản phẩm, số lượng nhập, đơn giá vốn, đối chiếu tồn trước và sau nhập (`StockBefore` -> `StockAfter`), nhà cung cấp, người lập phiếu, thời gian, hỗ trợ xuất **Hóa đơn nhập kho dạng PDF chuẩn A4**.
 5. **Coupons (`Coupons`)**: Bảng mã giảm giá và voucher ưu đãi:
    - Mã Code, mô tả, loại giảm (`FixedAmount` hoặc `Percentage`), giá trị giảm, đơn hàng tối thiểu, mức giảm tối đa, giới hạn lượt dùng, số lượt đã sử dụng, thời hạn áp dụng, trạng thái kích hoạt.
-6. **Orders (`Orders`) & OrderDetails (`OrderDetails`)**:
-   - Quản lý giao dịch bán hàng, mã đơn hàng (`DMX...`), thông tin người nhận, địa chỉ hành chính chi tiết, mã voucher áp dụng, phương thức thanh toán (COD, Chuyển khoản VietQR, Trả góp 0%), trạng thái đơn hàng (Chờ xác nhận, Đang xử lý, Đang giao hàng, Hoàn thành, Đã hủy).
-7. **ProductReviews (`ProductReviews`)**: Đánh giá và nhận xét chất lượng sản phẩm từ khách hàng (Rating từ 1 đến 5 sao).
-8. **Users (`Users`)**: Quản lý tài khoản đăng nhập (Admin, Customer), số điện thoại 10 số, email, địa chỉ và trạng thái kích hoạt tài khoản (`IsActive`).
+6. **Banners (`Banners`)**: Quản lý hệ thống Banner quảng cáo động trên Trang chủ:
+   - Tiêu đề chiến dịch, thông điệp phụ, đường dẫn ảnh (`ImageUrl`), liên kết đích (`LinkUrl`), vị trí hiển thị (`Hero` hoặc `SubBanner`), thứ tự ưu tiên (`DisplayOrder`) và trạng thái bật/tắt (`IsActive`).
+7. **Orders (`Orders`) & OrderDetails (`OrderDetails`)**:
+   - Quản lý giao dịch bán hàng, mã đơn hàng (`DMX...`), phiên bản biến thể đã chọn (`SelectedVariant`), thuế GTGT (`VatAmount` 8%), thông tin xuất hóa đơn đỏ doanh nghiệp (`RequireVatInvoice`, `CompanyName`, `CompanyTaxCode`, `CompanyAddress`), gói trả góp chi tiết (`InstallmentInfo`), phương thức thanh toán (COD, Chuyển khoản VietQR, Trả góp 0%).
+8. **ProductReviews (`ProductReviews`)**: Đánh giá và nhận xét chất lượng sản phẩm từ khách hàng (Rating từ 1 đến 5 sao).
+9. **Users (`Users`)**: Quản lý tài khoản đăng nhập (Admin, Customer), số điện thoại 10 số, email, địa chỉ và trạng thái kích hoạt tài khoản (`IsActive`).
 
 ---
 

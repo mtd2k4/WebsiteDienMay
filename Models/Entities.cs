@@ -102,6 +102,10 @@ namespace WebsiteDienMay.Models
 
         public string Specifications { get; set; } = string.Empty;
 
+        // Danh sách biến thể sản phẩm (Mỗi dòng: Tên biến thể | Giá bán | Giá gốc)
+        [StringLength(2000)]
+        public string? ProductVariants { get; set; }
+
         [StringLength(1000)]
         public string PromotionText { get; set; } = "Miễn phí công lắp đặt; Bảo hành chính hãng tận nhà; Đổi trả trong 30 ngày nếu lỗi kỹ thuật";
 
@@ -195,10 +199,32 @@ namespace WebsiteDienMay.Models
         public string? CouponCode { get; set; }
 
         [Column(TypeName = "decimal(18,0)")]
+        public decimal VatAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,0)")]
         public decimal TotalAmount { get; set; }
 
         [StringLength(50)]
         public string PaymentMethod { get; set; } = "COD";
+
+        // Thông tin gói trả góp đã chọn (Hình thức, Ngân hàng/Công ty tài chính, Kỳ hạn, Trả trước)
+        [StringLength(500)]
+        public string? InstallmentInfo { get; set; }
+
+        // Thông tin xuất hóa đơn GTGT (VAT) công ty
+        public bool RequireVatInvoice { get; set; } = false;
+
+        [StringLength(200)]
+        public string? CompanyName { get; set; }
+
+        [StringLength(50)]
+        public string? CompanyTaxCode { get; set; }
+
+        [StringLength(350)]
+        public string? CompanyAddress { get; set; }
+
+        [StringLength(150)]
+        public string? CompanyEmail { get; set; }
 
         [StringLength(60)]
         public string PaymentStatus { get; set; } = "Chưa thanh toán";
@@ -223,6 +249,9 @@ namespace WebsiteDienMay.Models
 
         [StringLength(250)]
         public string ProductName { get; set; } = string.Empty;
+
+        [StringLength(150)]
+        public string? SelectedVariant { get; set; }
 
         [StringLength(600)]
         public string ProductImage { get; set; } = string.Empty;
@@ -327,6 +356,35 @@ namespace WebsiteDienMay.Models
         public DateTime EndDate { get; set; } = DateTime.Now.AddMonths(3);
 
         public bool IsActive { get; set; } = true;
+    }
+
+    public class Banner
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập tiêu đề banner quảng cáo")]
+        [StringLength(200)]
+        public string Title { get; set; } = string.Empty;
+
+        [StringLength(300)]
+        public string? Subtitle { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập đường dẫn hình ảnh banner")]
+        [StringLength(600)]
+        public string ImageUrl { get; set; } = string.Empty;
+
+        [StringLength(400)]
+        public string LinkUrl { get; set; } = "/Product";
+
+        // "Hero" (Banner lớn trượt trên cùng) hoặc "SubBanner" (Banner đôi khuyến mãi phía dưới)
+        [StringLength(40)]
+        public string Position { get; set; } = "Hero";
+
+        public int DisplayOrder { get; set; } = 1;
+
+        public bool IsActive { get; set; } = true;
+
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }
 

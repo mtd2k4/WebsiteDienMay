@@ -100,7 +100,13 @@ else
                                                 <a asp-controller="Product" asp-action="Detail" asp-route-id="@d.ProductId" target="_blank" class="fw-bold text-dark text-decoration-none">
                                                     @d.ProductName
                                                 </a>
-                                                <div class="text-muted small">Mã SP: #@d.ProductId</div>
+                                                @if (!string.IsNullOrEmpty(d.SelectedVariant))
+                                                {
+                                                    <div>
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle mt-1">Phiên bản: @d.SelectedVariant</span>
+                                                    </div>
+                                                }
+                                                <div class="text-muted small mt-1">Mã SP: #@d.ProductId</div>
                                             </div>
                                         </div>
                                     </td>
@@ -126,11 +132,15 @@ else
                             <span class="text-success fw-semibold">-@Model.DiscountAmount.ToString("N0") đ</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2 small">
+                            <span class="text-muted">Thuế GTGT (VAT 8%):</span>
+                            <span class="fw-semibold">+@Model.VatAmount.ToString("N0") đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 small">
                             <span class="text-muted">Phí vận chuyển & lắp đặt:</span>
                             <span class="text-success fw-semibold">Miễn phí</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
-                            <span class="fw-bold text-dark">Tổng thanh toán:</span>
+                            <span class="fw-bold text-dark">Tổng thanh toán (Đã gồm VAT):</span>
                             <span class="fw-extrabold fs-5 text-danger">@Model.TotalAmount.ToString("N0") đ</span>
                         </div>
                     </div>
@@ -142,7 +152,7 @@ else
             <div class="adm-card-header">
                 <h6 class="adm-card-title">
                     <i class="bi bi-person-lines-fill text-primary"></i>
-                    <span>Thông tin người nhận & Địa chỉ lắp đặt</span>
+                    <span>Thông tin người nhận, Trả góp & Xuất hóa đơn GTGT</span>
                 </h6>
             </div>
 
@@ -163,6 +173,29 @@ else
                     <div class="text-muted mb-1">Phương thức thanh toán</div>
                     <div class="fw-semibold text-dark">@Model.PaymentMethod — <span class="text-primary">@Model.PaymentStatus</span></div>
                 </div>
+                @if (!string.IsNullOrEmpty(Model.InstallmentInfo))
+                {
+                    <div class="col-12">
+                        <div class="text-muted mb-1">Phương án trả góp 0% khách chọn</div>
+                        <div class="p-2 px-3 rounded-3 bg-primary-subtle border border-primary-subtle fw-semibold text-primary">
+                            <i class="bi bi-credit-card-2-front-fill me-1"></i>@Model.InstallmentInfo
+                        </div>
+                    </div>
+                }
+                @if (Model.RequireVatInvoice)
+                {
+                    <div class="col-12">
+                        <div class="text-muted mb-1">Thông tin xuất Hóa đơn điện tử GTGT (VAT 8%) Công ty</div>
+                        <div class="p-2 px-3 rounded-3 bg-success-subtle border border-success-subtle text-dark">
+                            <div class="fw-bold text-success"><i class="bi bi-receipt-cutoff me-1"></i>@Model.CompanyName (MST: <span class="font-monospace">@Model.CompanyTaxCode</span>)</div>
+                            <div><strong>Địa chỉ GPKD:</strong> @Model.CompanyAddress</div>
+                            @if (!string.IsNullOrEmpty(Model.CompanyEmail))
+                            {
+                                <div><strong>Email nhận HĐĐT:</strong> @Model.CompanyEmail</div>
+                            }
+                        </div>
+                    </div>
+                }
                 <div class="col-12">
                     <div class="text-muted mb-1">Địa chỉ giao hàng & lắp đặt</div>
                     <div class="p-2 px-3 rounded-3 bg-light border fw-semibold text-dark">

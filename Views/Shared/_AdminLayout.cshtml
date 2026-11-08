@@ -19,6 +19,7 @@
     var totalOrderCount = DbContext.Orders.Count();
     var userCount = DbContext.Users.Count();
     var reviewCount = DbContext.ProductReviews.Count();
+    var bannerCount = DbContext.Banners.Count();
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -126,6 +127,12 @@
                         <span class="adm-nav-icon"><i class="bi bi-ticket-perforated"></i></span>
                         <span class="adm-nav-text">Mã giảm giá & Voucher</span>
                         <span class="adm-nav-badge">@couponCount</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="Banners"
+                       class="adm-nav-link @(currentAction == "Banners" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-images"></i></span>
+                        <span class="adm-nav-text">Banner quảng cáo</span>
+                        <span class="adm-nav-badge">@bannerCount</span>
                     </a>
                     <a asp-controller="Admin" asp-action="Users"
                        class="adm-nav-link @(currentAction == "Users" ? "active" : "")">

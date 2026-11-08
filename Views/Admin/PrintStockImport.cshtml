@@ -1,0 +1,353 @@
+@model WebsiteDienMay.Models.PrintStockImportViewModel
+@{
+    Layout = null;
+    var imp = Model.StockImport;
+    var prod = imp.Product;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hóa đơn nhập kho #@imp.ReceiptCode - Điện Máy Xanh</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #1e293b;
+            font-size: 13.5px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 24px 0;
+        }
+
+        .invoice-sheet {
+            background: #ffffff;
+            width: 210mm;
+            min-height: 280mm;
+            margin: 0 auto;
+            padding: 18mm 20mm;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            box-sizing: border-box;
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #0071e3;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+
+        .brand-badge {
+            background: #fed700;
+            color: #004899;
+            font-weight: 900;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .invoice-title {
+            text-align: center;
+            margin: 22px 0;
+        }
+
+        .invoice-title h2 {
+            font-size: 21px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 6px 0;
+            text-transform: uppercase;
+        }
+
+        .invoice-info-box {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+        }
+
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .invoice-table th, .invoice-table td {
+            border: 1px solid #cbd5e1;
+            padding: 9px 10px;
+            vertical-align: middle;
+        }
+
+        .invoice-table th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            color: #0f172a;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .invoice-summary {
+            margin-left: auto;
+            width: 360px;
+            margin-bottom: 24px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        .summary-row.total {
+            border-top: 2px solid #0f172a;
+            padding-top: 8px;
+            font-weight: 800;
+            font-size: 16px;
+            color: #004899;
+        }
+
+        .invoice-signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 44px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .sig-col {
+            width: 31%;
+        }
+
+        .sig-col .title {
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .sig-col .sub {
+            font-size: 12px;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .sig-col .space {
+            height: 75px;
+        }
+
+        .no-print-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px 24px;
+            z-index: 10000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        @@media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+            .no-print-bar {
+                display: none !important;
+            }
+            .invoice-sheet {
+                box-shadow: none;
+                padding: 10mm;
+                width: 100%;
+                min-height: auto;
+                margin: 0;
+            }
+            @@page {
+                size: A4 portrait;
+                margin: 8mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Thanh thao tác Xuất PDF & In nhanh -->
+    <div class="no-print-bar">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark font-monospace fw-bold">#@imp.ReceiptCode</span>
+            <span class="fw-semibold">Chứng từ Hóa đơn Nhập kho Thiết bị Điện Máy</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" id="btnDownloadStockPdf" class="btn btn-danger btn-sm fw-bold px-3">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i>Tải Hóa Đơn Nhập Kho (.PDF)
+            </button>
+            <button type="button" onclick="window.print()" class="btn btn-primary btn-sm fw-bold px-3">
+                <i class="bi bi-printer-fill me-1"></i>In chứng từ A4 (Ctrl + P)
+            </button>
+            <button type="button" onclick="window.close()" class="btn btn-outline-light btn-sm px-3">
+                <i class="bi bi-x-lg me-1"></i>Đóng
+            </button>
+        </div>
+    </div>
+
+    <div style="height: 38px;" class="d-print-none"></div>
+
+    <!-- Trang Hóa Đơn Nhập Kho A4 -->
+    <div class="invoice-sheet" id="stockInvoicePrintArea">
+        <div class="invoice-header">
+            <div>
+                <div class="brand-badge">ĐIỆN MÁY XANH</div>
+                <div class="fw-bold fs-6 text-dark">@Model.StoreName</div>
+                <div class="text-muted" style="font-size: 12.5px;">Địa chỉ kho trung tâm: @Model.StoreAddress</div>
+                <div class="text-muted" style="font-size: 12.5px;">Mã số thuế: @Model.StoreTaxCode | Hotline điều vận: @Model.StoreHotline</div>
+            </div>
+            <div class="text-end">
+                <div class="text-secondary small">SỐ CHỨNG TỪ NHẬP KHO:</div>
+                <div class="fw-extrabold fs-5 text-primary font-monospace">#@imp.ReceiptCode</div>
+                <div class="text-muted small mt-1">Ngày nhập: @imp.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                <div class="badge bg-success-subtle text-success border border-success-subtle mt-1">Đã kiểm nghiệm & Cộng tồn kho</div>
+            </div>
+        </div>
+
+        <div class="invoice-title">
+            <h2>HÓA ĐƠN NHẬP KHO KIÊM BIÊN BẢN KIỂM NGHIỆM THIẾT BỊ</h2>
+            <div class="text-muted small">Mẫu số 01-VT (Ban hành theo Thông tư 200/2014/TT-BTC của Bộ Tài chính)</div>
+        </div>
+
+        <div class="invoice-info-box">
+            <div class="row g-2">
+                <div class="col-6">
+                    <div><strong>Đơn vị giao hàng / Nhà phân phối:</strong> @imp.SupplierName</div>
+                    <div><strong>Kho tiếp nhận:</strong> Kho Tổng Siêu thị Điện Máy Xanh</div>
+                    <div><strong>Tình trạng hàng hóa:</strong> Mới 100%, nguyên đai nguyên kiện NSX</div>
+                </div>
+                <div class="col-6">
+                    <div><strong>Cán bộ lập phiếu / Thủ kho:</strong> @imp.CreatedBy</div>
+                    <div><strong>Ngành hàng:</strong> @(prod?.Category?.Name ?? "Thiết bị điện máy") - Hãng: @(prod?.Brand?.Name ?? "Chính hãng")</div>
+                    <div><strong>Ghi chú chứng từ:</strong> @(string.IsNullOrWhiteSpace(imp.Note) ? "Nhập kho theo hợp đồng phân phối" : imp.Note)</div>
+                </div>
+            </div>
+        </div>
+
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th style="width: 45px;">STT</th>
+                    <th style="width: 110px;">Mã SKU</th>
+                    <th>Tên thiết bị, quy cách & xuất xứ</th>
+                    <th style="width: 75px;">ĐVT</th>
+                    <th style="width: 85px;">Tồn trước</th>
+                    <th style="width: 90px;">Thực nhập</th>
+                    <th style="width: 85px;">Tồn sau</th>
+                    <th style="width: 120px;">Đơn giá vốn</th>
+                    <th style="width: 130px;">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center">1</td>
+                    <td class="text-center font-monospace fw-bold">@(prod?.Code ?? $"SP-{imp.ProductId}")</td>
+                    <td>
+                        <div class="fw-bold text-dark">@(prod?.Name ?? $"Sản phẩm #{imp.ProductId}")</div>
+                        <div class="small text-muted">Bảo hành chính hãng: @(prod?.WarrantyMonths ?? 24) tháng</div>
+                    </td>
+                    <td class="text-center">Bộ/Chiếc</td>
+                    <td class="text-center text-muted">@imp.StockBefore</td>
+                    <td class="text-center fw-bold text-success">+@imp.Quantity</td>
+                    <td class="text-center fw-bold text-primary">@imp.StockAfter</td>
+                    <td class="text-end">@imp.ImportPrice.ToString("N0") đ</td>
+                    <td class="text-end fw-bold text-dark">@Model.SubTotal.ToString("N0") đ</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="invoice-summary">
+            <div class="summary-row">
+                <span class="text-muted">Cộng tiền hàng nhập kho (Chưa thuế):</span>
+                <span class="fw-bold">@Model.SubTotal.ToString("N0") đ</span>
+            </div>
+            <div class="summary-row">
+                <span class="text-muted">Thuế GTGT đầu vào (VAT 8%):</span>
+                <span class="fw-bold">+@Model.VatAmount.ToString("N0") đ</span>
+            </div>
+            <div class="summary-row total">
+                <span>Tổng giá trị thanh toán nhập kho:</span>
+                <span class="text-danger">@Model.TotalAmount.ToString("N0") đ</span>
+            </div>
+        </div>
+
+        <div class="p-3 rounded-3 bg-light border mb-3">
+            <strong>Tổng số tiền viết bằng chữ:</strong>
+            <span class="fst-italic fw-semibold text-primary ms-1">@Model.AmountInWords</span>
+        </div>
+
+        <div class="small text-muted mb-3">
+            Hội đồng kiểm nghiệm xác nhận toàn bộ <strong>@imp.Quantity</strong> thiết bị thuộc phiếu nhập <strong>#@imp.ReceiptCode</strong> đạt đầy đủ tiêu chuẩn chất lượng kỹ thuật, nguyên tem niêm phong của nhà sản xuất và đã được cập nhật tăng số lượng tồn kho tự động từ <strong>@imp.StockBefore</strong> lên <strong>@imp.StockAfter</strong> đơn vị.
+        </div>
+
+        <div class="invoice-signatures">
+            <div class="sig-col">
+                <div class="title">ĐẠI DIỆN NHÀ CUNG CẤP</div>
+                <div class="sub">(Ký, ghi rõ họ tên)</div>
+                <div class="space"></div>
+                <div class="fw-semibold">@imp.SupplierName</div>
+            </div>
+            <div class="sig-col">
+                <div class="title">THỦ KHO TIẾP NHẬN</div>
+                <div class="sub">(Ký, kiểm đếm thực tế)</div>
+                <div class="space"></div>
+                <div class="fw-semibold">@imp.CreatedBy</div>
+            </div>
+            <div class="sig-col">
+                <div class="title">KẾ TOÁN TRƯỞNG</div>
+                <div class="sub">(Ký, đóng dấu xác nhận)</div>
+                <div class="space"></div>
+                <div class="fw-semibold">Phòng Tài chính - Kế toán DMX</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var btn = document.getElementById("btnDownloadStockPdf");
+            if (btn) {
+                btn.addEventListener("click", function () {
+                    var element = document.getElementById("stockInvoicePrintArea");
+                    if (!element || typeof html2pdf === "undefined") {
+                        window.print();
+                        return;
+                    }
+                    var origHtml = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xuất PDF...';
+
+                    var opt = {
+                        margin: [0, 0, 0, 0],
+                        filename: "HoaDonNhapKho_@(imp.ReceiptCode).pdf",
+                        image: { type: "jpeg", quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+                    };
+
+                    html2pdf().set(opt).from(element).save().then(function () {
+                        btn.disabled = false;
+                        btn.innerHTML = origHtml;
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+

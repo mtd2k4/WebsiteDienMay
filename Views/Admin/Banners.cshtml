@@ -1,0 +1,242 @@
+@model List<WebsiteDienMay.Models.Banner>
+@{
+    ViewData["Title"] = "Quản lý Banner quảng cáo";
+    var editing = ViewBag.EditingBanner as WebsiteDienMay.Models.Banner ?? new WebsiteDienMay.Models.Banner { IsActive = true, DisplayOrder = 1, Position = "Hero", LinkUrl = "/Product" };
+    var isEdit = editing.Id > 0;
+    var heroCount = Model.Count(b => b.Position == "Hero");
+    var subCount = Model.Count(b => b.Position == "SubBanner");
+    var activeCount = Model.Count(b => b.IsActive);
+}
+
+<!-- 3 Thẻ KPI Tổng quan Banner -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="adm-kpi-label">Tổng số Banner quảng cáo</div>
+                    <div class="adm-kpi-value text-primary">@Model.Count banner</div>
+                    <div class="adm-kpi-sub">Đang hiển thị: <strong class="text-success">@activeCount</strong> banner</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #eff6ff; color: #2563eb;">
+                    <i class="bi bi-images"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="adm-kpi-label">Banner chính (Hero Slider)</div>
+                    <div class="adm-kpi-value text-dark">@heroCount banner</div>
+                    <div class="adm-kpi-sub">Hiển thị trượt lớn đầu trang chủ</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #fefce8; color: #ca8a04;">
+                    <i class="bi bi-aspect-ratio"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="adm-kpi-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="adm-kpi-label">Banner đôi phụ (Sub-Banner)</div>
+                    <div class="adm-kpi-value text-success">@subCount banner</div>
+                    <div class="adm-kpi-sub">Hiển thị theo cặp 2 banner ngang</div>
+                </div>
+                <div class="adm-kpi-icon" style="background: #ecfdf5; color: #059669;">
+                    <i class="bi bi-layout-split"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Cột trái: Form Thêm / Chỉnh sửa Banner -->
+    <div class="col-lg-4">
+        <div class="adm-card position-sticky" style="top: 88px;">
+            <div class="adm-card-header">
+                <h6 class="adm-card-title">
+                    <i class="bi @(isEdit ? "bi-pencil-square" : "bi-plus-circle-fill") text-primary"></i>
+                    <span>@(isEdit ? "Cập nhật Banner quảng cáo" : "Thêm Banner quảng cáo mới")</span>
+                </h6>
+                @if (isEdit)
+                {
+                    <a asp-action="Banners" class="btn btn-light border btn-sm">Thêm mới</a>
+                }
+            </div>
+
+            <form asp-action="SaveBanner" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@editing.Id" />
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Tiêu đề chiến dịch / Banner <span class="text-danger">*</span></label>
+                    <input type="text" name="Title" value="@editing.Title" class="form-control" placeholder="VD: Đại Tiệc Siêu Sale Điện Máy Xanh" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Mô tả phụ / Thông điệp khuyến mãi</label>
+                    <input type="text" name="Subtitle" value="@editing.Subtitle" class="form-control" placeholder="VD: Giảm đến 50% - Trả góp 0% lãi suất" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">URL Hình ảnh Banner <span class="text-danger">*</span></label>
+                    <input type="text" name="ImageUrl" id="bannerImgInput" value="@editing.ImageUrl" class="form-control" placeholder="https://cdnv2.tgdd.vn/..." required />
+                    <div class="mt-2 p-2 border rounded-3 bg-light text-center">
+                        <img id="bannerLivePreview"
+                             src="@(string.IsNullOrEmpty(editing.ImageUrl) ? "https://cdnv2.tgdd.vn/mwg-static/common/Banner/75/19/7519c4a5b9aa9c47d3f5d17225b17314.jpg" : editing.ImageUrl)"
+                             alt="Banner Preview"
+                             class="img-fluid rounded"
+                             style="max-height: 110px; object-fit: contain;" />
+                        <div class="text-muted mt-1" style="font-size: 11px;">Xem trước hình ảnh hiển thị</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Đường dẫn đích khi nhấn (Link URL)</label>
+                    <input type="text" name="LinkUrl" value="@editing.LinkUrl" class="form-control font-monospace" placeholder="/Product?categoryId=1" />
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-7">
+                        <label class="adm-form-label">Vị trí hiển thị</label>
+                        <select name="Position" class="form-select">
+                            <option value="Hero" selected="@(editing.Position == "Hero")">Banner lớn (Hero Slider)</option>
+                            <option value="SubBanner" selected="@(editing.Position == "SubBanner")">Banner đôi phụ (Sub-Banner)</option>
+                        </select>
+                    </div>
+                    <div class="col-5">
+                        <label class="adm-form-label">Thứ tự ưu tiên</label>
+                        <input type="number" name="DisplayOrder" value="@editing.DisplayOrder" min="1" max="99" class="form-control text-center fw-bold" />
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" role="switch" name="IsActive" value="true" id="bannerActiveSwitch" @(editing.IsActive ? "checked" : "") />
+                    <label class="form-check-label fw-semibold" for="bannerActiveSwitch">Kích hoạt hiển thị trên Trang chủ</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-3">
+                    <i class="bi bi-check2-circle me-1"></i>@(isEdit ? "Lưu cập nhật Banner" : "Thêm Banner quảng cáo")
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cột phải: Danh sách Banner đang quản lý -->
+    <div class="col-lg-8">
+        <div class="adm-card mb-0">
+            <div class="adm-card-header">
+                <h6 class="adm-card-title">
+                    <i class="bi bi-collection-play-fill text-primary"></i>
+                    <span>Danh sách Banner quảng cáo trên Trang chủ</span>
+                </h6>
+                <a asp-controller="Home" asp-action="Index" target="_blank" class="btn btn-outline-primary btn-sm fw-semibold">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Xem Trang chủ
+                </a>
+            </div>
+
+            <div class="adm-table-wrap">
+                <div class="table-responsive">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 180px;">Hình ảnh Banner</th>
+                                <th>Chiến dịch & Đường dẫn</th>
+                                <th class="text-center">Vị trí & Thứ tự</th>
+                                <th class="text-center">Trạng thái</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Chưa có banner quảng cáo nào.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var b in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <img src="@b.ImageUrl" alt="@b.Title" class="img-fluid rounded border bg-light p-1" style="max-height: 68px; width: 165px; object-fit: cover;" />
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-dark">@b.Title</div>
+                                            @if (!string.IsNullOrEmpty(b.Subtitle))
+                                            {
+                                                <div class="text-muted small">@b.Subtitle</div>
+                                            }
+                                            <div class="small font-monospace text-primary mt-1">
+                                                <i class="bi bi-link-45deg"></i>@b.LinkUrl
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (b.Position == "Hero")
+                                            {
+                                                <span class="adm-badge adm-badge-primary">Hero Slider</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="adm-badge adm-badge-warning">Banner Đôi</span>
+                                            }
+                                            <div class="small text-muted mt-1">Thứ tự: <strong>#@b.DisplayOrder</strong></div>
+                                        </td>
+                                        <td class="text-center">
+                                            <form asp-action="ToggleBanner" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@b.Id" />
+                                                <button type="submit" class="btn btn-sm @(b.IsActive ? "btn-success-subtle text-success border-success-subtle" : "btn-secondary-subtle text-secondary border")" style="font-size: 12px; font-weight: 600;">
+                                                    <i class="bi @(b.IsActive ? "bi-eye-fill" : "bi-eye-slash-fill") me-1"></i>@(b.IsActive ? "Đang hiện" : "Đang ẩn")
+                                                </button>
+                                            </form>
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            <a asp-action="Banners" asp-route-editId="@b.Id" class="btn btn-light border btn-sm me-1" title="Chỉnh sửa">
+                                                <i class="bi bi-pencil-square text-primary"></i>
+                                            </a>
+                                            <form asp-action="DeleteBanner" method="post" class="d-inline swal-confirm-form"
+                                                  data-swal-title="Xóa Banner quảng cáo?"
+                                                  data-swal-text="Bạn có chắc chắn muốn xóa banner '@b.Title' khỏi hệ thống?"
+                                                  data-swal-confirm="Xóa banner">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@b.Id" />
+                                                <button type="submit" class="btn btn-light border btn-sm" title="Xóa">
+                                                    <i class="bi bi-trash3 text-danger"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var imgInput = document.getElementById("bannerImgInput");
+            var imgPreview = document.getElementById("bannerLivePreview");
+            if (imgInput && imgPreview) {
+                imgInput.addEventListener("input", function () {
+                    var val = this.value.trim();
+                    if (val) {
+                        imgPreview.src = val;
+                    }
+                });
+            }
+        });
+    </script>
+}
+
