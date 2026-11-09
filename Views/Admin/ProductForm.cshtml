@@ -97,19 +97,23 @@
                 </div>
 
                 <div class="p-3 rounded-3 bg-light border mb-3">
-                    <div class="small fw-bold text-dark mb-2">Thêm nhanh dòng biến thể mới:</div>
+                    <div class="small fw-bold text-dark mb-2">Thêm nhanh dòng biến thể & ảnh màu tương ứng:</div>
                     <div class="row g-2 align-items-end">
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <label class="form-label small text-muted mb-1">Tên phiên bản / Màu sắc / Cấu hình</label>
-                            <input type="text" id="quickVarName" class="form-control form-control-sm" placeholder="VD: 256GB - Titan Tự Nhiên" />
+                            <input type="text" id="quickVarName" class="form-control form-control-sm" placeholder="VD: Màu Đen Ánh Kim / 256GB" />
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small text-muted mb-1">Giá bán KM (VNĐ)</label>
-                            <input type="number" id="quickVarPrice" step="10000" class="form-control form-control-sm" placeholder="VD: 29490000" />
+                            <input type="number" id="quickVarPrice" step="10000" class="form-control form-control-sm" placeholder="VD: 15990000" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted mb-1">Giá niêm yết gốc</label>
+                            <input type="number" id="quickVarOrig" step="10000" class="form-control form-control-sm" placeholder="VD: 21900000" />
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small text-muted mb-1">Giá niêm yết gốc</label>
-                            <input type="number" id="quickVarOrig" step="10000" class="form-control form-control-sm" placeholder="VD: 34990000" />
+                            <label class="form-label small text-muted mb-1">URL ảnh màu / biến thể tương ứng</label>
+                            <input type="text" id="quickVarImg" class="form-control form-control-sm" placeholder="https://cdn.tgdd.vn/... (tùy chọn)" />
                         </div>
                         <div class="col-md-1">
                             <button type="button" id="btnAddQuickVariant" class="btn btn-primary btn-sm w-100 fw-bold" title="Thêm vào danh sách">
@@ -119,11 +123,14 @@
                     </div>
                 </div>
 
+                <!-- Danh sách thẻ biến thể trực quan có ảnh màu -->
+                <div id="variantVisualList" class="d-flex flex-column gap-2 mb-3"></div>
+
                 <div>
-                    <label asp-for="ProductVariants" class="adm-form-label">Danh sách biến thể (Mỗi dòng theo cú pháp: Tên biến thể | Giá bán | Giá gốc)</label>
-                    <textarea asp-for="ProductVariants" id="productVariantsTextarea" rows="4" class="form-control font-monospace small" placeholder="256GB - Titan Tự Nhiên | 33990000 | 36990000&#10;512GB - Titan Sa Mạc | 39990000 | 42990000"></textarea>
+                    <label asp-for="ProductVariants" class="adm-form-label">Danh sách biến thể (Mỗi dòng: Tên biến thể | Giá bán | Giá gốc | URL ảnh màu biến thể)</label>
+                    <textarea asp-for="ProductVariants" id="productVariantsTextarea" rows="4" class="form-control font-monospace small" placeholder="Màu Đen Ánh Kim | 15990000 | 21900000 | https://cdnv2.tgdd.vn/pim/cdn/images/202611/359518110433.jpg&#10;Màu Bạc Inox | 16890000 | 22900000 | https://cdn.tgdd.vn/2026/10/timerseo/327797-600x600-3.jpg"></textarea>
                     <div class="text-muted mt-1" style="font-size: 11.5px;">
-                        <i class="bi bi-info-circle me-1"></i>Áp dụng cho Điện thoại (Dung lượng/Màu), Laptop (RAM/SSD), Tivi (Kích cỡ inch), Máy lạnh (Công suất HP). Để trống nếu sản phẩm chỉ có 1 phiên bản duy nhất.
+                        <i class="bi bi-info-circle me-1"></i>Mỗi biến thể (Màu sắc, Dung lượng, Công suất, Kích cỡ) có thể gắn kèm URL ảnh riêng ở cột thứ 4. Khi khách hàng bấm chọn biến thể ở trang chi tiết, ảnh sản phẩm sẽ tự động đổi sang ảnh màu tương ứng.
                     </div>
                 </div>
             </div>
@@ -304,30 +311,111 @@
 
             const btnAddVar = document.getElementById("btnAddQuickVariant");
             const varTextarea = document.getElementById("productVariantsTextarea");
+            const visualList = document.getElementById("variantVisualList");
+
+            function renderVisualVariants() {
+                if (!varTextarea || !visualList) return;
+                visualList.innerHTML = "";
+                const defaultImg = (imgInput && imgInput.value.trim()) ? imgInput.value.trim() : "https://cdn.tgdd.vn/2026/11/timerseo/365273.jpg";
+                const rawLines = varTextarea.value.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+
+                rawLines.forEach(function (line, idx) {
+                    const parts = line.split("|").map(p => p.trim());
+                    const vName = parts[0] || "";
+                    const vPrice = parts[1] || (saleInput ? saleInput.value : "0");
+                    const vOrig = parts[2] || (origInput ? origInput.value : vPrice);
+                    const vImg = parts[3] || "";
+                    const displayImg = vImg || defaultImg;
+
+                    const row = document.createElement("div");
+                    row.className = "d-flex flex-wrap align-items-center justify-content-between gap-2 p-2 rounded-3 border bg-white shadow-xs";
+                    row.innerHTML = `
+                        <div class="d-flex align-items-center gap-2" style="min-width: 220px;">
+                            <img src="${displayImg}" alt="${vName}" class="rounded border bg-light flex-shrink-0" style="width: 44px; height: 44px; object-fit: contain; padding: 2px;" />
+                            <div>
+                                <div class="fw-bold small text-dark">${vName}</div>
+                                <div class="small">
+                                    <span class="text-danger fw-bold">${Number(vPrice || 0).toLocaleString("vi-VN")} đ</span>
+                                    <span class="text-muted text-decoration-line-through ms-1" style="font-size: 11px;">${Number(vOrig || 0).toLocaleString("vi-VN")} đ</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1" style="min-width: 220px;">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light text-muted"><i class="bi bi-image"></i></span>
+                                <input type="text" class="form-control variant-line-img-input" data-idx="${idx}" value="${vImg}" placeholder="URL ảnh riêng cho màu/biến thể này..." />
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-variant-line-btn" data-idx="${idx}" title="Xóa biến thể này">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    `;
+                    visualList.appendChild(row);
+                });
+
+                visualList.querySelectorAll(".variant-line-img-input").forEach(function (inp) {
+                    inp.addEventListener("change", function () {
+                        const i = parseInt(this.getAttribute("data-idx"), 10);
+                        const lines = varTextarea.value.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                        if (i >= 0 && i < lines.length) {
+                            const pts = lines[i].split("|").map(p => p.trim());
+                            const name = pts[0] || "";
+                            const pr = pts[1] || "0";
+                            const or = pts[2] || pr;
+                            const newImg = this.value.trim();
+                            lines[i] = newImg ? `${name} | ${pr} | ${or} | ${newImg}` : `${name} | ${pr} | ${or}`;
+                            varTextarea.value = lines.join("\n");
+                            renderVisualVariants();
+                        }
+                    });
+                });
+
+                visualList.querySelectorAll(".remove-variant-line-btn").forEach(function (btn) {
+                    btn.addEventListener("click", function () {
+                        const i = parseInt(this.getAttribute("data-idx"), 10);
+                        const lines = varTextarea.value.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                        if (i >= 0 && i < lines.length) {
+                            lines.splice(i, 1);
+                            varTextarea.value = lines.join("\n");
+                            renderVisualVariants();
+                        }
+                    });
+                });
+            }
+
             if (btnAddVar && varTextarea) {
                 btnAddVar.addEventListener("click", function () {
                     const vNameEl = document.getElementById("quickVarName");
                     const vPriceEl = document.getElementById("quickVarPrice");
                     const vOrigEl = document.getElementById("quickVarOrig");
+                    const vImgEl = document.getElementById("quickVarImg");
 
                     const vName = (vNameEl.value || "").trim();
                     const vPrice = (vPriceEl.value || saleInput.value || "0").trim();
                     const vOrig = (vOrigEl.value || origInput.value || vPrice).trim();
+                    const vImg = vImgEl ? (vImgEl.value || "").trim() : "";
 
                     if (!vName) {
                         vNameEl.focus();
                         return;
                     }
 
-                    const newLine = `${vName} | ${vPrice} | ${vOrig}`;
+                    const newLine = vImg
+                        ? `${vName} | ${vPrice} | ${vOrig} | ${vImg}`
+                        : `${vName} | ${vPrice} | ${vOrig}`;
                     const currentVal = varTextarea.value.trim();
                     varTextarea.value = currentVal ? (currentVal + "\n" + newLine) : newLine;
 
                     vNameEl.value = "";
                     vPriceEl.value = "";
                     vOrigEl.value = "";
+                    if (vImgEl) vImgEl.value = "";
+                    renderVisualVariants();
                     vNameEl.focus();
                 });
+
+                varTextarea.addEventListener("input", renderVisualVariants);
+                renderVisualVariants();
             }
         });
     </script>

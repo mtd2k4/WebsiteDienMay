@@ -122,14 +122,15 @@
 
                     @if ((order.PaymentMethod == "Banking" || order.PaymentMethod.Contains("Chuyển khoản", StringComparison.OrdinalIgnoreCase)) && order.OrderStatus != "Đã hủy" && order.PaymentStatus != "Đã thanh toán")
                     {
-                        var qrTrackUrl = $"https://img.vietqr.io/image/MB-0988123456-compact2.png?amount={(long)order.TotalAmount}&addInfo={order.OrderCode}&accountName=SIEU%20THI%20DIEN%20MAY%20XANH";
+                        var defBank = WebsiteDienMay.Data.BankConfigStore.GetDefault();
+                        var qrTrackUrl = WebsiteDienMay.Data.BankConfigStore.BuildVietQrUrl(defBank, order.TotalAmount, order.OrderCode);
                         <div class="p-3 mb-3 rounded-3 bg-primary-subtle border border-primary-subtle">
                             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                                 <div class="d-flex align-items-center gap-3">
                                     <img src="@qrTrackUrl" alt="VietQR" class="rounded border bg-white p-1" style="width: 80px; height: 80px; object-fit: contain;" />
                                     <div>
                                         <div class="fw-bold text-primary"><i class="bi bi-qr-code-scan me-1"></i>Quét mã VietQR thanh toán tự động: @order.TotalAmount.ToString("N0") đ</div>
-                                        <div class="small text-muted">MBBank STK: <strong>0988123456</strong> | Cú pháp chuyển khoản: <strong class="text-danger font-monospace">@order.OrderCode</strong></div>
+                                        <div class="small text-muted">@defBank.BankCode STK: <strong>@defBank.AccountNumber</strong> (@defBank.AccountHolder) | Cú pháp: <strong class="text-danger font-monospace">@order.OrderCode</strong></div>
                                     </div>
                                 </div>
                                 <a href="@qrTrackUrl" target="_blank" class="btn btn-primary btn-sm fw-bold">

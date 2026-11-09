@@ -1,0 +1,38 @@
+[
+  {
+    "Id": 1,
+    "BankCode": "MB",
+    "BankName": "MBBank - Ng\u00E2n h\u00E0ng TMCP Qu\u00E2n \u0110\u1ED9i",
+    "AccountNumber": "0988123456",
+    "AccountHolder": "SIEU THI DIEN MAY XANH",
+    "Branch": "Chi nh\u00E1nh S\u1EDF Giao D\u1ECBch TP. H\u1ED3 Ch\u00ED Minh",
+    "QrTemplate": "compact2",
+    "IsDefault": true,
+    "IsActive": true,
+    "UpdatedAt": "2026-11-09T12:32:47.2278366+07:00"
+  },
+  {
+    "Id": 2,
+    "BankCode": "VCB",
+    "BankName": "Vietcombank - Ng\u00E2n h\u00E0ng TMCP Ngo\u1EA1i th\u01B0\u01A1ng Vi\u1EC7t Nam",
+    "AccountNumber": "1029384756",
+    "AccountHolder": "CONG TY CP THE GIOI DI DONG DMX",
+    "Branch": "Chi nh\u00E1nh T\u00E2n B\u00ECnh - TP. H\u1ED3 Ch\u00ED Minh",
+    "QrTemplate": "compact2",
+    "IsDefault": false,
+    "IsActive": true,
+    "UpdatedAt": "2026-11-09T12:32:47.2278564+07:00"
+  },
+  {
+    "Id": 3,
+    "BankCode": "TCB",
+    "BankName": "Techcombank - Ng\u00E2n h\u00E0ng TMCP K\u1EF9 th\u01B0\u01A1ng Vi\u1EC7t Nam",
+    "AccountNumber": "19038889996868",
+    "AccountHolder": "SIEU THI DIEN MAY XANH",
+    "Branch": "Chi nh\u00E1nh S\u00E0i G\u00F2n",
+    "QrTemplate": "compact2",
+    "IsDefault": false,
+    "IsActive": true,
+    "UpdatedAt": "2026-11-09T12:32:47.2278567+07:00"
+  }
+]

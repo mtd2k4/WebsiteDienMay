@@ -627,6 +627,52 @@ namespace WebsiteDienMay.Controllers
             return RedirectToAction(nameof(Users));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy người dùng cần xóa.";
+                return RedirectToAction(nameof(Users));
+            }
+
+            if (string.Equals(user.Username, "admin", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = "Không thể xóa tài khoản Quản trị viên gốc (admin).";
+                return RedirectToAction(nameof(Users));
+            }
+
+            var currentUserId = HttpContext.Session.GetInt32("USER_ID");
+            if (currentUserId.HasValue && user.Id == currentUserId.Value)
+            {
+                TempData["ErrorMessage"] = "Bạn không thể tự xóa tài khoản đang đăng nhập hiện tại.";
+                return RedirectToAction(nameof(Users));
+            }
+
+            var userOrders = await _context.Orders.Where(o => o.UserId == id).ToListAsync();
+            foreach (var ord in userOrders)
+            {
+                ord.UserId = null;
+            }
+
+            var userReviews = await _context.ProductReviews.Where(r => r.UserId == id).ToListAsync();
+            foreach (var rev in userReviews)
+            {
+                rev.UserId = null;
+            }
+
+            var deletedName = user.FullName;
+            var deletedUsername = user.Username;
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Đã xóa tài khoản \"{deletedName}\" (@{deletedUsername}) thành công.";
+            return RedirectToAction(nameof(Users));
+        }
+
         // ================= QUẢN LÝ ĐÁNH GIÁ =================
         public async Task<IActionResult> Reviews()
         {
@@ -1221,6 +1267,69 @@ namespace WebsiteDienMay.Controllers
                 TempData["SuccessMessage"] = $"Đã xóa banner quảng cáo \"{banner.Title}\".";
             }
             return RedirectToAction(nameof(Banners));
+        }
+
+        // ================= CẤU HÌNH NGÂN HÀNG & VIETQR =================
+        [HttpGet]
+        public IActionResult BankConfig()
+        {
+            var accounts = BankConfigStore.GetAll();
+            return View(accounts);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult SaveBankConfig(BankAccountConfig model)
+        {
+            if (string.IsNullOrWhiteSpace(model.BankCode) ||
+                string.IsNullOrWhiteSpace(model.AccountNumber) ||
+                string.IsNullOrWhiteSpace(model.AccountHolder))
+            {
+                TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ Ngân hàng, Số tài khoản và Tên chủ tài khoản.";
+                return RedirectToAction(nameof(BankConfig));
+            }
+
+            var isUpdate = model.Id > 0;
+            BankConfigStore.Save(model);
+
+            TempData["SuccessMessage"] = isUpdate
+                ? $"Đã cập nhật tài khoản ngân hàng {model.BankCode} - {model.AccountNumber}."
+                : $"Đã thêm tài khoản ngân hàng mới {model.BankCode} - {model.AccountNumber}.";
+
+            return RedirectToAction(nameof(BankConfig));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult SetDefaultBank(int id)
+        {
+            BankConfigStore.SetDefault(id);
+            TempData["SuccessMessage"] = "Đã đặt tài khoản ngân hàng làm mặc định tạo mã VietQR thanh toán.";
+            return RedirectToAction(nameof(BankConfig));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ToggleBankStatus(int id)
+        {
+            BankConfigStore.ToggleActive(id);
+            TempData["SuccessMessage"] = "Đã cập nhật trạng thái hiển thị của tài khoản ngân hàng.";
+            return RedirectToAction(nameof(BankConfig));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteBankConfig(int id)
+        {
+            if (BankConfigStore.Delete(id, out var error))
+            {
+                TempData["SuccessMessage"] = "Đã xóa tài khoản ngân hàng khỏi cấu hình.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = error;
+            }
+            return RedirectToAction(nameof(BankConfig));
         }
     }
 }

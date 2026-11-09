@@ -386,5 +386,39 @@ namespace WebsiteDienMay.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
+
+    public class BankAccountConfig
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng chọn mã ngân hàng VietQR")]
+        [StringLength(30)]
+        public string BankCode { get; set; } = "MB";
+
+        [Required(ErrorMessage = "Vui lòng nhập tên ngân hàng")]
+        [StringLength(150)]
+        public string BankName { get; set; } = "MBBank - Ngân hàng TMCP Quân Đội";
+
+        [Required(ErrorMessage = "Vui lòng nhập số tài khoản thụ hưởng")]
+        [StringLength(50)]
+        public string AccountNumber { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Vui lòng nhập tên chủ tài khoản")]
+        [StringLength(150)]
+        public string AccountHolder { get; set; } = "SIEU THI DIEN MAY XANH";
+
+        [StringLength(150)]
+        public string Branch { get; set; } = "Chi nhánh Sở Giao Dịch TP. Hồ Chí Minh";
+
+        // Mẫu VietQR: compact2, compact, print, qr_only
+        [StringLength(30)]
+        public string QrTemplate { get; set; } = "compact2";
+
+        public bool IsDefault { get; set; } = false;
+
+        public bool IsActive { get; set; } = true;
+
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+    }
 }
 

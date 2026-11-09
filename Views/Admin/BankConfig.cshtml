@@ -1,0 +1,366 @@
+@model List<WebsiteDienMay.Models.BankAccountConfig>
+@using WebsiteDienMay.Data
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Cấu hình Ngân hàng & Thanh toán VietQR";
+    var defaultBank = BankConfigStore.GetDefault();
+    var activeCount = Model.Count(x => x.IsActive);
+}
+
+<!-- KPI Tổng quan Cấu hình Ngân hàng -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="adm-stat-card">
+            <div class="adm-stat-icon blue"><i class="bi bi-bank2"></i></div>
+            <div>
+                <div class="adm-stat-label">Tổng tài khoản thụ hưởng</div>
+                <div class="adm-stat-value">@Model.Count tài khoản</div>
+                <div class="adm-stat-sub">Hỗ trợ chuyển khoản Napas 247 toàn quốc</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="adm-stat-card">
+            <div class="adm-stat-icon green"><i class="bi bi-qr-code-scan"></i></div>
+            <div>
+                <div class="adm-stat-label">Ngân hàng VietQR mặc định</div>
+                <div class="adm-stat-value text-primary">@defaultBank.BankCode - @defaultBank.AccountNumber</div>
+                <div class="adm-stat-sub text-truncate" style="max-width: 220px;">@defaultBank.AccountHolder</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="adm-stat-card">
+            <div class="adm-stat-icon amber"><i class="bi bi-shield-check"></i></div>
+            <div>
+                <div class="adm-stat-label">Trạng thái cổng VietQR</div>
+                <div class="adm-stat-value text-success">@activeCount đang hoạt động</div>
+                <div class="adm-stat-sub">Tự động điền Số tiền & Mã đơn hàng</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Cột trái: Form Thêm / Cập nhật Tài khoản Ngân hàng & Xem trước VietQR -->
+    <div class="col-lg-5">
+        <div class="adm-card sticky-top" style="top: 84px; z-index: 10;">
+            <div class="adm-card-header">
+                <h6 class="adm-card-title" id="bankFormTitle">
+                    <i class="bi bi-plus-circle-fill text-primary"></i>
+                    <span>Thêm tài khoản ngân hàng mới</span>
+                </h6>
+                <button type="button" id="btnResetBankForm" class="btn btn-light border btn-sm d-none" onclick="resetBankForm()">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Hủy sửa
+                </button>
+            </div>
+
+            <form asp-action="SaveBankConfig" method="post" id="bankConfigForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="bankId" value="0" />
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Chọn Ngân hàng (Chuẩn Napas 247 / VietQR) <span class="text-danger">*</span></label>
+                    <select id="bankPresetSelect" class="form-select" onchange="onBankPresetChange(this)">
+                        <option value="MB|MBBank - Ngân hàng TMCP Quân Đội">MB - MBBank (Ngân hàng TMCP Quân Đội)</option>
+                        <option value="VCB|Vietcombank - Ngân hàng TMCP Ngoại thương Việt Nam">VCB - Vietcombank (Ngân hàng TMCP Ngoại thương)</option>
+                        <option value="TCB|Techcombank - Ngân hàng TMCP Kỹ thương Việt Nam">TCB - Techcombank (Ngân hàng TMCP Kỹ thương)</option>
+                        <option value="CTG|VietinBank - Ngân hàng TMCP Công thương Việt Nam">CTG - VietinBank (Ngân hàng TMCP Công thương)</option>
+                        <option value="BIDV|BIDV - Ngân hàng TMCP Đầu tư và Phát triển Việt Nam">BIDV - Ngân hàng Đầu tư và Phát triển Việt Nam</option>
+                        <option value="ACB|ACB - Ngân hàng TMCP Á Châu">ACB - Ngân hàng TMCP Á Châu</option>
+                        <option value="VPB|VPBank - Ngân hàng TMCP Việt Nam Thịnh Vượng">VPB - VPBank (Việt Nam Thịnh Vượng)</option>
+                        <option value="TPB|TPBank - Ngân hàng TMCP Tiên Phong">TPB - TPBank (Ngân hàng Tiên Phong)</option>
+                        <option value="STB|Sacombank - Ngân hàng TMCP Sài Gòn Thương Tín">STB - Sacombank (Sài Gòn Thương Tín)</option>
+                        <option value="VIB|VIB - Ngân hàng TMCP Quốc Tế Việt Nam">VIB - Ngân hàng Quốc Tế Việt Nam</option>
+                        <option value="MSB|MSB - Ngân hàng TMCP Hàng Hải Việt Nam">MSB - Ngân hàng Hàng Hải Việt Nam</option>
+                        <option value="HDB|HDBank - Ngân hàng TMCP Phát triển TP.HCM">HDB - HDBank (Phát triển TP.HCM)</option>
+                        <option value="SHB|SHB - Ngân hàng TMCP Sài Gòn - Hà Nội">SHB - Ngân hàng Sài Gòn - Hà Nội</option>
+                        <option value="OCB|OCB - Ngân hàng TMCP Phương Đông">OCB - Ngân hàng Phương Đông</option>
+                    </select>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-4">
+                        <label class="adm-form-label">Mã BIN/VietQR <span class="text-danger">*</span></label>
+                        <input type="text" name="BankCode" id="bankCodeInput" class="form-control font-monospace fw-bold text-uppercase" value="MB" required />
+                    </div>
+                    <div class="col-8">
+                        <label class="adm-form-label">Tên hiển thị ngân hàng <span class="text-danger">*</span></label>
+                        <input type="text" name="BankName" id="bankNameInput" class="form-control" value="MBBank - Ngân hàng TMCP Quân Đội" required />
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <label class="adm-form-label">Số tài khoản nhận tiền <span class="text-danger">*</span></label>
+                        <input type="text" name="AccountNumber" id="accountNumberInput" class="form-control font-monospace fw-bold" placeholder="VD: 0988123456" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="adm-form-label">Mẫu giao diện QR</label>
+                        <select name="QrTemplate" id="qrTemplateSelect" class="form-select">
+                            <option value="compact2">compact2 (Đầy đủ thông tin)</option>
+                            <option value="compact">compact (Khung QR thu gọn)</option>
+                            <option value="print">print (Bản in chứng từ)</option>
+                            <option value="qr_only">qr_only (Chỉ hình mã QR)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Tên chủ tài khoản thụ hưởng (Viết hoa không dấu) <span class="text-danger">*</span></label>
+                    <input type="text" name="AccountHolder" id="accountHolderInput" class="form-control text-uppercase fw-semibold" value="SIEU THI DIEN MAY XANH" placeholder="VD: SIEU THI DIEN MAY XANH" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="adm-form-label">Chi nhánh ngân hàng</label>
+                    <input type="text" name="Branch" id="branchInput" class="form-control" value="Chi nhánh Sở Giao Dịch TP. Hồ Chí Minh" placeholder="VD: Chi nhánh TP. Hồ Chí Minh" />
+                </div>
+
+                <div class="p-3 rounded-3 bg-light border mb-3">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="IsDefault" id="isDefaultCheck" value="true" />
+                        <label class="form-check-label fw-bold text-dark small" for="isDefaultCheck">
+                            Đặt làm tài khoản tạo mã VietQR mặc định khi khách đặt hàng
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="IsActive" id="isActiveCheck" value="true" checked />
+                        <label class="form-check-label small text-secondary" for="isActiveCheck">
+                            Kích hoạt hiển thị tại trang Thanh toán & Tra cứu đơn hàng
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Khung Xem trước mã VietQR trực tiếp -->
+                <div class="p-3 rounded-3 border bg-white text-center mb-3">
+                    <div class="small fw-bold text-primary text-uppercase mb-2">
+                        <i class="bi bi-eye-fill me-1"></i>Xem trước mã VietQR tự động (Mẫu đơn 15.990.000đ)
+                    </div>
+                    <img id="liveVietQrPreview"
+                         src="https://img.vietqr.io/image/MB-0988123456-compact2.png?amount=15990000&addInfo=DMX2026DEMO&accountName=SIEU%20THI%20DIEN%20MAY%20XANH"
+                         alt="VietQR Preview"
+                         class="img-fluid rounded border p-2 bg-white shadow-xs"
+                         style="max-height: 210px; object-fit: contain;" />
+                    <div class="text-muted mt-2" style="font-size: 11.5px;">
+                        Mã QR tự động nhúng <strong>Số tiền đơn hàng</strong> và <strong>Mã đơn hàng</strong> khi khách thanh toán.
+                    </div>
+                </div>
+
+                <button type="submit" id="btnSubmitBank" class="btn btn-primary w-100 fw-bold py-2">
+                    <i class="bi bi-save2 me-1"></i>Lưu cấu hình tài khoản ngân hàng
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cột phải: Danh sách các tài khoản ngân hàng đã cấu hình -->
+    <div class="col-lg-7">
+        <div class="adm-card">
+            <div class="adm-card-header">
+                <div>
+                    <h6 class="adm-card-title">
+                        <i class="bi bi-credit-card-2-front-fill text-primary"></i>
+                        <span>Danh sách tài khoản ngân hàng nhận thanh toán (@Model.Count)</span>
+                    </h6>
+                    <div class="text-muted small mt-1">Tài khoản gắn nhãn <strong>Mặc định VietQR</strong> sẽ hiển thị đầu tiên trên trang Hoàn tất đơn hàng & Tra cứu đơn</div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-column gap-3">
+                @foreach (var item in Model)
+                {
+                    var sampleQr = BankConfigStore.BuildVietQrUrl(item, 15990000, "DMX2026888");
+                    <div class="p-3 rounded-4 border @(item.IsDefault ? "border-primary bg-primary-subtle bg-opacity-10" : "bg-white") shadow-xs">
+                        <div class="row align-items-center g-3">
+                            <div class="col-sm-3 text-center">
+                                <a href="@sampleQr" target="_blank" title="Bấm để phóng to mã VietQR">
+                                    <img src="@sampleQr" alt="@item.BankCode" class="img-fluid rounded-3 border bg-white p-1" style="max-height: 115px; object-fit: contain;" />
+                                </a>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+                                    <div class="d-flex align-items-center flex-wrap gap-1">
+                                        <span class="badge bg-primary font-monospace">@item.BankCode</span>
+                                        <strong class="text-dark">@item.BankName</strong>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        @if (item.IsDefault)
+                                        {
+                                            <span class="adm-badge adm-badge-primary">
+                                                <i class="bi bi-star-fill me-1"></i>Mặc định VietQR
+                                            </span>
+                                        }
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="adm-badge adm-badge-success">Đang hoạt động</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="adm-badge adm-badge-neutral">Tạm ngưng</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 small my-2 p-2 rounded-3 bg-light border">
+                                    <div class="col-sm-6">
+                                        <div class="text-muted" style="font-size: 11px;">Số tài khoản thụ hưởng:</div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <strong class="font-monospace fs-6 text-danger">@item.AccountNumber</strong>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1"
+                                                    onclick="navigator.clipboard.writeText('@item.AccountNumber'); if(typeof Swal !== 'undefined') Swal.fire({toast:true, position:'top-end', icon:'success', title:'Đã sao chép STK @item.AccountNumber', timer:1500, showConfirmButton:false});"
+                                                    title="Sao chép STK">
+                                                <i class="bi bi-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="text-muted" style="font-size: 11px;">Chủ tài khoản:</div>
+                                        <div class="fw-bold text-dark text-uppercase">@item.AccountHolder</div>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        <span class="text-muted"><i class="bi bi-geo-alt me-1"></i>@item.Branch</span>
+                                    </div>
+                                    <div class="col-sm-4 text-sm-end">
+                                        <span class="badge bg-white text-secondary border font-monospace">Mẫu: @item.QrTemplate</span>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2">
+                                    <span class="text-muted" style="font-size: 11.5px;">
+                                        <i class="bi bi-clock-history me-1"></i>Cập nhật: @item.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </span>
+
+                                    <div class="d-inline-flex align-items-center gap-1">
+                                        @if (!item.IsDefault)
+                                        {
+                                            <form asp-action="SetDefaultBank" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <button type="submit" class="btn btn-outline-primary btn-sm py-1 px-2 fw-semibold" title="Đặt làm ngân hàng VietQR mặc định">
+                                                    <i class="bi bi-check2-circle me-1"></i>Đặt mặc định
+                                                </button>
+                                            </form>
+                                        }
+
+                                        <button type="button"
+                                                class="btn btn-light border btn-sm py-1 px-2 fw-semibold"
+                                                onclick="editBankAccount(@item.Id, '@Html.Raw(item.BankCode)', '@Html.Raw(item.BankName.Replace("'", "\\'"))', '@Html.Raw(item.AccountNumber)', '@Html.Raw(item.AccountHolder.Replace("'", "\\'"))', '@Html.Raw(item.Branch.Replace("'", "\\'"))', '@Html.Raw(item.QrTemplate)', @(item.IsDefault ? "true" : "false"), @(item.IsActive ? "true" : "false"))">
+                                            <i class="bi bi-pencil-square text-primary me-1"></i>Sửa
+                                        </button>
+
+                                        <form asp-action="ToggleBankStatus" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="adm-icon-btn" title="@(item.IsActive ? "Tạm ẩn tài khoản này" : "Kích hoạt lại")">
+                                                <i class="bi @(item.IsActive ? "bi-eye-slash text-warning" : "bi-eye text-success")"></i>
+                                            </button>
+                                        </form>
+
+                                        @if (Model.Count > 1)
+                                        {
+                                            <form asp-action="DeleteBankConfig" method="post"
+                                                  class="swal-confirm-form d-inline"
+                                                  data-swal-title="Xóa tài khoản @item.BankCode - @item.AccountNumber?"
+                                                  data-swal-text="Tài khoản ngân hàng '@item.BankName' sẽ bị xóa khỏi danh sách cấu hình thanh toán VietQR."
+                                                  data-swal-icon="warning"
+                                                  data-swal-color="#d0021c"
+                                                  data-swal-confirm="Xóa ngân hàng">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <button type="submit" class="adm-icon-btn danger" title="Xóa tài khoản ngân hàng">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateLiveQrPreview() {
+            const code = (document.getElementById("bankCodeInput").value || "MB").trim().toUpperCase();
+            const acc = (document.getElementById("accountNumberInput").value || "0988123456").trim();
+            const holder = encodeURIComponent((document.getElementById("accountHolderInput").value || "SIEU THI DIEN MAY XANH").trim().toUpperCase());
+            const tpl = (document.getElementById("qrTemplateSelect").value || "compact2").trim();
+            const img = document.getElementById("liveVietQrPreview");
+            if (img) {
+                img.src = `https://img.vietqr.io/image/${code}-${acc}-${tpl}.png?amount=15990000&addInfo=DMX2026DEMO&accountName=${holder}`;
+            }
+        }
+
+        function onBankPresetChange(sel) {
+            if (!sel || !sel.value) return;
+            const parts = sel.value.split("|");
+            if (parts.length >= 2) {
+                document.getElementById("bankCodeInput").value = parts[0];
+                document.getElementById("bankNameInput").value = parts[1];
+                updateLiveQrPreview();
+            }
+        }
+
+        function editBankAccount(id, code, name, accNo, holder, branch, tpl, isDef, isAct) {
+            document.getElementById("bankId").value = id;
+            document.getElementById("bankCodeInput").value = code;
+            document.getElementById("bankNameInput").value = name;
+            document.getElementById("accountNumberInput").value = accNo;
+            document.getElementById("accountHolderInput").value = holder;
+            document.getElementById("branchInput").value = branch;
+            document.getElementById("qrTemplateSelect").value = tpl || "compact2";
+            document.getElementById("isDefaultCheck").checked = !!isDef;
+            document.getElementById("isActiveCheck").checked = !!isAct;
+
+            const preset = document.getElementById("bankPresetSelect");
+            if (preset) {
+                for (let i = 0; i < preset.options.length; i++) {
+                    if (preset.options[i].value.startsWith(code + "|")) {
+                        preset.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            document.getElementById("bankFormTitle").innerHTML = '<i class="bi bi-pencil-square text-primary"></i><span>Cập nhật tài khoản: ' + code + ' - ' + accNo + '</span>';
+            document.getElementById("btnSubmitBank").innerHTML = '<i class="bi bi-check2-circle me-1"></i>Cập nhật tài khoản ngân hàng';
+            document.getElementById("btnResetBankForm").classList.remove("d-none");
+
+            updateLiveQrPreview();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function resetBankForm() {
+            document.getElementById("bankId").value = "0";
+            document.getElementById("bankPresetSelect").selectedIndex = 0;
+            onBankPresetChange(document.getElementById("bankPresetSelect"));
+            document.getElementById("accountNumberInput").value = "";
+            document.getElementById("accountHolderInput").value = "SIEU THI DIEN MAY XANH";
+            document.getElementById("branchInput").value = "Chi nhánh Sở Giao Dịch TP. Hồ Chí Minh";
+            document.getElementById("qrTemplateSelect").value = "compact2";
+            document.getElementById("isDefaultCheck").checked = false;
+            document.getElementById("isActiveCheck").checked = true;
+
+            document.getElementById("bankFormTitle").innerHTML = '<i class="bi bi-plus-circle-fill text-primary"></i><span>Thêm tài khoản ngân hàng mới</span>';
+            document.getElementById("btnSubmitBank").innerHTML = '<i class="bi bi-save2 me-1"></i>Lưu cấu hình tài khoản ngân hàng';
+            document.getElementById("btnResetBankForm").classList.add("d-none");
+            updateLiveQrPreview();
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            ["bankCodeInput", "accountNumberInput", "accountHolderInput", "qrTemplateSelect"].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener("input", updateLiveQrPreview);
+                    el.addEventListener("change", updateLiveQrPreview);
+                }
+            });
+        });
+    </script>
+}
+

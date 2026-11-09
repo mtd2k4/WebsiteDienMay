@@ -96,10 +96,11 @@ namespace WebsiteDienMay.Controllers
             }
 
             // Phân giải biến thể sản phẩm (nếu có)
-            var variants = ProductVariantItem.ParseVariants(product.ProductVariants, product.Price, product.OriginalPrice);
+            var variants = ProductVariantItem.ParseVariants(product.ProductVariants, product.Price, product.OriginalPrice, product.ImageUrl);
             string? resolvedVariant = null;
             decimal resolvedPrice = product.Price;
             decimal resolvedOrigPrice = product.OriginalPrice;
+            string resolvedImageUrl = product.ImageUrl;
 
             if (variants.Any())
             {
@@ -111,6 +112,10 @@ namespace WebsiteDienMay.Controllers
                 resolvedVariant = matched.VariantName;
                 resolvedPrice = matched.Price;
                 resolvedOrigPrice = matched.OriginalPrice;
+                if (!string.IsNullOrWhiteSpace(matched.ImageUrl))
+                {
+                    resolvedImageUrl = matched.ImageUrl;
+                }
             }
 
             var reqQty = Math.Max(1, quantity);
@@ -135,6 +140,7 @@ namespace WebsiteDienMay.Controllers
                 existing.Quantity = newQty;
                 existing.UnitPrice = resolvedPrice;
                 existing.OriginalPrice = resolvedOrigPrice;
+                existing.ImageUrl = resolvedImageUrl;
             }
             else
             {
@@ -152,7 +158,7 @@ namespace WebsiteDienMay.Controllers
                     ProductName = product.Name,
                     ProductCode = product.Code,
                     SelectedVariant = resolvedVariant,
-                    ImageUrl = product.ImageUrl,
+                    ImageUrl = resolvedImageUrl,
                     UnitPrice = resolvedPrice,
                     OriginalPrice = resolvedOrigPrice,
                     Quantity = allowedQty

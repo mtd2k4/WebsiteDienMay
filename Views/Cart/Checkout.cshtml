@@ -157,6 +157,9 @@
                         </div>
                     </label>
 
+                    @{
+                        var defaultCheckoutBank = WebsiteDienMay.Data.BankConfigStore.GetDefault();
+                    }
                     <label class="p-3 border rounded-3 d-flex align-items-start gap-3 payment-method-card @(Model.PaymentMethod == "Banking" ? "bg-primary-subtle border-primary" : "bg-white")" style="cursor: pointer;">
                         <input type="radio" asp-for="PaymentMethod" value="Banking" class="form-check-input mt-1 payment-method-radio" />
                         <div class="flex-grow-1">
@@ -164,7 +167,9 @@
                                 <span class="fw-bold text-dark">Chuyển khoản ngân hàng / Quét mã VietQR 24/7</span>
                                 <span class="badge bg-success-subtle text-success border border-success-subtle">Xác nhận tự động</span>
                             </div>
-                            <div class="small text-muted mt-1">Hỗ trợ thanh toán nhanh qua ứng dụng Mobile Banking của tất cả ngân hàng nội địa chuẩn Napas 247.</div>
+                            <div class="small text-muted mt-1">
+                                Thụ hưởng: <strong class="text-dark">@defaultCheckoutBank.BankName</strong> — STK: <strong class="font-monospace text-primary">@defaultCheckoutBank.AccountNumber</strong> (@defaultCheckoutBank.AccountHolder). Mã QR tự động tạo ngay sau khi đặt hàng.
+                            </div>
                         </div>
                     </label>
 

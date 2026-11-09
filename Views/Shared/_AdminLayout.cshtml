@@ -134,6 +134,12 @@
                         <span class="adm-nav-text">Banner quảng cáo</span>
                         <span class="adm-nav-badge">@bannerCount</span>
                     </a>
+                    <a asp-controller="Admin" asp-action="BankConfig"
+                       class="adm-nav-link @(currentAction == "BankConfig" ? "active" : "")">
+                        <span class="adm-nav-icon"><i class="bi bi-bank2"></i></span>
+                        <span class="adm-nav-text">Cấu hình ngân hàng</span>
+                        <span class="adm-nav-badge" style="background: rgba(37, 99, 235, 0.2); color: #60a5fa;">VietQR</span>
+                    </a>
                     <a asp-controller="Admin" asp-action="Users"
                        class="adm-nav-link @(currentAction == "Users" ? "active" : "")">
                         <span class="adm-nav-icon"><i class="bi bi-people"></i></span>

@@ -1266,93 +1266,112 @@ namespace WebsiteDienMay.Data
 
         private static void SeedProductVariantsAndVat(ApplicationDbContext context)
         {
-            var productsWithoutVariants = context.Products
+            var productsToUpdateVariants = context.Products
                 .Include(p => p.Category)
-                .Where(p => string.IsNullOrEmpty(p.ProductVariants))
+                .Where(p => string.IsNullOrEmpty(p.ProductVariants) || !p.ProductVariants.Contains("http"))
                 .ToList();
 
             bool changed = false;
-            foreach (var p in productsWithoutVariants)
+            foreach (var p in productsToUpdateVariants)
             {
                 var catSlug = p.Category?.Slug ?? "";
                 if (p.Code == "DMX-DT01")
                 {
                     p.ProductVariants =
-                        "256GB - Titan Tự Nhiên | 33990000 | 36990000\n" +
-                        "256GB - Titan Sa Mạc | 33990000 | 36990000\n" +
-                        "512GB - Titan Tự Nhiên | 39990000 | 42990000\n" +
-                        "1TB - Titan Đen | 45990000 | 48990000";
+                        "256GB - Đỏ Ruby | 33990000 | 36990000 | https://cdn.tgdd.vn/Products/Images/42/370982/iphone-18-pro-max-do-thumb.jpg\n" +
+                        "256GB - Titan Sa Mạc | 33990000 | 36990000 | https://cdn.tgdd.vn/Products/Images/42/342679/iphone-17-pro-max-cam-thumb.jpg\n" +
+                        "512GB - Titan Đen | 39990000 | 42990000 | https://cdn.tgdd.vn/Products/Images/42/369617/xiaomi-redmi-note-17-4g-black-thumb.jpg\n" +
+                        "1TB - Trắng Titan | 45990000 | 48990000 | https://cdnv2.tgdd.vn/pim/cdn/images/202610/oppo-reno16f-trang-thumb170202.jpg";
                     changed = true;
                 }
                 else if (p.Code == "DMX-DT02")
                 {
                     p.ProductVariants =
-                        "256GB - Titan Cam | 28490000 | 32990000\n" +
-                        "256GB - Titan Trắng | 28490000 | 32990000\n" +
-                        "512GB - Titan Cam | 33990000 | 37990000\n" +
-                        "1TB - Titan Đen | 38990000 | 42990000";
+                        "256GB - Titan Cam | 28490000 | 32990000 | https://cdn.tgdd.vn/Products/Images/42/342679/iphone-17-pro-max-cam-thumb.jpg\n" +
+                        "256GB - Titan Đỏ | 28490000 | 32990000 | https://cdn.tgdd.vn/Products/Images/42/370982/iphone-18-pro-max-do-thumb.jpg\n" +
+                        "512GB - Titan Trắng | 33990000 | 37990000 | https://cdnv2.tgdd.vn/pim/cdn/images/202610/oppo-reno16f-trang-thumb170202.jpg\n" +
+                        "1TB - Titan Đen | 38990000 | 42990000 | https://cdn.tgdd.vn/Products/Images/42/369617/xiaomi-redmi-note-17-4g-black-thumb.jpg";
                     changed = true;
                 }
                 else if (p.Code == "DMX-DT03")
                 {
                     p.ProductVariants =
-                        "8GB/128GB - Trắng Ánh Sao | 8490000 | 9990000\n" +
-                        "8GB/256GB - Xanh Ngọc Bích | 9490000 | 10990000\n" +
-                        "12GB/256GB - Đen Thạch Anh | 10490000 | 11990000";
+                        "8GB/128GB - Trắng Ánh Sao | 8490000 | 9990000 | https://cdnv2.tgdd.vn/pim/cdn/images/202610/oppo-reno16f-trang-thumb170202.jpg\n" +
+                        "8GB/256GB - Nâu Cà Phê | 9490000 | 10990000 | https://cdn.tgdd.vn/Products/Images/42/367596/oppo-a6c-nau-thumb-1.jpg\n" +
+                        "12GB/256GB - Đen Thạch Anh | 10490000 | 11990000 | https://cdn.tgdd.vn/Products/Images/42/369617/xiaomi-redmi-note-17-4g-black-thumb.jpg";
                     changed = true;
                 }
                 else if (p.Code == "DMX-DT04")
                 {
                     p.ProductVariants =
-                        "4GB/128GB - Đen Bán Dạ | 4590000 | 5490000\n" +
-                        "6GB/128GB - Xanh Băng Tuyết | 4990000 | 5990000\n" +
-                        "8GB/256GB - Tím Cực Quang | 5690000 | 6690000";
+                        "4GB/128GB - Đen Bán Dạ | 4590000 | 5490000 | https://cdn.tgdd.vn/Products/Images/42/369617/xiaomi-redmi-note-17-4g-black-thumb.jpg\n" +
+                        "6GB/128GB - Đen Nhám | 4990000 | 5990000 | https://cdn.tgdd.vn/Products/Images/42/369630/xiaomi-redmi-17-4g-black-thumb.jpg\n" +
+                        "8GB/256GB - Trắng Băng Tuyết | 5690000 | 6690000 | https://cdnv2.tgdd.vn/pim/cdn/images/202610/oppo-reno16f-trang-thumb170202.jpg";
                     changed = true;
                 }
                 else if (catSlug == "dien-thoai")
                 {
                     p.ProductVariants =
-                        $"128GB - Đen Tiêu Chuẩn | {p.Price:0} | {p.OriginalPrice:0}\n" +
-                        $"256GB - Bạc Titan | {p.Price + 2500000:0} | {p.OriginalPrice + 2500000:0}\n" +
-                        $"512GB - Vàng Sa Mạc | {p.Price + 5500000:0} | {p.OriginalPrice + 5500000:0}";
+                        $"128GB - Đen Tiêu Chuẩn | {p.Price:0} | {p.OriginalPrice:0} | {p.ImageUrl}\n" +
+                        $"256GB - Trắng Bạc Titan | {p.Price + 2500000:0} | {p.OriginalPrice + 2500000:0} | https://cdnv2.tgdd.vn/pim/cdn/images/202610/oppo-reno16f-trang-thumb170202.jpg\n" +
+                        $"512GB - Vàng Sa Mạc | {p.Price + 5500000:0} | {p.OriginalPrice + 5500000:0} | https://cdn.tgdd.vn/Products/Images/42/342679/iphone-17-pro-max-cam-thumb.jpg";
+                    changed = true;
+                }
+                else if (catSlug == "tu-lanh")
+                {
+                    var blackImg = p.ImageUrl;
+                    var silverImg = "https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/1943/363377/tu-lanh-funiki-inverter-415-lit-multi-door-hr-m8415ss-thumb-639086520716518196-600x600.jpg";
+                    var grayImg = "https://cdn.tgdd.vn/2026/10/timerseo/327797-600x600-3.jpg";
+
+                    if (p.Code == "DMX-TL03")
+                    {
+                        blackImg = "https://cdnv2.tgdd.vn/pim/cdn/images/202611/342628105514.jpg";
+                        silverImg = "https://cdnv2.tgdd.vn/pim/cdn/images/202611/370337072738.png";
+                        grayImg = "https://cdnv2.tgdd.vn/pim/cdn/images/202611/360346105744.jpg";
+                    }
+                    else if (p.Code == "DMX-TL04")
+                    {
+                        blackImg = "https://cdn.tgdd.vn/2026/10/timerseo/359980-600x600-3.jpg";
+                        silverImg = "https://cdn.tgdd.vn/2026/10/timerseo/327797-600x600-3.jpg";
+                        grayImg = "https://cdnv2.tgdd.vn/pim/cdn/images/202611/359518110433.jpg";
+                    }
+
+                    p.ProductVariants =
+                        $"Màu Đen Ánh Kim (Bản Tiêu Chuẩn) | {p.Price:0} | {p.OriginalPrice:0} | {blackImg}\n" +
+                        $"Màu Bạc Inox (Thép Không Gỉ) | {p.Price + 900000:0} | {p.OriginalPrice + 1000000:0} | {silverImg}\n" +
+                        $"Màu Xám Khói (Lấy Nước Ngoài) | {p.Price + 1800000:0} | {p.OriginalPrice + 2000000:0} | {grayImg}";
                     changed = true;
                 }
                 else if (catSlug == "laptop")
                 {
                     p.ProductVariants =
-                        $"RAM 8GB / SSD 512GB - Bạc | {p.Price:0} | {p.OriginalPrice:0}\n" +
-                        $"RAM 16GB / SSD 512GB - Xám | {p.Price + 2000000:0} | {p.OriginalPrice + 2000000:0}\n" +
-                        $"RAM 16GB / SSD 1TB - Đen | {p.Price + 4200000:0} | {p.OriginalPrice + 4200000:0}";
+                        $"RAM 8GB / SSD 512GB - Màu Bạc | {p.Price:0} | {p.OriginalPrice:0} | {p.ImageUrl}\n" +
+                        $"RAM 16GB / SSD 512GB - Màu Xám Titan | {p.Price + 2000000:0} | {p.OriginalPrice + 2000000:0} | https://cdn.tgdd.vn/2026/11/timerseo/0220042003992-laptop-tron-20261104-600x600.png\n" +
+                        $"RAM 16GB / SSD 1TB - Màu Đen Nhám | {p.Price + 4200000:0} | {p.OriginalPrice + 4200000:0} | https://cdn.tgdd.vn/2026/11/timerseo/0220042003571-laptop-tron-20261104-600x600.png";
                     changed = true;
                 }
                 else if (catSlug == "tivi")
                 {
                     p.ProductVariants =
-                        $"55 inch - 4K Tiêu Chuẩn | {p.Price:0} | {p.OriginalPrice:0}\n" +
-                        $"65 inch - 4K Màn Hình Lớn | {p.Price + 4000000:0} | {p.OriginalPrice + 4500000:0}\n" +
-                        $"75 inch - 4K Rạp Hát Tại Gia | {p.Price + 9500000:0} | {p.OriginalPrice + 10500000:0}";
+                        $"55 inch - 4K Tiêu Chuẩn | {p.Price:0} | {p.OriginalPrice:0} | {p.ImageUrl}\n" +
+                        $"65 inch - 4K Màn Hình Lớn | {p.Price + 4000000:0} | {p.OriginalPrice + 4500000:0} | https://cdn.tgdd.vn/2026/11/timerseo/365298.jpg\n" +
+                        $"75 inch - 4K Rạp Hát Tại Gia | {p.Price + 9500000:0} | {p.OriginalPrice + 10500000:0} | https://cdn.tgdd.vn/2026/11/timerseo/366151.jpg";
                     changed = true;
                 }
                 else if (catSlug == "may-lanh")
                 {
                     p.ProductVariants =
-                        $"1 HP (9.000 BTU) - Dưới 15m2 | {p.Price:0} | {p.OriginalPrice:0}\n" +
-                        $"1.5 HP (12.000 BTU) - Từ 15-20m2 | {p.Price + 2200000:0} | {p.OriginalPrice + 2500000:0}\n" +
-                        $"2 HP (18.000 BTU) - Từ 20-30m2 | {p.Price + 5800000:0} | {p.OriginalPrice + 6500000:0}";
-                    changed = true;
-                }
-                else if (catSlug == "tu-lanh")
-                {
-                    p.ProductVariants =
-                        $"Bản Tiêu Chuẩn - Đen Ánh Kim | {p.Price:0} | {p.OriginalPrice:0}\n" +
-                        $"Bản Cao Cấp (Lấy nước ngoài) - Bạc | {p.Price + 1800000:0} | {p.OriginalPrice + 2000000:0}";
+                        $"1 HP (9.000 BTU) - Trắng Tinh Khôi | {p.Price:0} | {p.OriginalPrice:0} | {p.ImageUrl}\n" +
+                        $"1.5 HP (12.000 BTU) - Trắng Ngà | {p.Price + 2200000:0} | {p.OriginalPrice + 2500000:0} | https://cdn.tgdd.vn/2026/11/timerseo/1751098000224-may-lanh-tron-20261105-600x600.png\n" +
+                        $"2 HP (18.000 BTU) - Trắng Viền Bạc | {p.Price + 5800000:0} | {p.OriginalPrice + 6500000:0} | https://cdn.tgdd.vn/2026/11/timerseo/1751098000005-may-lanh-tron-20261105-600x600.png";
                     changed = true;
                 }
                 else if (catSlug == "may-giat")
                 {
                     p.ProductVariants =
-                        $"Khối lượng 9.5 Kg - Xám Đen | {p.Price:0} | {p.OriginalPrice:0}\n" +
-                        $"Khối lượng 10.5 Kg - Trắng Tinh Khôi | {p.Price + 1500000:0} | {p.OriginalPrice + 1800000:0}";
+                        $"9.5 Kg - Màu Xám Đen | {p.Price:0} | {p.OriginalPrice:0} | {p.ImageUrl}\n" +
+                        $"10.5 Kg - Màu Bạc Inox | {p.Price + 1500000:0} | {p.OriginalPrice + 1800000:0} | https://cdn.tgdd.vn/2026/11/timerseo/357870.jpg\n" +
+                        $"12 Kg - Màu Trắng Tinh Khôi | {p.Price + 2800000:0} | {p.OriginalPrice + 3200000:0} | https://cdn.tgdd.vn/2026/11/timerseo/334633.jpg";
                     changed = true;
                 }
             }

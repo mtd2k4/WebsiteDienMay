@@ -18,11 +18,12 @@ namespace WebsiteDienMay.Models
         public string VariantName { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public decimal OriginalPrice { get; set; }
+        public string ImageUrl { get; set; } = string.Empty;
         public int DiscountPercent => (OriginalPrice > 0 && Price < OriginalPrice)
             ? (int)Math.Round((OriginalPrice - Price) / OriginalPrice * 100)
             : 0;
 
-        public static List<ProductVariantItem> ParseVariants(string? rawVariants, decimal defaultPrice, decimal defaultOriginalPrice)
+        public static List<ProductVariantItem> ParseVariants(string? rawVariants, decimal defaultPrice, decimal defaultOriginalPrice, string defaultImageUrl = "")
         {
             var result = new List<ProductVariantItem>();
             if (string.IsNullOrWhiteSpace(rawVariants)) return result;
@@ -36,6 +37,7 @@ namespace WebsiteDienMay.Models
                 var vName = parts[0];
                 var vPrice = defaultPrice;
                 var vOrigPrice = defaultOriginalPrice;
+                var vImageUrl = defaultImageUrl;
 
                 if (parts.Length >= 2 && decimal.TryParse(parts[1].Replace(".", "").Replace(",", "").Trim(), out var parsedPrice) && parsedPrice > 0)
                 {
@@ -49,12 +51,17 @@ namespace WebsiteDienMay.Models
                 {
                     vOrigPrice = Math.Round(vPrice * 1.15m / 10000m, 0) * 10000m;
                 }
+                if (parts.Length >= 4 && !string.IsNullOrWhiteSpace(parts[3]))
+                {
+                    vImageUrl = parts[3].Trim();
+                }
 
                 result.Add(new ProductVariantItem
                 {
                     VariantName = vName,
                     Price = vPrice,
-                    OriginalPrice = vOrigPrice
+                    OriginalPrice = vOrigPrice,
+                    ImageUrl = vImageUrl
                 });
             }
 

@@ -134,8 +134,22 @@
                                               data-swal-confirm="Đồng ý">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@u.Id" />
-                                            <button type="submit" class="adm-icon-btn @(u.IsActive ? "danger" : "")" title="@(u.IsActive ? "Khóa tài khoản" : "Mở khóa tài khoản")">
-                                                <i class="bi @(u.IsActive ? "bi-lock" : "bi-unlock text-success")"></i>
+                                            <button type="submit" class="adm-icon-btn @(u.IsActive ? "" : "text-success")" title="@(u.IsActive ? "Khóa tài khoản" : "Mở khóa tài khoản")">
+                                                <i class="bi @(u.IsActive ? "bi-lock text-warning" : "bi-unlock text-success")"></i>
+                                            </button>
+                                        </form>
+
+                                        <form asp-action="DeleteUser" method="post"
+                                              class="swal-confirm-form d-inline"
+                                              data-swal-title="Xóa tài khoản '@u.FullName'?"
+                                              data-swal-text="Tài khoản '@@@u.Username' sẽ bị xóa vĩnh viễn khỏi hệ thống (lịch sử đơn hàng của khách hàng vẫn được bảo toàn)."
+                                              data-swal-icon="warning"
+                                              data-swal-color="#d0021c"
+                                              data-swal-confirm="Xóa tài khoản">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <button type="submit" class="adm-icon-btn danger" title="Xóa tài khoản người dùng">
+                                                <i class="bi bi-trash3"></i>
                                             </button>
                                         </form>
                                     }

@@ -175,7 +175,16 @@ namespace WebsiteDienMay.Controllers
                     .ToList();
             }
 
+            var variants = ProductVariantItem.ParseVariants(product.ProductVariants, product.Price, product.OriginalPrice, product.ImageUrl);
+
             var gallery = new List<string> { product.ImageUrl };
+            foreach (var v in variants)
+            {
+                if (!string.IsNullOrWhiteSpace(v.ImageUrl))
+                {
+                    gallery.Add(v.ImageUrl);
+                }
+            }
             if (!string.IsNullOrWhiteSpace(product.ExtraImages))
             {
                 var extras = product.ExtraImages
@@ -193,7 +202,7 @@ namespace WebsiteDienMay.Controllers
                 SpecList = specList,
                 Promotions = promotions,
                 GalleryImages = gallery.Distinct().ToList(),
-                Variants = ProductVariantItem.ParseVariants(product.ProductVariants, product.Price, product.OriginalPrice)
+                Variants = variants
             };
 
             return View(vm);

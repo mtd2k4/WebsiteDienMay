@@ -37,23 +37,47 @@
 
     @if (Model.PaymentMethod == "Banking" || Model.PaymentMethod.Contains("Chuyển khoản", StringComparison.OrdinalIgnoreCase))
     {
-        var vietQrUrl = $"https://img.vietqr.io/image/MB-0988123456-compact2.png?amount={(long)Model.TotalAmount}&addInfo={Model.OrderCode}&accountName=SIEU%20THI%20DIEN%20MAY%20XANH";
+        var activeBanks = WebsiteDienMay.Data.BankConfigStore.GetActiveAccounts();
+        var primaryBank = WebsiteDienMay.Data.BankConfigStore.GetDefault();
+        var vietQrUrl = WebsiteDienMay.Data.BankConfigStore.BuildVietQrUrl(primaryBank, Model.TotalAmount, Model.OrderCode);
         <div class="card border-primary mb-4 shadow-sm rounded-4 overflow-hidden">
             <div class="card-header bg-primary text-white py-3 px-4 d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-qr-code-scan fs-4"></i>
                     <div>
                         <h6 class="mb-0 fw-bold">QUÉT MÃ VIETQR ĐỂ THANH TOÁN TỰ ĐỘNG</h6>
-                        <small class="opacity-75">Hỗ trợ tất cả ứng dụng Ngân hàng (MB, VCB, Techcombank, Vietinbank, Momo...)</small>
+                        <small class="opacity-75">Hỗ trợ tất cả ứng dụng Ngân hàng chuẩn Napas 247 toàn quốc</small>
                     </div>
                 </div>
                 <span class="badge bg-warning text-dark font-monospace fw-bold">NAPAS 247</span>
             </div>
             <div class="card-body p-4 bg-light">
+                @if (activeBanks.Count > 1)
+                {
+                    <div class="mb-3 pb-3 border-bottom d-flex flex-wrap align-items-center gap-2">
+                        <span class="small fw-bold text-secondary me-1"><i class="bi bi-bank2 text-primary me-1"></i>Chọn ngân hàng thụ hưởng:</span>
+                        @for (int bIdx = 0; bIdx < activeBanks.Count; bIdx++)
+                        {
+                            var b = activeBanks[bIdx];
+                            var bQr = WebsiteDienMay.Data.BankConfigStore.BuildVietQrUrl(b, Model.TotalAmount, Model.OrderCode);
+                            var isDef = b.Id == primaryBank.Id;
+                            <button type="button"
+                                    class="btn btn-sm fw-bold bank-switch-btn @(isDef ? "btn-primary" : "btn-outline-primary bg-white")"
+                                    data-qr="@bQr"
+                                    data-bankname="@b.BankName"
+                                    data-holder="@b.AccountHolder"
+                                    data-accno="@b.AccountNumber"
+                                    data-branch="@b.Branch"
+                                    onclick="switchOrderBankQr(this)">
+                                @b.BankCode - @b.AccountNumber
+                            </button>
+                        }
+                    </div>
+                }
                 <div class="row align-items-center g-4">
                     <div class="col-md-5 text-center">
                         <div class="bg-white p-3 rounded-3 border d-inline-block shadow-sm">
-                            <img src="@vietQrUrl" alt="VietQR Thanh toán Điện Máy Xanh" class="img-fluid rounded" style="max-width: 230px;" />
+                            <img id="orderSuccessVietQrImg" src="@vietQrUrl" alt="VietQR Thanh toán Điện Máy Xanh" class="img-fluid rounded" style="max-width: 230px;" />
                             <div class="text-muted small mt-2">
                                 <i class="bi bi-shield-check text-success me-1"></i>Chuẩn thanh toán VietQR Quốc gia
                             </div>
@@ -64,17 +88,17 @@
                         <ul class="list-group list-group-flush border rounded-3 bg-white mb-3">
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <span class="text-muted">Ngân hàng thụ hưởng:</span>
-                                <strong class="text-dark">MBBank (Ngân hàng TMCP Quân Đội)</strong>
+                                <strong id="orderBankNameText" class="text-dark text-end">@primaryBank.BankName</strong>
                             </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <span class="text-muted">Chủ tài khoản:</span>
-                                <strong class="text-primary text-uppercase">SIEU THI DIEN MAY XANH</strong>
+                                <strong id="orderBankHolderText" class="text-primary text-uppercase">@primaryBank.AccountHolder</strong>
                             </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <span class="text-muted">Số tài khoản:</span>
                                 <div class="d-flex align-items-center gap-2">
-                                    <strong class="font-monospace fs-6 text-dark">0988123456</strong>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="navigator.clipboard.writeText('0988123456'); if(typeof Swal !== 'undefined') Swal.fire({toast:true, position:'top-end', icon:'success', title:'Đã sao chép STK', timer:1500, showConfirmButton:false});" title="Sao chép STK">
+                                    <strong id="orderBankAccNoText" class="font-monospace fs-6 text-dark">@primaryBank.AccountNumber</strong>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="var stk = document.getElementById('orderBankAccNoText').textContent; navigator.clipboard.writeText(stk); if(typeof Swal !== 'undefined') Swal.fire({toast:true, position:'top-end', icon:'success', title:'Đã sao chép STK ' + stk, timer:1500, showConfirmButton:false});" title="Sao chép STK">
                                         <i class="bi bi-copy"></i>
                                     </button>
                                 </div>
@@ -100,6 +124,26 @@
                 </div>
             </div>
         </div>
+        <script>
+            function switchOrderBankQr(btn) {
+                if (!btn) return;
+                document.querySelectorAll(".bank-switch-btn").forEach(function (el) {
+                    el.classList.remove("btn-primary");
+                    el.classList.add("btn-outline-primary", "bg-white");
+                });
+                btn.classList.remove("btn-outline-primary", "bg-white");
+                btn.classList.add("btn-primary");
+
+                var qrImg = document.getElementById("orderSuccessVietQrImg");
+                if (qrImg) qrImg.src = btn.getAttribute("data-qr");
+                var nameEl = document.getElementById("orderBankNameText");
+                if (nameEl) nameEl.textContent = btn.getAttribute("data-bankname");
+                var holderEl = document.getElementById("orderBankHolderText");
+                if (holderEl) holderEl.textContent = btn.getAttribute("data-holder");
+                var accEl = document.getElementById("orderBankAccNoText");
+                if (accEl) accEl.textContent = btn.getAttribute("data-accno");
+            }
+        </script>
     }
 
     @if (Model.PaymentMethod == "Installment" && !string.IsNullOrEmpty(Model.InstallmentInfo))
