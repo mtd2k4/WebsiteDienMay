@@ -319,6 +319,18 @@ namespace WebsiteDienMay.Models
         public string CreatedBy { get; set; } = "Quản trị viên";
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        [NotMapped]
+        public decimal SubTotal => ImportPrice * Quantity;
+
+        [NotMapped]
+        public decimal VatRate => 8m;
+
+        [NotMapped]
+        public decimal VatAmount => Math.Round(SubTotal * 0.08m, 0);
+
+        [NotMapped]
+        public decimal TotalAmountWithVat => SubTotal + VatAmount;
     }
 
     public class Coupon

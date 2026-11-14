@@ -13,7 +13,46 @@
         new { Key = "Hoàn thành", Label = "Hoàn thành", Icon = "bi-patch-check" },
         new { Key = "Đã hủy", Label = "Đã hủy", Icon = "bi-x-octagon" }
     };
+
+    var validOrders = Model.Where(o => o.OrderStatus != "Đã hủy").ToList();
+    var sumSubTotal = validOrders.Sum(o => o.SubTotal);
+    var sumDiscount = validOrders.Sum(o => o.DiscountAmount);
+    var sumTaxable = validOrders.Sum(o => Math.Max(0, o.SubTotal - o.DiscountAmount));
+    var sumVat = validOrders.Sum(o => o.VatAmount > 0 ? o.VatAmount : Math.Round(Math.Max(0, o.SubTotal - o.DiscountAmount) * 0.08m, 0));
+    var sumFinalTotal = validOrders.Sum(o => o.TotalAmount);
 }
+
+<!-- Thống kê nhanh Doanh thu Xuất hàng & Thuế GTGT đầu ra (VAT 8%) -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="adm-kpi-label">Tiền hàng xuất (Chưa VAT)</div>
+            <div class="adm-kpi-value text-dark" style="font-size: 19px;">@sumTaxable.ToString("N0") đ</div>
+            <div class="adm-kpi-sub">Tạm tính gốc: @sumSubTotal.ToString("N0") đ</div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="adm-kpi-label">Trợ giá Mã giảm giá (Voucher)</div>
+            <div class="adm-kpi-value text-success" style="font-size: 19px;">-@sumDiscount.ToString("N0") đ</div>
+            <div class="adm-kpi-sub">Tổng ưu đãi đã khấu trừ</div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="adm-kpi-label">Thuế GTGT Xuất hàng (VAT 8%)</div>
+            <div class="adm-kpi-value text-primary" style="font-size: 19px;">+@sumVat.ToString("N0") đ</div>
+            <div class="adm-kpi-sub">Thuế GTGT đầu ra (8% đơn hợp lệ)</div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="adm-kpi-card">
+            <div class="adm-kpi-label">Tổng thanh toán (Gồm VAT 8%)</div>
+            <div class="adm-kpi-value text-danger" style="font-size: 19px;">@sumFinalTotal.ToString("N0") đ</div>
+            <div class="adm-kpi-sub">Trên @validOrders.Count đơn hàng hiệu lực</div>
+        </div>
+    </div>
+</div>
 
 <div class="adm-card">
     <div class="adm-card-header">
@@ -95,6 +134,7 @@
                                 _ => "adm-badge-warning"
                             };
                             var itemQty = o.OrderDetails?.Sum(d => d.Quantity) ?? 0;
+                            var orderVat = o.VatAmount > 0 ? o.VatAmount : Math.Round(Math.Max(0, o.SubTotal - o.DiscountAmount) * 0.08m, 0);
 
                             <tr>
                                 <td>
@@ -104,8 +144,14 @@
                                     <div class="text-muted small mt-1">
                                         <i class="bi bi-calendar3 me-1"></i>@o.CreatedAt.ToString("dd/MM/yyyy HH:mm")
                                     </div>
+                                    @if (o.RequireVatInvoice)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle mt-1" style="font-size: 10px;">
+                                            Xuất HĐ Công ty (@o.CompanyTaxCode)
+                                        </span>
+                                    }
                                 </td>
-                                <td style="max-width: 280px;">
+                                <td style="max-width: 260px;">
                                     <div class="fw-bold text-dark">@o.CustomerName <span class="text-muted fw-normal">• @o.CustomerPhone</span></div>
                                     <div class="text-muted small text-truncate" title="@o.ShippingAddress">
                                         <i class="bi bi-geo-alt me-1"></i>@o.ShippingAddress
@@ -118,18 +164,31 @@
                                 <td class="text-center">
                                     <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2">@itemQty SP</span>
                                 </td>
-                                <td class="text-end fw-extrabold text-danger fs-6">
-                                    @o.TotalAmount.ToString("N0") đ
+                                <td class="text-end text-nowrap">
+                                    <div class="text-muted" style="font-size: 11px;">
+                                        Chưa VAT: @o.SubTotal.ToString("N0") đ
+                                        @if (o.DiscountAmount > 0)
+                                        {
+                                            <span class="text-success fw-semibold">(-@o.DiscountAmount.ToString("N0") đ)</span>
+                                        }
+                                    </div>
+                                    <div class="text-primary" style="font-size: 11px;">Thuế VAT (8%): <strong>+@orderVat.ToString("N0") đ</strong></div>
+                                    <div class="fw-extrabold text-danger fs-6">Tổng: @o.TotalAmount.ToString("N0") đ</div>
                                 </td>
                                 <td class="text-center">
                                     <span class="adm-badge @statusBadge">
                                         <span class="adm-badge-dot"></span>@o.OrderStatus
                                     </span>
                                 </td>
-                                <td class="text-end">
-                                    <a asp-action="OrderDetail" asp-route-id="@o.Id" class="btn btn-primary btn-sm fw-semibold rounded-3 px-3">
-                                        Xử lý <i class="bi bi-arrow-right-short"></i>
-                                    </a>
+                                <td class="text-end text-nowrap">
+                                    <div class="d-inline-flex gap-1">
+                                        <a asp-action="PrintInvoice" asp-route-id="@o.Id" target="_blank" class="btn btn-outline-danger btn-sm fw-semibold rounded-3" title="In Hóa đơn GTGT (VAT 8%) & Phiếu xuất kho">
+                                            <i class="bi bi-printer-fill"></i> HĐ VAT
+                                        </a>
+                                        <a asp-action="OrderDetail" asp-route-id="@o.Id" class="btn btn-primary btn-sm fw-semibold rounded-3 px-2">
+                                            Xử lý <i class="bi bi-arrow-right-short"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         }

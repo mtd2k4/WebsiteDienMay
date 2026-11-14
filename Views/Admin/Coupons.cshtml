@@ -99,24 +99,24 @@
                     <div class="col-6">
                         <label class="adm-form-label">Loại giảm giá</label>
                         <select name="discountType" id="cpType" class="form-select">
-                            <option value="FixedAmount">Số tiền (VNĐ)</option>
-                            <option value="Percentage">Phần trăm (%)</option>
+                            <option value="FixedAmount">Số tiền cố định (VNĐ)</option>
+                            <option value="Percentage">Theo phần trăm (%)</option>
                         </select>
                     </div>
                     <div class="col-6">
-                        <label class="adm-form-label">Mức giảm <span class="text-danger">*</span></label>
-                        <input type="number" name="discountValue" id="cpValue" min="1" step="1000" class="form-control fw-bold text-danger" placeholder="VD: 500000 hoặc 10" required />
+                        <label class="adm-form-label"><span id="cpValueLabel">Mức giảm (VNĐ)</span> <span class="text-danger">*</span></label>
+                        <input type="number" name="discountValue" id="cpValue" min="1" step="1" class="form-control fw-bold text-danger" placeholder="VD: 500000" required />
                     </div>
                 </div>
 
                 <div class="row g-2 mb-3">
                     <div class="col-6">
                         <label class="adm-form-label">Đơn tối thiểu (VNĐ)</label>
-                        <input type="number" name="minOrderAmount" id="cpMin" min="0" step="10000" class="form-control" value="0" />
+                        <input type="number" name="minOrderAmount" id="cpMin" min="0" step="1" class="form-control" value="0" />
                     </div>
                     <div class="col-6">
-                        <label class="adm-form-label">Giảm tối đa (% đơn)</label>
-                        <input type="number" name="maxDiscountAmount" id="cpMax" min="0" step="10000" class="form-control" placeholder="Không giới hạn" />
+                        <label class="adm-form-label">Giảm tối đa (VNĐ)</label>
+                        <input type="number" name="maxDiscountAmount" id="cpMax" min="0" step="1" class="form-control" placeholder="Chỉ áp dụng cho mã %" />
                     </div>
                 </div>
 
@@ -193,7 +193,7 @@
                             {
                                 @foreach (var cp in Model)
                                 {
-                                    var isExpired = cp.EndDate < DateTime.Now;
+                                    var isExpired = cp.EndDate.Date < DateTime.Now.Date;
                                     var isExhausted = cp.UsedCount >= cp.UsageLimit;
                                     <tr>
                                         <td>
@@ -271,9 +271,9 @@
                                                         data-code="@cp.Code"
                                                         data-desc="@cp.Description"
                                                         data-type="@cp.DiscountType"
-                                                        data-value="@cp.DiscountValue"
-                                                        data-min="@cp.MinOrderAmount"
-                                                        data-max="@(cp.MaxDiscountAmount ?? 0)"
+                                                        data-value="@cp.DiscountValue.ToString("0")"
+                                                        data-min="@cp.MinOrderAmount.ToString("0")"
+                                                        data-max="@((cp.MaxDiscountAmount ?? 0).ToString("0"))"
                                                         data-limit="@cp.UsageLimit"
                                                         data-start="@cp.StartDate.ToString("yyyy-MM-dd")"
                                                         data-end="@cp.EndDate.ToString("yyyy-MM-dd")"
@@ -315,6 +315,7 @@
             const cpDesc = document.getElementById("cpDesc");
             const cpType = document.getElementById("cpType");
             const cpValue = document.getElementById("cpValue");
+            const cpValueLabel = document.getElementById("cpValueLabel");
             const cpMin = document.getElementById("cpMin");
             const cpMax = document.getElementById("cpMax");
             const cpLimit = document.getElementById("cpLimit");
@@ -322,6 +323,26 @@
             const cpEnd = document.getElementById("cpEnd");
             const cpActive = document.getElementById("cpActive");
             const btnReset = document.getElementById("btnResetCoupon");
+
+            function syncDiscountTypeUI() {
+                if (cpType.value === "Percentage") {
+                    if (cpValueLabel) cpValueLabel.textContent = "Tỷ lệ giảm (%)";
+                    cpValue.setAttribute("max", "100");
+                    cpValue.setAttribute("placeholder", "VD: 5, 10, 15");
+                    cpMax.disabled = false;
+                    cpMax.setAttribute("placeholder", "VD: 1500000 (Không bắt buộc)");
+                } else {
+                    if (cpValueLabel) cpValueLabel.textContent = "Mức giảm (VNĐ)";
+                    cpValue.removeAttribute("max");
+                    cpValue.setAttribute("placeholder", "VD: 200000, 500000");
+                    cpMax.value = "";
+                    cpMax.disabled = true;
+                    cpMax.setAttribute("placeholder", "Chỉ áp dụng cho mã %");
+                }
+            }
+
+            cpType.addEventListener("change", syncDiscountTypeUI);
+            syncDiscountTypeUI();
 
             document.querySelectorAll(".btn-edit-coupon").forEach(btn => {
                 btn.addEventListener("click", function () {
@@ -333,9 +354,10 @@
                     cpCode.value = this.dataset.code;
                     cpDesc.value = this.dataset.desc;
                     cpType.value = this.dataset.type;
+                    syncDiscountTypeUI();
                     cpValue.value = this.dataset.value;
                     cpMin.value = this.dataset.min;
-                    cpMax.value = this.dataset.max > 0 ? this.dataset.max : "";
+                    cpMax.value = Number(this.dataset.max) > 0 ? this.dataset.max : "";
                     cpLimit.value = this.dataset.limit;
                     cpStart.value = this.dataset.start;
                     cpEnd.value = this.dataset.end;
@@ -355,6 +377,7 @@
                 cpCode.value = "";
                 cpDesc.value = "";
                 cpType.value = "FixedAmount";
+                syncDiscountTypeUI();
                 cpValue.value = "";
                 cpMin.value = "0";
                 cpMax.value = "";

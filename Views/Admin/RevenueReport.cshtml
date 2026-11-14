@@ -175,6 +175,58 @@
     </div>
 </div>
 
+<!-- Khung Đối soát Thuế GTGT (VAT 8%) cho Xuất hàng & Nhập hàng trong kỳ -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="p-3 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-2">
+                <div class="fw-bold text-success">
+                    <i class="bi bi-receipt-cutoff me-1"></i>THUẾ GTGT ĐẦU RA - ĐƠN XUẤT HÀNG (VAT 8%)
+                </div>
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Xuất bán 8%</span>
+            </div>
+            <div class="row g-2 text-center small">
+                <div class="col-4 border-end">
+                    <div class="text-muted">Doanh thu chưa VAT</div>
+                    <div class="fw-bold text-dark">@Model.NetRevenue.ToString("N0") đ</div>
+                </div>
+                <div class="col-4 border-end">
+                    <div class="text-muted">Thuế VAT xuất (8%)</div>
+                    <div class="fw-bold text-success">+@Model.TotalOutputVat.ToString("N0") đ</div>
+                </div>
+                <div class="col-4">
+                    <div class="text-muted">Tổng thu (Gồm VAT)</div>
+                    <div class="fw-extrabold text-danger">@Model.TotalRevenueWithVat.ToString("N0") đ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="p-3 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-2">
+                <div class="fw-bold text-primary">
+                    <i class="bi bi-box-arrow-in-down me-1"></i>THUẾ GTGT ĐẦU VÀO - PHIẾU NHẬP HÀNG (VAT 8%)
+                </div>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Nhập kho 8%</span>
+            </div>
+            <div class="row g-2 text-center small">
+                <div class="col-4 border-end">
+                    <div class="text-muted">Giá trị nhập chưa VAT</div>
+                    <div class="fw-bold text-dark">@Model.TotalStockImportSubTotal.ToString("N0") đ</div>
+                </div>
+                <div class="col-4 border-end">
+                    <div class="text-muted">Thuế VAT nhập (8%)</div>
+                    <div class="fw-bold text-primary">+@Model.TotalInputVat.ToString("N0") đ</div>
+                </div>
+                <div class="col-4">
+                    <div class="text-muted">Tổng nhập (Gồm VAT)</div>
+                    <div class="fw-extrabold text-danger">@Model.TotalStockImportWithVat.ToString("N0") đ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 2 Biểu đồ Thống kê Trực quan (Chart.js) -->
 <div class="row g-4 mb-4">
     <!-- Cột trái: Biểu đồ doanh thu & lợi nhuận theo ngày -->
@@ -289,7 +341,8 @@
                                 <th>Ngày ghi nhận</th>
                                 <th class="text-center">Đơn</th>
                                 <th class="text-center">SL bán</th>
-                                <th class="text-end">Doanh thu thuần</th>
+                                <th class="text-end">Chưa VAT & Thuế VAT (8%)</th>
+                                <th class="text-end">Tổng thu (Gồm VAT)</th>
                                 <th class="text-end">Lợi nhuận gộp</th>
                             </tr>
                         </thead>
@@ -297,7 +350,7 @@
                             @if (!Model.DailyRevenues.Any())
                             {
                                 <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">Không có doanh thu phát sinh trong kỳ này.</td>
+                                    <td colspan="6" class="text-center py-4 text-muted">Không có doanh thu phát sinh trong kỳ này.</td>
                                 </tr>
                             }
                             else
@@ -314,7 +367,11 @@
                                         </td>
                                         <td class="text-center fw-semibold">@d.OrdersCount</td>
                                         <td class="text-center text-muted">@d.ProductsCount</td>
-                                        <td class="text-end fw-bold text-primary text-nowrap">@d.NetRevenue.ToString("N0") đ</td>
+                                        <td class="text-end text-nowrap">
+                                            <div class="fw-semibold text-dark">@d.NetRevenue.ToString("N0") đ</div>
+                                            <div class="text-primary" style="font-size: 11px;">VAT 8%: +@d.VatAmount.ToString("N0") đ</div>
+                                        </td>
+                                        <td class="text-end fw-bold text-danger text-nowrap">@d.TotalWithVat.ToString("N0") đ</td>
                                         <td class="text-end fw-bold text-success text-nowrap">@d.EstimatedProfit.ToString("N0") đ</td>
                                     </tr>
                                 }

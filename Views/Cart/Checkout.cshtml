@@ -311,8 +311,52 @@
                     }
                 </div>
 
+                <!-- Khung áp dụng / đổi Mã giảm giá trực tiếp tại trang Thanh toán -->
+                <div class="p-3 rounded-3 bg-light border mb-3">
+                    <label class="small fw-bold text-dark mb-2 d-block">
+                        <i class="bi bi-ticket-perforated-fill text-primary me-1"></i>Mã giảm giá / Voucher ưu đãi:
+                    </label>
+                    <div class="input-group input-group-sm mb-2">
+                        <input type="text" id="checkoutCouponVisibleInput" value="@Model.Cart.CouponCode" class="form-control fw-bold text-uppercase font-monospace" placeholder="Nhập mã ưu đãi..." />
+                        <button type="button" class="btn btn-primary fw-bold px-3" onclick="submitCheckoutCoupon(document.getElementById('checkoutCouponVisibleInput').value)">
+                            Áp dụng
+                        </button>
+                        @if (!string.IsNullOrEmpty(Model.Cart.CouponCode))
+                        {
+                            <button type="button" class="btn btn-outline-danger fw-bold" onclick="submitCheckoutCoupon('')" title="Gỡ mã giảm giá">
+                                Gỡ mã
+                            </button>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Cart.CouponCode) && Model.Cart.DiscountAmount > 0)
+                    {
+                        <div class="small text-success fw-semibold mb-2">
+                            <i class="bi bi-check-circle-fill me-1"></i>Đã áp dụng <strong>@Model.Cart.CouponCode</strong>: Giảm <strong>@Model.Cart.DiscountAmount.ToString("N0") đ</strong>
+                        </div>
+                    }
+                    @if (Model.Cart.AvailableCoupons.Any())
+                    {
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                            @foreach (var cp in Model.Cart.AvailableCoupons)
+                            {
+                                var isApplied = string.Equals(Model.Cart.CouponCode, cp.Code, StringComparison.OrdinalIgnoreCase);
+                                var isEligible = Model.Cart.SubTotal >= cp.MinOrderAmount;
+                                var label = cp.DiscountType == "Percentage" ? $"{cp.Code} (-{cp.DiscountValue:0}%)" : $"{cp.Code} (-{cp.DiscountValue / 1000:N0}K)";
+                                <button type="button"
+                                        class="btn btn-sm py-0 px-2 fw-semibold @(isApplied ? "btn-success" : (isEligible ? "btn-outline-primary bg-white" : "btn-outline-secondary opacity-50"))"
+                                        style="font-size: 11px;"
+                                        title="@cp.Description (Đơn từ @cp.MinOrderAmount.ToString("N0")đ)"
+                                        @(isEligible ? "" : "disabled")
+                                        onclick="submitCheckoutCoupon('@cp.Code')">
+                                    @label @(isApplied ? "✓" : "")
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+
                 <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Tạm tính tiền hàng:</span>
+                    <span class="text-muted">Tạm tính tiền hàng (chưa VAT):</span>
                     <span class="fw-bold">@Model.Cart.SubTotal.ToString("N0") đ</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
@@ -320,8 +364,12 @@
                     <span class="text-success fw-bold">-@Model.Cart.DiscountAmount.ToString("N0") đ</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Thuế GTGT (VAT 8%):</span>
-                    <span class="fw-semibold text-dark">+@Model.Cart.VatAmount.ToString("N0") đ</span>
+                    <span class="text-muted">Giá trị tính thuế GTGT:</span>
+                    <span class="fw-semibold">@Model.Cart.TaxableAmount.ToString("N0") đ</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Thuế GTGT xuất hàng (VAT 8%):</span>
+                    <span class="fw-semibold text-primary">+@Model.Cart.VatAmount.ToString("N0") đ</span>
                 </div>
                 <div class="d-flex justify-content-between mb-3">
                     <span class="text-muted">Vận chuyển & Công lắp đặt:</span>
@@ -343,6 +391,21 @@
         </div>
     </div>
 </form>
+
+<form asp-action="ApplyCoupon" method="post" id="checkoutCouponForm" class="d-none">
+    <input type="hidden" name="returnUrl" value="/Cart/Checkout" />
+    <input type="hidden" name="couponCode" id="checkoutCouponHiddenInput" value="" />
+</form>
+<script>
+    function submitCheckoutCoupon(code) {
+        var input = document.getElementById("checkoutCouponHiddenInput");
+        var form = document.getElementById("checkoutCouponForm");
+        if (input && form) {
+            input.value = code || "";
+            form.submit();
+        }
+    }
+</script>
 
 @section Scripts {
     <script>

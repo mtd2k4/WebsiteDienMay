@@ -237,6 +237,17 @@ namespace WebsiteDienMay.Controllers
                 .Take(30)
                 .ToListAsync();
 
+            var allStockImports = await _context.StockImports.AsNoTracking().ToListAsync();
+            var totalImpSub = allStockImports.Sum(si => si.ImportPrice * si.Quantity);
+            var totalImpVat = allStockImports.Sum(si => Math.Round(si.ImportPrice * si.Quantity * 0.08m, 0));
+
+            var validExportOrders = await _context.Orders
+                .AsNoTracking()
+                .Where(o => o.OrderStatus != "Đã hủy")
+                .ToListAsync();
+            var totalExpSub = validExportOrders.Sum(o => Math.Max(0, o.SubTotal - o.DiscountAmount));
+            var totalExpVat = validExportOrders.Sum(o => o.VatAmount > 0 ? o.VatAmount : Math.Round(Math.Max(0, o.SubTotal - o.DiscountAmount) * 0.08m, 0));
+
             var vm = new WarehouseViewModel
             {
                 Products = filtered.ToList(),
@@ -251,7 +262,13 @@ namespace WebsiteDienMay.Controllers
                 TotalInventoryValue = allProducts.Sum(p => p.Price * p.StockQuantity),
                 LowStockProductCount = allProducts.Count(p => p.StockQuantity > 0 && p.StockQuantity <= 10),
                 OutOfStockProductCount = allProducts.Count(p => p.StockQuantity <= 0),
-                TotalImportReceipts = await _context.StockImports.CountAsync()
+                TotalImportReceipts = allStockImports.Count,
+                TotalImportSubTotal = totalImpSub,
+                TotalImportVatAmount = totalImpVat,
+                TotalImportWithVat = totalImpSub + totalImpVat,
+                TotalExportSubTotal = totalExpSub,
+                TotalExportVatAmount = totalExpVat,
+                TotalExportWithVat = totalExpSub + totalExpVat
             };
 
             return View(vm);
@@ -309,7 +326,7 @@ namespace WebsiteDienMay.Controllers
             _context.StockImports.Add(stockImport);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Đã lập phiếu {stockImport.ReceiptCode}: Nhập +{quantity} sản phẩm \"{product.Name}\" (Tồn kho: {stockBefore} -> {stockAfter}).";
+            TempData["SuccessMessage"] = $"Đã lập phiếu {stockImport.ReceiptCode}: Nhập +{quantity} \"{product.Name}\". Tạm tính: {stockImport.SubTotal:N0} đ | Thuế VAT đầu vào (8%): +{stockImport.VatAmount:N0} đ | Tổng giá trị nhập (gồm VAT): {stockImport.TotalAmountWithVat:N0} đ.";
             return RedirectToAction(nameof(Warehouse));
         }
 
@@ -538,7 +555,7 @@ namespace WebsiteDienMay.Controllers
 
             var oldStatus = order.OrderStatus;
 
-            // Hoàn kho nếu chuyển từ đơn hiệu lực sang Đã hủy
+            // Hoàn kho & hoàn lượt dùng Voucher nếu chuyển từ đơn hiệu lực sang Đã hủy
             if (oldStatus != "Đã hủy" && orderStatus == "Đã hủy")
             {
                 foreach (var detail in order.OrderDetails)
@@ -550,8 +567,17 @@ namespace WebsiteDienMay.Controllers
                         product.SoldCount = Math.Max(0, product.SoldCount - detail.Quantity);
                     }
                 }
+
+                if (!string.IsNullOrWhiteSpace(order.CouponCode))
+                {
+                    var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Code == order.CouponCode);
+                    if (coupon != null)
+                    {
+                        coupon.UsedCount = Math.Max(0, coupon.UsedCount - 1);
+                    }
+                }
             }
-            // Trừ kho lại nếu khôi phục đơn từ Đã hủy sang trạng thái hiệu lực
+            // Trừ kho & cộng lại lượt dùng Voucher nếu khôi phục đơn từ Đã hủy sang trạng thái hiệu lực
             else if (oldStatus == "Đã hủy" && orderStatus != "Đã hủy")
             {
                 foreach (var detail in order.OrderDetails)
@@ -571,6 +597,15 @@ namespace WebsiteDienMay.Controllers
                     {
                         product.StockQuantity -= detail.Quantity;
                         product.SoldCount += detail.Quantity;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(order.CouponCode))
+                {
+                    var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Code == order.CouponCode);
+                    if (coupon != null)
+                    {
+                        coupon.UsedCount += 1;
                     }
                 }
             }
@@ -789,7 +824,7 @@ namespace WebsiteDienMay.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveCoupon(Coupon model)
+        public async Task<IActionResult> SaveCoupon(Coupon model, bool isActive = false)
         {
             if (string.IsNullOrWhiteSpace(model.Code) || string.IsNullOrWhiteSpace(model.Description))
             {
@@ -798,6 +833,49 @@ namespace WebsiteDienMay.Controllers
             }
 
             model.Code = model.Code.Trim().ToUpper();
+            model.Description = model.Description.Trim();
+            model.IsActive = isActive;
+            model.MinOrderAmount = Math.Max(0, model.MinOrderAmount);
+            model.UsageLimit = Math.Max(1, model.UsageLimit);
+
+            if (model.DiscountValue <= 0)
+            {
+                TempData["ErrorMessage"] = "Giá trị giảm giá bắt buộc phải lớn hơn 0.";
+                return RedirectToAction(nameof(Coupons));
+            }
+
+            if (model.DiscountType == "Percentage")
+            {
+                if (model.DiscountValue > 100)
+                {
+                    TempData["ErrorMessage"] = "Tỷ lệ giảm giá theo phần trăm (%) không được vượt quá 100%.";
+                    return RedirectToAction(nameof(Coupons));
+                }
+                model.MaxDiscountAmount = (model.MaxDiscountAmount.HasValue && model.MaxDiscountAmount.Value > 0)
+                    ? model.MaxDiscountAmount.Value
+                    : null;
+            }
+            else
+            {
+                model.DiscountType = "FixedAmount";
+                model.MaxDiscountAmount = null;
+            }
+
+            if (model.EndDate.Date < model.StartDate.Date)
+            {
+                TempData["ErrorMessage"] = "Ngày kết thúc của Voucher không được nhỏ hơn Ngày bắt đầu.";
+                return RedirectToAction(nameof(Coupons));
+            }
+
+            model.StartDate = model.StartDate.Date;
+            model.EndDate = model.EndDate.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+
+            var isDuplicate = await _context.Coupons.AnyAsync(c => c.Code == model.Code && c.Id != model.Id);
+            if (isDuplicate)
+            {
+                TempData["ErrorMessage"] = $"Mã ưu đãi \"{model.Code}\" đã tồn tại trong hệ thống.";
+                return RedirectToAction(nameof(Coupons));
+            }
 
             if (model.Id > 0)
             {
@@ -805,7 +883,7 @@ namespace WebsiteDienMay.Controllers
                 if (existing != null)
                 {
                     existing.Code = model.Code;
-                    existing.Description = model.Description.Trim();
+                    existing.Description = model.Description;
                     existing.DiscountType = model.DiscountType;
                     existing.DiscountValue = model.DiscountValue;
                     existing.MinOrderAmount = model.MinOrderAmount;
@@ -814,20 +892,13 @@ namespace WebsiteDienMay.Controllers
                     existing.StartDate = model.StartDate;
                     existing.EndDate = model.EndDate;
                     existing.IsActive = model.IsActive;
-                    TempData["SuccessMessage"] = $"Đã cập nhật mã ưu đãi \"{existing.Code}\".";
+                    TempData["SuccessMessage"] = $"Đã cập nhật mã ưu đãi \"{existing.Code}\" thành công.";
                 }
             }
             else
             {
-                var isDuplicate = await _context.Coupons.AnyAsync(c => c.Code == model.Code);
-                if (isDuplicate)
-                {
-                    TempData["ErrorMessage"] = $"Mã ưu đãi \"{model.Code}\" đã tồn tại trong hệ thống.";
-                    return RedirectToAction(nameof(Coupons));
-                }
-
                 _context.Coupons.Add(model);
-                TempData["SuccessMessage"] = $"Đã tạo mã ưu đãi mới \"{model.Code}\".";
+                TempData["SuccessMessage"] = $"Đã tạo mã ưu đãi mới \"{model.Code}\" thành công.";
             }
 
             await _context.SaveChangesAsync();
@@ -984,8 +1055,18 @@ namespace WebsiteDienMay.Controllers
 
             var grossRevenue = filteredOrders.Sum(o => o.SubTotal);
             var totalDiscount = filteredOrders.Sum(o => o.DiscountAmount);
-            var netRevenue = filteredOrders.Sum(o => o.TotalAmount);
+            var netRevenue = filteredOrders.Sum(o => Math.Max(0, o.SubTotal - o.DiscountAmount));
+            var totalOutputVat = filteredOrders.Sum(o => o.VatAmount > 0 ? o.VatAmount : Math.Round(Math.Max(0, o.SubTotal - o.DiscountAmount) * 0.08m, 0));
+            var totalRevenueWithVat = netRevenue + totalOutputVat;
             var totalOrders = filteredOrders.Count;
+
+            var periodStockImports = await _context.StockImports
+                .AsNoTracking()
+                .Where(si => si.CreatedAt >= start && si.CreatedAt <= end)
+                .ToListAsync();
+            var totalStockImportSubTotal = periodStockImports.Sum(si => si.ImportPrice * si.Quantity);
+            var totalInputVat = periodStockImports.Sum(si => Math.Round(si.ImportPrice * si.Quantity * 0.08m, 0));
+            var totalStockImportWithVat = totalStockImportSubTotal + totalInputVat;
 
             decimal totalCost = 0;
             int totalSoldProducts = 0;
@@ -1017,7 +1098,9 @@ namespace WebsiteDienMay.Controllers
             {
                 var dayGross = g.Sum(o => o.SubTotal);
                 var dayDisc = g.Sum(o => o.DiscountAmount);
-                var dayNet = g.Sum(o => o.TotalAmount);
+                var dayNet = g.Sum(o => Math.Max(0, o.SubTotal - o.DiscountAmount));
+                var dayVat = g.Sum(o => o.VatAmount > 0 ? o.VatAmount : Math.Round(Math.Max(0, o.SubTotal - o.DiscountAmount) * 0.08m, 0));
+                var dayTotalWithVat = dayNet + dayVat;
                 var dayOrders = g.Count();
                 var dayProds = g.SelectMany(o => o.OrderDetails).Sum(od => od.Quantity);
 
@@ -1043,6 +1126,8 @@ namespace WebsiteDienMay.Controllers
                     GrossRevenue = dayGross,
                     DiscountAmount = dayDisc,
                     NetRevenue = dayNet,
+                    VatAmount = dayVat,
+                    TotalWithVat = dayTotalWithVat,
                     EstimatedProfit = Math.Max(0, dayNet - dayCost)
                 });
             }
@@ -1132,6 +1217,11 @@ namespace WebsiteDienMay.Controllers
                 GrossRevenue = grossRevenue,
                 TotalDiscount = totalDiscount,
                 NetRevenue = netRevenue,
+                TotalOutputVat = totalOutputVat,
+                TotalRevenueWithVat = totalRevenueWithVat,
+                TotalStockImportSubTotal = totalStockImportSubTotal,
+                TotalInputVat = totalInputVat,
+                TotalStockImportWithVat = totalStockImportWithVat,
                 TotalOrders = totalOrders,
                 TotalSoldProducts = totalSoldProducts,
                 AverageOrderValue = aov,

@@ -66,6 +66,58 @@
     </div>
 </div>
 
+<!-- Khung đối soát Thuế GTGT (VAT 8%) Nhập hàng & Xuất hàng -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="p-3 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-2">
+                <div class="fw-bold text-primary">
+                    <i class="bi bi-box-arrow-in-down me-1"></i>THUẾ GTGT ĐẦU VÀO - NHẬP HÀNG (VAT 8%)
+                </div>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Thuế suất 8%</span>
+            </div>
+            <div class="row g-2 text-center small">
+                <div class="col-4 border-end">
+                    <div class="text-muted">Tiền hàng chưa VAT</div>
+                    <div class="fw-bold text-dark">@Model.TotalImportSubTotal.ToString("N0") đ</div>
+                </div>
+                <div class="col-4 border-end">
+                    <div class="text-muted">Thuế VAT đầu vào (8%)</div>
+                    <div class="fw-bold text-primary">+@Model.TotalImportVatAmount.ToString("N0") đ</div>
+                </div>
+                <div class="col-4">
+                    <div class="text-muted">Tổng nhập (Gồm VAT)</div>
+                    <div class="fw-extrabold text-danger">@Model.TotalImportWithVat.ToString("N0") đ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="p-3 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-2">
+                <div class="fw-bold text-success">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>THUẾ GTGT ĐẦU RA - XUẤT HÀNG (VAT 8%)
+                </div>
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Thuế suất 8%</span>
+            </div>
+            <div class="row g-2 text-center small">
+                <div class="col-4 border-end">
+                    <div class="text-muted">Doanh thu chưa VAT</div>
+                    <div class="fw-bold text-dark">@Model.TotalExportSubTotal.ToString("N0") đ</div>
+                </div>
+                <div class="col-4 border-end">
+                    <div class="text-muted">Thuế VAT đầu ra (8%)</div>
+                    <div class="fw-bold text-success">+@Model.TotalExportVatAmount.ToString("N0") đ</div>
+                </div>
+                <div class="col-4">
+                    <div class="text-muted">Tổng xuất (Gồm VAT)</div>
+                    <div class="fw-extrabold text-danger">@Model.TotalExportWithVat.ToString("N0") đ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4">
     <!-- Cột trái: Lập Phiếu Nhập Kho -->
     <div class="col-lg-4">
@@ -134,8 +186,28 @@
                         <input type="number" name="quantity" id="importQtyInput" min="1" max="10000" value="10" class="form-control fw-bold text-primary" required />
                     </div>
                     <div class="col-6">
-                        <label for="importPriceInput" class="adm-form-label">Đơn giá nhập (VNĐ)</label>
+                        <label for="importPriceInput" class="adm-form-label">Đơn giá chưa VAT (VNĐ)</label>
                         <input type="number" name="importPrice" id="importPriceInput" min="0" step="1" class="form-control" placeholder="Giá vốn..." />
+                    </div>
+                </div>
+
+                <!-- Khung tính tự động Thuế GTGT đầu vào (VAT 8%) cho Phiếu nhập kho -->
+                <div class="p-3 rounded-3 bg-light border mb-3 small">
+                    <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-2">
+                        <span class="fw-bold text-dark"><i class="bi bi-receipt-cutoff text-primary me-1"></i>Dự toán giá trị nhập & Thuế VAT (8%):</span>
+                        <span class="badge bg-warning text-dark">VAT 8%</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Tiền hàng chưa thuế (Tạm tính):</span>
+                        <strong id="previewSubTotalText" class="text-dark font-monospace">0 đ</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Thuế GTGT đầu vào (VAT 8%):</span>
+                        <strong id="previewVatAmountText" class="text-primary font-monospace">+0 đ</strong>
+                    </div>
+                    <div class="d-flex justify-content-between border-top pt-2 mt-1">
+                        <span class="fw-bold text-dark">Tổng thanh toán (Gồm VAT 8%):</span>
+                        <strong id="previewTotalWithVatText" class="text-danger fs-6 font-monospace">0 đ</strong>
                     </div>
                 </div>
 
@@ -303,7 +375,7 @@
                                 <th>Mã phiếu & Thời gian</th>
                                 <th>Sản phẩm nhập</th>
                                 <th class="text-center">Đối chiếu tồn kho</th>
-                                <th class="text-end">Đơn giá & Tổng nhập</th>
+                                <th class="text-end">Tiền hàng & Thuế VAT (8%)</th>
                                 <th>Nguồn nhập & Người lập</th>
                                 <th class="text-end d-print-none">Hóa đơn PDF</th>
                             </tr>
@@ -319,7 +391,6 @@
                             {
                                 @foreach (var imp in Model.RecentImports)
                                 {
-                                    var totalImpVal = imp.ImportPrice * imp.Quantity;
                                     <tr>
                                         <td>
                                             <div class="fw-bold text-primary font-monospace">#@imp.ReceiptCode</div>
@@ -336,22 +407,41 @@
                                             <strong class="text-dark">@imp.StockAfter</strong>
                                         </td>
                                         <td class="text-end text-nowrap">
-                                            <div class="fw-semibold text-dark">@imp.ImportPrice.ToString("N0") đ/SP</div>
-                                            <div class="small text-danger fw-bold">Tổng: @totalImpVal.ToString("N0") đ</div>
+                                            <div class="text-muted" style="font-size: 11px;">Đơn giá: @imp.ImportPrice.ToString("N0") đ | Chưa VAT: <strong>@imp.SubTotal.ToString("N0") đ</strong></div>
+                                            <div class="text-primary" style="font-size: 11px;">Thuế GTGT (VAT 8%): <strong>+@imp.VatAmount.ToString("N0") đ</strong></div>
+                                            <div class="small text-danger fw-extrabold">Tổng (Gồm VAT): @imp.TotalAmountWithVat.ToString("N0") đ</div>
                                         </td>
                                         <td>
                                             <div class="small fw-semibold text-dark">@imp.SupplierName</div>
                                             <div class="text-muted" style="font-size: 11.5px;">Lập bởi: @imp.CreatedBy</div>
                                         </td>
                                         <td class="text-end text-nowrap d-print-none">
-                                            <a asp-action="PrintStockImport" asp-route-id="@imp.Id" target="_blank" class="btn btn-outline-danger btn-sm fw-semibold rounded-3" title="Xem & Xuất hóa đơn nhập kho PDF">
-                                                <i class="bi bi-file-earmark-pdf-fill me-1"></i>Xuất PDF
+                                            <a asp-action="PrintStockImport" asp-route-id="@imp.Id" target="_blank" class="btn btn-outline-danger btn-sm fw-semibold rounded-3" title="Xem & Xuất hóa đơn nhập kho GTGT (VAT 8%) PDF">
+                                                <i class="bi bi-file-earmark-pdf-fill me-1"></i>HĐ Nhập VAT
                                             </a>
                                         </td>
                                     </tr>
                                 }
                             }
                         </tbody>
+                        @if (Model.RecentImports.Any())
+                        {
+                            var sumQty = Model.RecentImports.Sum(x => x.Quantity);
+                            var sumSub = Model.RecentImports.Sum(x => x.SubTotal);
+                            var sumVat = Model.RecentImports.Sum(x => x.VatAmount);
+                            var sumTot = Model.RecentImports.Sum(x => x.TotalAmountWithVat);
+                            <tfoot class="table-light border-top">
+                                <tr>
+                                    <td colspan="2" class="fw-bold text-dark">Tổng cộng (@Model.RecentImports.Count phiếu nhập gần nhất):</td>
+                                    <td class="text-center"><span class="badge bg-primary">Tổng nhập: +@sumQty SP</span></td>
+                                    <td class="text-end text-nowrap">
+                                        <div class="small text-muted">Chưa VAT: <strong>@sumSub.ToString("N0") đ</strong> | VAT 8%: <strong class="text-primary">+@sumVat.ToString("N0") đ</strong></div>
+                                        <div class="fw-extrabold text-danger">Tổng gồm VAT: @sumTot.ToString("N0") đ</div>
+                                    </td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        }
                     </table>
                 </div>
             </div>
@@ -400,11 +490,37 @@
             const previewBefore = document.getElementById("previewBefore");
             const previewAdd = document.getElementById("previewAdd");
             const previewAfter = document.getElementById("previewAfter");
+            const previewSubTotalText = document.getElementById("previewSubTotalText");
+            const previewVatAmountText = document.getElementById("previewVatAmountText");
+            const previewTotalWithVatText = document.getElementById("previewTotalWithVatText");
+
+            function formatVnd(num) {
+                return Math.round(num || 0).toLocaleString("vi-VN") + " đ";
+            }
+
+            function updateImportVatCalculation() {
+                const addQty = Math.max(0, parseInt(qtyInput.value || "0", 10));
+                let unitCost = parseFloat(priceInput.value || "0");
+                if ((!unitCost || unitCost <= 0) && prodSelect.value) {
+                    const opt = prodSelect.options[prodSelect.selectedIndex];
+                    if (opt && opt.dataset.cost) {
+                        unitCost = parseFloat(opt.dataset.cost || "0");
+                    }
+                }
+                const subTotal = Math.max(0, unitCost * addQty);
+                const vatAmount = Math.round(subTotal * 0.08);
+                const totalWithVat = subTotal + vatAmount;
+
+                if (previewSubTotalText) previewSubTotalText.textContent = formatVnd(subTotal);
+                if (previewVatAmountText) previewVatAmountText.textContent = "+" + formatVnd(vatAmount);
+                if (previewTotalWithVatText) previewTotalWithVatText.textContent = formatVnd(totalWithVat);
+            }
 
             function refreshPreview(populateDefaults) {
                 const opt = prodSelect.options[prodSelect.selectedIndex];
                 if (!prodSelect.value || !opt) {
                     previewBox.classList.add("d-none");
+                    updateImportVatCalculation();
                     return;
                 }
 
@@ -422,6 +538,7 @@
                     if (opt.dataset.cost) priceInput.value = opt.dataset.cost;
                     if (opt.dataset.brand) supplierInput.value = "Nhà phân phối chính hãng " + opt.dataset.brand;
                 }
+                updateImportVatCalculation();
             }
 
             prodSelect.addEventListener("change", function () {
@@ -430,6 +547,10 @@
 
             qtyInput.addEventListener("input", function () {
                 refreshPreview(false);
+            });
+
+            priceInput.addEventListener("input", function () {
+                updateImportVatCalculation();
             });
 
             document.querySelectorAll(".btn-pick-import").forEach(function (btn) {

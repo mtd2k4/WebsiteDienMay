@@ -31,18 +31,21 @@ namespace WebsiteDienMay.Controllers
             HttpContext.Session.SetObjectAsJson(CartSessionKey, items);
         }
 
-        private decimal CalculateDiscount(decimal subTotal, string? couponCode)
+        private decimal CalculateDiscount(decimal subTotal, string? couponCode, out Coupon? matchedCoupon)
         {
+            matchedCoupon = null;
             if (string.IsNullOrWhiteSpace(couponCode) || subTotal <= 0) return 0;
             var code = couponCode.Trim().ToUpper();
 
-            var coupon = _context.Coupons.FirstOrDefault(c => c.Code == code && c.IsActive);
+            var coupon = _context.Coupons.AsNoTracking().FirstOrDefault(c => c.Code == code && c.IsActive);
             if (coupon == null) return 0;
 
-            var now = DateTime.Now;
-            if (now < coupon.StartDate || now > coupon.EndDate) return 0;
+            var today = DateTime.Now.Date;
+            if (today < coupon.StartDate.Date || today > coupon.EndDate.Date) return 0;
             if (coupon.UsedCount >= coupon.UsageLimit) return 0;
             if (subTotal < coupon.MinOrderAmount) return 0;
+
+            matchedCoupon = coupon;
 
             if (coupon.DiscountType == "Percentage")
             {
@@ -51,7 +54,7 @@ namespace WebsiteDienMay.Controllers
                 {
                     discount = Math.Min(discount, coupon.MaxDiscountAmount.Value);
                 }
-                return discount;
+                return Math.Min(subTotal, discount);
             }
             else
             {
@@ -62,14 +65,31 @@ namespace WebsiteDienMay.Controllers
         private CartViewModel BuildCartViewModel()
         {
             var items = GetCartItems();
-            var coupon = HttpContext.Session.GetString(CouponSessionKey);
+            var couponCode = HttpContext.Session.GetString(CouponSessionKey);
             var subTotal = items.Sum(x => x.Total);
-            var discount = CalculateDiscount(subTotal, coupon);
+            var discount = CalculateDiscount(subTotal, couponCode, out var matchedCoupon);
+
+            if (!string.IsNullOrEmpty(couponCode) && (discount <= 0 || matchedCoupon == null))
+            {
+                HttpContext.Session.Remove(CouponSessionKey);
+                couponCode = null;
+                discount = 0;
+            }
+
+            var today = DateTime.Now.Date;
+            var availableCoupons = _context.Coupons
+                .AsNoTracking()
+                .Where(c => c.IsActive && c.StartDate.Date <= today && c.EndDate.Date >= today && c.UsedCount < c.UsageLimit)
+                .OrderBy(c => c.MinOrderAmount)
+                .ThenByDescending(c => c.DiscountValue)
+                .ToList();
 
             return new CartViewModel
             {
                 Items = items,
-                CouponCode = coupon,
+                AvailableCoupons = availableCoupons,
+                CouponCode = couponCode,
+                AppliedCouponDescription = matchedCoupon?.Description,
                 DiscountAmount = discount
             };
         }
@@ -252,48 +272,74 @@ namespace WebsiteDienMay.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        private IActionResult RedirectToCartOrReturnUrl(string? returnUrl)
+        {
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
         [HttpPost]
-        public async Task<IActionResult> ApplyCoupon(string? couponCode)
+        public async Task<IActionResult> ApplyCoupon(string? couponCode, string? returnUrl = null)
         {
             if (string.IsNullOrWhiteSpace(couponCode))
             {
                 HttpContext.Session.Remove(CouponSessionKey);
-                TempData["SuccessMessage"] = "Đã gỡ mã giảm giá.";
-                return RedirectToAction(nameof(Index));
+                TempData["SuccessMessage"] = "Đã gỡ mã giảm giá khỏi đơn hàng.";
+                return RedirectToCartOrReturnUrl(returnUrl);
             }
 
             var code = couponCode.Trim().ToUpper();
-            var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Code == code && c.IsActive);
+            var coupon = await _context.Coupons.AsNoTracking().FirstOrDefaultAsync(c => c.Code == code && c.IsActive);
 
             if (coupon == null)
             {
-                TempData["ErrorMessage"] = $"Mã ưu đãi \"{code}\" không tồn tại hoặc đã ngừng áp dụng.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = $"Mã ưu đãi \"{code}\" không tồn tại hoặc đang tạm khóa.";
+                return RedirectToCartOrReturnUrl(returnUrl);
             }
 
-            var now = DateTime.Now;
-            if (now < coupon.StartDate || now > coupon.EndDate)
+            var today = DateTime.Now.Date;
+            if (today < coupon.StartDate.Date)
             {
-                TempData["ErrorMessage"] = $"Mã ưu đãi \"{code}\" đã hết hạn áp dụng.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = $"Mã ưu đãi \"{code}\" chưa đến thời gian mở áp dụng (Bắt đầu từ {coupon.StartDate:dd/MM/yyyy}).";
+                return RedirectToCartOrReturnUrl(returnUrl);
+            }
+
+            if (today > coupon.EndDate.Date)
+            {
+                TempData["ErrorMessage"] = $"Mã ưu đãi \"{code}\" đã hết hạn áp dụng từ ngày {coupon.EndDate:dd/MM/yyyy}.";
+                return RedirectToCartOrReturnUrl(returnUrl);
             }
 
             if (coupon.UsedCount >= coupon.UsageLimit)
             {
-                TempData["ErrorMessage"] = $"Mã ưu đãi \"{code}\" đã đạt giới hạn lượt sử dụng.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = $"Mã ưu đãi \"{code}\" đã hết lượt sử dụng ({coupon.UsageLimit} lượt).";
+                return RedirectToCartOrReturnUrl(returnUrl);
             }
 
-            var cartVm = BuildCartViewModel();
-            if (cartVm.SubTotal < coupon.MinOrderAmount)
+            var items = GetCartItems();
+            var subTotal = items.Sum(x => x.Total);
+            if (subTotal < coupon.MinOrderAmount)
             {
-                TempData["ErrorMessage"] = $"Mã \"{code}\" áp dụng cho đơn từ {coupon.MinOrderAmount:N0} đ. (Đơn hiện tại: {cartVm.SubTotal:N0} đ)";
-                return RedirectToAction(nameof(Index));
+                var needed = coupon.MinOrderAmount - subTotal;
+                TempData["ErrorMessage"] = $"Mã \"{code}\" chỉ áp dụng cho đơn từ {coupon.MinOrderAmount:N0} đ. Vui lòng mua thêm {needed:N0} đ để dùng mã này.";
+                return RedirectToCartOrReturnUrl(returnUrl);
             }
 
             HttpContext.Session.SetString(CouponSessionKey, code);
-            TempData["SuccessMessage"] = $"Áp dụng mã \"{code}\" thành công ({coupon.Description}).";
-            return RedirectToAction(nameof(Index));
+            var discountAmt = CalculateDiscount(subTotal, code, out _);
+            TempData["SuccessMessage"] = $"Áp dụng mã \"{code}\" thành công: Giảm ngay {discountAmt:N0} đ ({coupon.Description}).";
+            return RedirectToCartOrReturnUrl(returnUrl);
+        }
+
+        [HttpPost]
+        public IActionResult RemoveCoupon(string? returnUrl = null)
+        {
+            HttpContext.Session.Remove(CouponSessionKey);
+            TempData["SuccessMessage"] = "Đã gỡ mã giảm giá khỏi đơn hàng.";
+            return RedirectToCartOrReturnUrl(returnUrl);
         }
 
         [HttpGet]

@@ -116,7 +116,9 @@ namespace WebsiteDienMay.Models
         public const decimal VatRate = 0.08m; // Thuế GTGT 8% áp dụng cho thiết bị điện máy
 
         public List<CartItemViewModel> Items { get; set; } = new();
+        public List<Coupon> AvailableCoupons { get; set; } = new();
         public string? CouponCode { get; set; }
+        public string? AppliedCouponDescription { get; set; }
         public decimal DiscountAmount { get; set; }
         public decimal SubTotal => Items.Sum(x => x.Total);
         public decimal TaxableAmount => Math.Max(0, SubTotal - DiscountAmount);
@@ -242,6 +244,16 @@ namespace WebsiteDienMay.Models
         public int LowStockProductCount { get; set; }
         public int OutOfStockProductCount { get; set; }
         public int TotalImportReceipts { get; set; }
+
+        // Thống kê giá trị Nhập kho & Thuế GTGT đầu vào (VAT 8%)
+        public decimal TotalImportSubTotal { get; set; }
+        public decimal TotalImportVatAmount { get; set; }
+        public decimal TotalImportWithVat { get; set; }
+
+        // Thống kê giá trị Xuất hàng & Thuế GTGT đầu ra (VAT 8%)
+        public decimal TotalExportSubTotal { get; set; }
+        public decimal TotalExportVatAmount { get; set; }
+        public decimal TotalExportWithVat { get; set; }
     }
 
     public class ProductCompareViewModel
@@ -305,6 +317,8 @@ namespace WebsiteDienMay.Models
         public decimal GrossRevenue { get; set; }
         public decimal DiscountAmount { get; set; }
         public decimal NetRevenue { get; set; }
+        public decimal VatAmount { get; set; }
+        public decimal TotalWithVat { get; set; }
         public decimal EstimatedProfit { get; set; }
     }
 
@@ -342,6 +356,11 @@ namespace WebsiteDienMay.Models
         public decimal GrossRevenue { get; set; }
         public decimal TotalDiscount { get; set; }
         public decimal NetRevenue { get; set; }
+        public decimal TotalOutputVat { get; set; }
+        public decimal TotalRevenueWithVat { get; set; }
+        public decimal TotalStockImportSubTotal { get; set; }
+        public decimal TotalInputVat { get; set; }
+        public decimal TotalStockImportWithVat { get; set; }
         public int TotalOrders { get; set; }
         public int TotalSoldProducts { get; set; }
         public decimal AverageOrderValue { get; set; }

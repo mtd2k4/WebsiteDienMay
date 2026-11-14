@@ -273,6 +273,21 @@
                 <div class="pdf-kpi-val text-info">@Model.AverageOrderValue.ToString("N0") đ</div>
                 <div class="text-muted" style="font-size: 10.5px;">Quy mô giỏ hàng bình quân</div>
             </div>
+            <div class="pdf-kpi-box">
+                <div class="pdf-kpi-label">Thuế GTGT Xuất hàng (VAT 8%)</div>
+                <div class="pdf-kpi-val text-success">+@Model.TotalOutputVat.ToString("N0") đ</div>
+                <div class="text-muted" style="font-size: 10.5px;">Tổng thu gồm VAT: @Model.TotalRevenueWithVat.ToString("N0") đ</div>
+            </div>
+            <div class="pdf-kpi-box">
+                <div class="pdf-kpi-label">Thuế GTGT Nhập hàng (VAT 8%)</div>
+                <div class="pdf-kpi-val text-primary">+@Model.TotalInputVat.ToString("N0") đ</div>
+                <div class="text-muted" style="font-size: 10.5px;">Tổng nhập gồm VAT: @Model.TotalStockImportWithVat.ToString("N0") đ</div>
+            </div>
+            <div class="pdf-kpi-box">
+                <div class="pdf-kpi-label">Giá trị nhập kho chưa VAT</div>
+                <div class="pdf-kpi-val text-dark">@Model.TotalStockImportSubTotal.ToString("N0") đ</div>
+                <div class="text-muted" style="font-size: 10.5px;">Tổng vốn nhập hàng trong kỳ</div>
+            </div>
         </div>
 
         <!-- 2. Cơ cấu doanh thu theo ngành hàng -->
@@ -356,12 +371,14 @@
             <table class="pdf-table">
                 <thead>
                     <tr>
-                        <th style="width: 6%;">STT</th>
-                        <th style="width: 18%;">Ngày ghi nhận</th>
-                        <th style="width: 12%; text-align: center;">Số đơn</th>
-                        <th style="width: 12%; text-align: center;">SL bán</th>
-                        <th style="width: 26%; text-align: right;">Doanh thu thuần (VNĐ)</th>
-                        <th style="width: 26%; text-align: right;">Lợi nhuận gộp ước tính</th>
+                        <th style="width: 5%;">STT</th>
+                        <th style="width: 14%;">Ngày ghi nhận</th>
+                        <th style="width: 8%; text-align: center;">Số đơn</th>
+                        <th style="width: 8%; text-align: center;">SL bán</th>
+                        <th style="width: 17%; text-align: right;">Doanh thu chưa VAT</th>
+                        <th style="width: 15%; text-align: right;">Thuế VAT (8%)</th>
+                        <th style="width: 17%; text-align: right;">Tổng thu (Gồm VAT)</th>
+                        <th style="width: 16%; text-align: right;">Lợi nhuận gộp</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -372,7 +389,9 @@
                             <td class="text-center fw-semibold">@d.FullDateString</td>
                             <td class="text-center">@d.OrdersCount</td>
                             <td class="text-center">@d.ProductsCount</td>
-                            <td class="text-end font-monospace fw-bold text-primary">@d.NetRevenue.ToString("N0")</td>
+                            <td class="text-end font-monospace">@d.NetRevenue.ToString("N0")</td>
+                            <td class="text-end font-monospace text-primary">+@d.VatAmount.ToString("N0")</td>
+                            <td class="text-end font-monospace fw-bold text-danger">@d.TotalWithVat.ToString("N0")</td>
                             <td class="text-end font-monospace fw-bold text-success">@d.EstimatedProfit.ToString("N0")</td>
                         </tr>
                     }
